@@ -6,12 +6,10 @@ export interface Notification {
   title: string
   message: string
   jobCode?: string
-  jobId?: number
   senderName: string
   senderEmail: string
   isRead: boolean
   createdAt: Date
-  actionUrl?: string
 }
 
 export interface NotificationResponse {

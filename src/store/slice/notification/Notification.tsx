@@ -1,6 +1,13 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import type { Notification } from "@/types/notifications";
-import { getNotifications, markAsRead, markAllAsRead, deleteNotification } from "@/services/NotificationApi";
+import { 
+  getAllNotifications, 
+  readNotificationByIdAndAccountId, 
+  readAllNotificationsByIdsAndAccountId, 
+  deleteNotification,
+  createNotification
+} from "@/services/NotificationApi";
+import { PageResponse } from "@/components/types/Page";
 
 interface NotificationState {
   notifications: Notification[];
@@ -8,6 +15,11 @@ interface NotificationState {
   loading: boolean;
   error: string | null;
   totalCount: number;
+  pagination: {
+    currentPage: number;
+    pageSize: number;
+    totalPages: number;
+  };
 }
 
 const initialState: NotificationState = {
@@ -16,27 +28,41 @@ const initialState: NotificationState = {
   loading: false,
   error: null,
   totalCount: 0,
+  pagination: {
+    currentPage: 0,
+    pageSize: 10,
+    totalPages: 0,
+  },
 };
 
 export const FetchNotificationsAction = createAsyncThunk(
   "notification/fetchNotifications",
   async ({ page = 0, size = 10 }: { page?: number; size?: number }) => {
-    return await getNotifications(page, size);
+    const response = await getAllNotifications({ pageNumber: page, pageSize: size });
+    return response;
+  }
+);
+
+export const CreateNotificationAction = createAsyncThunk(
+  "notification/createNotification",
+  async (data: Omit<Notification, "id" | "createdAt">) => {
+    const response = await createNotification(data);
+    return response.data as Notification;
   }
 );
 
 export const MarkAsReadAction = createAsyncThunk(
   "notification/markAsRead",
   async (notificationId: number) => {
-    await markAsRead(notificationId);
+    await readNotificationByIdAndAccountId(notificationId);
     return notificationId;
   }
 );
 
 export const MarkAllAsReadAction = createAsyncThunk(
   "notification/markAllAsRead",
-  async () => {
-    await markAllAsRead();
+  async (ids: number[]) => {
+    await readAllNotificationsByIdsAndAccountId(ids);
     return null;
   }
 );
@@ -69,13 +95,37 @@ const notificationSlice = createSlice({
       })
       .addCase(FetchNotificationsAction.fulfilled, (state, action) => {
         state.loading = false;
-        state.notifications = action.payload.data;
-        state.unreadCount = action.payload.unreadCount;
-        state.totalCount = action.payload.count;
+        const pageResponse = (action.payload as any).data as PageResponse<Notification[]>;
+        state.notifications = pageResponse.data;
+        state.unreadCount = (action.payload as any).unreadCount;
+        state.totalCount = (action.payload as any).count;
+        state.pagination = {
+          currentPage: pageResponse.pageNumber,
+          pageSize: pageResponse.pageSize,
+          totalPages: pageResponse.totalPages,
+        };
       })
       .addCase(FetchNotificationsAction.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || "Failed to fetch notifications";
+      });
+
+    // Create notification
+    builder
+      .addCase(CreateNotificationAction.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(CreateNotificationAction.fulfilled, (state, action) => {
+        state.loading = false;
+        state.notifications.unshift(action.payload);
+        state.totalCount += 1;
+        if (!action.payload.isRead) {
+          state.unreadCount += 1;
+        }
+      })
+      .addCase(CreateNotificationAction.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || "Create notification failed";
       });
 
     // Mark as read
