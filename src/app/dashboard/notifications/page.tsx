@@ -4,13 +4,14 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, CheckCheck, Check } from "lucide-react";
+import { Trash2, CheckCheck, Check, ArrowDown } from "lucide-react";
 import { useNotifications } from "@/hooks/use-notifications";
-import { useAppDispatch } from "@/store/store";
+import { useAppDispatch, useAppSelector } from "@/store/store";
 import {
   MarkAsReadAction,
   MarkAllAsReadAction,
   DeleteNotificationAction,
+  FetchNotificationsAction,
 } from "@/store/slice/notification/Notification";
 import { toast } from "react-toastify";
 import Loader from "@/components/ui/loader";
@@ -40,9 +41,12 @@ const NOTIFICATION_LABELS = {
 
 export default function NotificationsPage() {
   const dispatch = useAppDispatch();
-  const { notifications, unreadCount, loading } = useNotifications(15000);
+  const { unreadCount, loading } = useNotifications(15000);
+  const { notifications, pagination } = useAppSelector((state) => state.notification);
+  
   const [deleting, setDeleting] = useState<number | null>(null);
   const [marking, setMarking] = useState<number | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const handleMarkAsRead = async (id: number) => {
     setMarking(id);
@@ -55,8 +59,15 @@ export default function NotificationsPage() {
 
   const handleMarkAllAsRead = async () => {
     try {
-      await dispatch(MarkAllAsReadAction());
-      toast.success("Đánh dấu tất cả đã đọc");
+      const unreadIds = notifications
+        .filter((n: Notification) => !n.isRead)
+        .map((n: Notification) => n.id);
+      if (unreadIds.length > 0) {
+        await dispatch(MarkAllAsReadAction(unreadIds));
+        toast.success("Đánh dấu tất cả đã đọc");
+      } else {
+        toast.info("Tất cả đã đọc");
+      }
     } catch (error: any) {
       toast.error(error.message || "Lỗi khi đánh dấu");
     }
@@ -74,15 +85,28 @@ export default function NotificationsPage() {
     }
   };
 
-  const formatTime = (date: Date) => {
+  const handleLoadMore = async () => {
+    setLoadingMore(true);
+    try {
+      const nextPage = pagination.currentPage + 1;
+      await dispatch(FetchNotificationsAction({ page: nextPage, size: pagination.pageSize }));
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  const formatTime = (date: Date | string) => {
     const now = new Date();
-    const diffInSeconds = Math.floor((now.getTime() - new Date(date).getTime()) / 1000);
+    const parsedDate = typeof date === "string" ? new Date(date) : date;
+    const diffInSeconds = Math.floor((now.getTime() - parsedDate.getTime()) / 1000);
 
     if (diffInSeconds < 60) return "Vừa xong";
     if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} phút trước`;
     if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} giờ trước`;
     return `${Math.floor(diffInSeconds / 86400)} ngày trước`;
   };
+
+  const hasMorePages = pagination.currentPage < pagination.totalPages - 1;
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6">
@@ -111,82 +135,99 @@ export default function NotificationsPage() {
           )}
         </div>
 
-        {loading ? (
+        {loading && notifications.length === 0 ? (
           <Loader width={40} height={40} />
         ) : notifications.length === 0 ? (
           <Card className="p-12 text-center">
             <p className="text-muted-foreground">Không có thông báo nào</p>
           </Card>
         ) : (
-          <div className="space-y-3">
-            {notifications.map((notification: Notification) => (
-              <Card
-                key={notification.id}
-                className={`p-4 border-l-4 transition-all hover:shadow-md ${
-                  NOTIFICATION_COLORS[notification.type]
-                } ${!notification.isRead ? "border-l-primary" : ""}`}
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Badge className={NOTIFICATION_BADGE_COLORS[notification.type]}>
-                        {NOTIFICATION_LABELS[notification.type]}
-                      </Badge>
+          <>
+            <div className="space-y-3">
+              {notifications.map((notification: Notification) => (
+                <Card
+                  key={notification.id}
+                  className={`p-4 border-l-4 transition-all hover:shadow-md ${
+                    NOTIFICATION_COLORS[notification.type]
+                  } ${!notification.isRead ? "border-l-primary" : ""}`}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Badge className={NOTIFICATION_BADGE_COLORS[notification.type]}>
+                          {NOTIFICATION_LABELS[notification.type]}
+                        </Badge>
+                        {!notification.isRead && (
+                          <div className="w-2 h-2 bg-primary rounded-full"></div>
+                        )}
+                      </div>
+
+                      <h3 className="font-semibold text-sm mb-1">
+                        {notification.title}
+                      </h3>
+
+                      <p className="text-sm text-muted-foreground mb-2">
+                        {notification.message}
+                      </p>
+
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        <span>Từ: {notification.senderName}</span>
+                        <span>{formatTime(notification.createdAt)}</span>
+
+                        {notification.jobCode && (
+                          <Link
+                            href={`/dashboard/job`}
+                            className="text-primary hover:underline font-medium"
+                          >
+                            Xem công việc →
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
                       {!notification.isRead && (
-                        <div className="w-2 h-2 bg-primary rounded-full"></div>
-                      )}
-                    </div>
-
-                    <h3 className="font-semibold text-sm mb-1">
-                      {notification.title}
-                    </h3>
-
-                    <p className="text-sm text-muted-foreground mb-2">
-                      {notification.message}
-                    </p>
-
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                      <span>Từ: {notification.senderName}</span>
-                      <span>{formatTime(notification.createdAt)}</span>
-
-                      {notification.jobCode && (
-                        <Link
-                          href={`/dashboard/job`}
-                          className="text-primary hover:underline font-medium"
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleMarkAsRead(notification.id)}
+                          disabled={marking === notification.id}
+                          className="gap-2"
                         >
-                          Xem công việc →
-                        </Link>
+                          <Check className="w-4 h-4" />
+                        </Button>
                       )}
-                    </div>
-                  </div>
 
-                  <div className="flex items-center gap-2">
-                    {!notification.isRead && (
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleMarkAsRead(notification.id)}
-                        disabled={marking === notification.id}
-                        className="gap-2"
+                        onClick={() => handleDelete(notification.id)}
+                        disabled={deleting === notification.id}
+                        className="text-destructive hover:text-destructive gap-2"
                       >
-                        <Check className="w-4 h-4" />
+                        <Trash2 className="w-4 h-4" />
                       </Button>
-                    )}
-
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(notification.id)}
-                      disabled={deleting === notification.id}
-                      className="text-destructive hover:text-destructive gap-2"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    </div>
                   </div>
-                </div>
-              </Card>
-            ))}
-          </div>
+                </Card>
+              ))}
+            </div>
+
+            {/* Load More Button */}
+            {hasMorePages && (
+              <div className="flex justify-center mt-6">
+                <Button
+                  variant="outline"
+                  onClick={handleLoadMore}
+                  disabled={loadingMore}
+                  className="gap-2"
+                >
+                  <ArrowDown className="w-4 h-4" />
+                  {loadingMore ? "Đang tải..." : "Tải thêm"}
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
