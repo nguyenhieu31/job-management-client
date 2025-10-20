@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Trash2, CheckCheck, Check, ArrowDown } from "lucide-react";
-import { useNotifications } from "@/hooks/use-notifications";
 import { useAppDispatch, useAppSelector } from "@/store/store";
 import {
   MarkAsReadAction,
@@ -17,32 +16,32 @@ import { toast } from "react-toastify";
 import Loader from "@/components/ui/loader";
 import Link from "next/link";
 import type { Notification } from "@/types/notifications";
+import { PageResponse } from "@/components/types/Page";
 
 const NOTIFICATION_COLORS = {
-  job_done: "bg-blue-50 border-blue-200",
-  review_submitted: "bg-green-50 border-green-200",
-  job_assigned: "bg-purple-50 border-purple-200",
-  review_assigned: "bg-orange-50 border-orange-200",
+  "JOB_DONE": "bg-blue-50 border-blue-200",
+  "REVIEW_SUBMITTED": "bg-green-50 border-green-200",
+  "JOB_ASSIGNED": "bg-purple-50 border-purple-200",
+  "REVIEW_ASSIGNED": "bg-orange-50 border-orange-200",
 };
 
 const NOTIFICATION_BADGE_COLORS = {
-  job_done: "bg-blue-100 text-blue-800",
-  review_submitted: "bg-green-100 text-green-800",
-  job_assigned: "bg-purple-100 text-purple-800",
-  review_assigned: "bg-orange-100 text-orange-800",
+  "JOB_DONE": "bg-blue-100 text-blue-800",
+  "REVIEW_SUBMITTED": "bg-green-100 text-green-800",
+  "JOB_ASSIGNED": "bg-purple-100 text-purple-800",
+  "REVIEW_ASSIGNED": "bg-orange-100 text-orange-800",
 };
 
 const NOTIFICATION_LABELS = {
-  job_done: "Công việc hoàn thành",
-  review_submitted: "Review hoàn thành",
-  job_assigned: "Giao công việc",
-  review_assigned: "Chờ review",
+  "JOB_DONE": "Công việc hoàn thành",
+  "REVIEW_SUBMITTED": "Review hoàn thành",
+  "JOB_ASSIGNED": "Giao công việc",
+  "REVIEW_ASSIGNED": "Chờ review",
 };
 
 export default function NotificationsPage() {
   const dispatch = useAppDispatch();
-  const { unreadCount, loading } = useNotifications(15000);
-  const { notifications, pagination } = useAppSelector((state) => state.notification);
+  const { notifications, loading, unreadCount } : {notifications: PageResponse<Notification[]> | undefined, loading: boolean, unreadCount: number} = useAppSelector((state) => state.notification);
   
   const [deleting, setDeleting] = useState<number | null>(null);
   const [marking, setMarking] = useState<number | null>(null);
@@ -59,10 +58,10 @@ export default function NotificationsPage() {
 
   const handleMarkAllAsRead = async () => {
     try {
-      const unreadIds = notifications
+      const unreadIds = notifications?.data
         .filter((n: Notification) => !n.isRead)
         .map((n: Notification) => n.id);
-      if (unreadIds.length > 0) {
+      if (unreadIds && unreadIds.length > 0) {
         await dispatch(MarkAllAsReadAction(unreadIds));
         toast.success("Đánh dấu tất cả đã đọc");
       } else {
@@ -88,14 +87,15 @@ export default function NotificationsPage() {
   const handleLoadMore = async () => {
     setLoadingMore(true);
     try {
-      const nextPage = pagination.currentPage + 1;
-      await dispatch(FetchNotificationsAction({ page: nextPage, size: pagination.pageSize }));
+      const nextPage = notifications ? notifications.pageNumber + 1 : 0;
+      await dispatch(FetchNotificationsAction({ page: nextPage, size: notifications?.pageSize }));
     } finally {
       setLoadingMore(false);
     }
   };
 
   const formatTime = (date: Date | string) => {
+    console.log("formatTime called with date:", date);
     const now = new Date();
     const parsedDate = typeof date === "string" ? new Date(date) : date;
     const diffInSeconds = Math.floor((now.getTime() - parsedDate.getTime()) / 1000);
@@ -106,7 +106,7 @@ export default function NotificationsPage() {
     return `${Math.floor(diffInSeconds / 86400)} ngày trước`;
   };
 
-  const hasMorePages = pagination.currentPage < pagination.totalPages - 1;
+  const hasMorePages = notifications ? notifications.pageNumber < notifications.totalPages - 1 : false;
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6">
@@ -135,16 +135,16 @@ export default function NotificationsPage() {
           )}
         </div>
 
-        {loading && notifications.length === 0 ? (
+        {loading && notifications && notifications.data.length === 0 ? (
           <Loader width={40} height={40} />
-        ) : notifications.length === 0 ? (
+        ) : notifications && notifications.data.length === 0 ? (
           <Card className="p-12 text-center">
             <p className="text-muted-foreground">Không có thông báo nào</p>
           </Card>
         ) : (
           <>
             <div className="space-y-3">
-              {notifications.map((notification: Notification) => (
+              {notifications &&  notifications.data.map((notification: Notification) => (
                 <Card
                   key={notification.id}
                   className={`p-4 border-l-4 transition-all hover:shadow-md ${

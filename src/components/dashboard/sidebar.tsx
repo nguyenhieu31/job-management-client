@@ -24,10 +24,11 @@ export function Sidebar() {
   const dispatch = useAppDispatch();
   const pathname = usePathname()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const {email,fullName, roleName} = useAppSelector((state) => state.authenticate);
+  const {email, fullName, roleName} = useAppSelector((state) => state.authenticate);
 
   // Filter navigation based on role
-  const filteredNavigation = roleName === 'EMPLOYEE' || roleName === 'QA' 
+  // Default to employee/QA view if roleName is not loaded yet (for security)
+  const filteredNavigation = !roleName || roleName === 'EMPLOYEE' || roleName === 'QA' 
     ? navigation.filter(item => item.href === '/dashboard/job' || item.href === '/dashboard/change-password')
     : roleName === 'MANAGER'
     ? navigation.filter(item => item.href !== '/dashboard/settings')

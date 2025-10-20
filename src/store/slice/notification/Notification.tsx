@@ -10,7 +10,7 @@ import {
 import { PageResponse } from "@/components/types/Page";
 
 interface NotificationState {
-  notifications: Notification[];
+  notifications: PageResponse<Notification[]> | undefined;
   unreadCount: number;
   loading: boolean;
   error: string | null;
@@ -23,7 +23,7 @@ interface NotificationState {
 }
 
 const initialState: NotificationState = {
-  notifications: [],
+  notifications: undefined,
   unreadCount: 0,
   loading: false,
   error: null,
@@ -39,7 +39,7 @@ export const FetchNotificationsAction = createAsyncThunk(
   "notification/fetchNotifications",
   async ({ page = 0, size = 10 }: { page?: number; size?: number }) => {
     const response = await getAllNotifications({ pageNumber: page, pageSize: size });
-    return response;
+    return response.data as PageResponse<Notification[]>;
   }
 );
 
@@ -80,7 +80,16 @@ const notificationSlice = createSlice({
   initialState,
   reducers: {
     addNotificationLocal: (state, action) => {
-      state.notifications.unshift(action.payload);
+      if (!state.notifications) {
+        state.notifications = {
+          data: [],
+          pageNumber: 0,
+          pageSize: 10,
+          totalElements: 0,
+          totalPages: 0,
+        };
+      }
+      state.notifications.data.unshift(action.payload);
       if (!action.payload.isRead) {
         state.unreadCount += 1;
       }
@@ -95,10 +104,10 @@ const notificationSlice = createSlice({
       })
       .addCase(FetchNotificationsAction.fulfilled, (state, action) => {
         state.loading = false;
-        const pageResponse = (action.payload as any).data as PageResponse<Notification[]>;
-        state.notifications = pageResponse.data;
-        state.unreadCount = (action.payload as any).unreadCount;
-        state.totalCount = (action.payload as any).count;
+        const pageResponse = action.payload as PageResponse<Notification[]>;
+        state.notifications = pageResponse;
+        state.totalCount = pageResponse.totalElements;
+        state.unreadCount = pageResponse.data.filter((n) => !n.isRead).length;
         state.pagination = {
           currentPage: pageResponse.pageNumber,
           pageSize: pageResponse.pageSize,
@@ -117,7 +126,16 @@ const notificationSlice = createSlice({
       })
       .addCase(CreateNotificationAction.fulfilled, (state, action) => {
         state.loading = false;
-        state.notifications.unshift(action.payload);
+        if (!state.notifications) {
+          state.notifications = {
+            data: [],
+            pageNumber: 0,
+            pageSize: 10,
+            totalElements: 0,
+            totalPages: 0,
+          };
+        }
+        state.notifications.data.unshift(action.payload);
         state.totalCount += 1;
         if (!action.payload.isRead) {
           state.unreadCount += 1;
@@ -131,7 +149,8 @@ const notificationSlice = createSlice({
     // Mark as read
     builder
       .addCase(MarkAsReadAction.fulfilled, (state, action) => {
-        const notification = state.notifications.find((n) => n.id === action.payload);
+        if (!state.notifications) return;
+        const notification = state.notifications.data.find((n) => n.id === action.payload);
         if (notification && !notification.isRead) {
           notification.isRead = true;
           state.unreadCount = Math.max(0, state.unreadCount - 1);
@@ -141,7 +160,8 @@ const notificationSlice = createSlice({
     // Mark all as read
     builder
       .addCase(MarkAllAsReadAction.fulfilled, (state) => {
-        state.notifications.forEach((n) => {
+        if (!state.notifications) return;
+        state.notifications.data.forEach((n) => {
           n.isRead = true;
         });
         state.unreadCount = 0;
@@ -150,13 +170,15 @@ const notificationSlice = createSlice({
     // Delete notification
     builder
       .addCase(DeleteNotificationAction.fulfilled, (state, action) => {
-        const index = state.notifications.findIndex((n) => n.id === action.payload);
+        if (!state.notifications) return;
+
+        const index = state.notifications.data.findIndex((n) => n.id === action.payload);
         if (index > -1) {
-          const notification = state.notifications[index];
+          const notification = state.notifications.data[index];
           if (!notification.isRead) {
             state.unreadCount = Math.max(0, state.unreadCount - 1);
           }
-          state.notifications.splice(index, 1);
+          state.notifications.data.splice(index, 1);
           state.totalCount = Math.max(0, state.totalCount - 1);
         }
       });

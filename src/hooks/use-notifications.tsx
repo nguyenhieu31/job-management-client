@@ -8,13 +8,13 @@ export const useNotifications = (intervalMs: number = 30000) => {
 
   // Initial fetch
   useEffect(() => {
-    dispatch(FetchNotificationsAction({ page: 0, size: 20 }));
+    dispatch(FetchNotificationsAction({ page: 0, size: 10 }));
   }, [dispatch]);
 
   // Set up polling interval
   useEffect(() => {
     const timer = setInterval(() => {
-      dispatch(FetchNotificationsAction({ page: 0, size: 20 }));
+      dispatch(FetchNotificationsAction({ page: 0, size: 10 }));
     }, intervalMs);
 
     return () => clearInterval(timer);
