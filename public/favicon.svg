@@ -1,0 +1,43 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="256" height="256" fill="black"/>
+  
+  <!-- White "PT" text with house icon -->
+  <g transform="translate(50, 40)">
+    <!-- Roof -->
+    <polygon points="80,0 160,80 0,80" fill="white"/>
+    
+    <!-- House windows -->
+    <rect x="70" y="10" width="20" height="20" fill="black"/>
+    <rect x="100" y="10" width="20" height="20" fill="black"/>
+    <line x1="80" y1="10" x2="80" y2="30" stroke="black" stroke-width="2"/>
+    <line x1="70" y1="20" x2="90" y2="20" stroke="black" stroke-width="2"/>
+    <line x1="100" y1="20" x2="120" y2="20" stroke="black" stroke-width="2"/>
+    
+    <!-- P letter shape -->
+    <rect x="5" y="80" width="35" height="100" fill="white"/>
+    <ellipse cx="40" cy="105" rx="30" ry="35" fill="black"/>
+    
+    <!-- T letter shape -->
+    <rect x="70" y="80" width="80" height="20" fill="white"/>
+    <rect x="105" y="100" width="20" height="80" fill="white"/>
+    
+    <!-- Building shape under T -->
+    <polygon points="90,160 90,180 140,180 140,160 115,145" fill="white"/>
+    <polygon points="100,160 100,175 120,175 120,160" fill="black"/>
+    <polygon points="125,160 125,175 140,175 140,160" fill="black"/>
+    
+    <!-- Motorcycle icon (small) -->
+    <g transform="translate(140, 160)">
+      <circle cx="5" cy="15" r="8" fill="white" stroke="black" stroke-width="2"/>
+      <circle cx="25" cy="15" r="8" fill="white" stroke="black" stroke-width="2"/>
+      <rect x="8" y="5" width="14" height="15" fill="white" stroke="black" stroke-width="1.5"/>
+      <polygon points="12,5 15,0 20,5" fill="white" stroke="black" stroke-width="1.5"/>
+    </g>
+  </g>
+  
+  <!-- Text "EDITING SERVICE" -->
+  <text x="128" y="240" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white" text-anchor="middle" letter-spacing="3">
+    EDITING SERVICE
+  </text>
+</svg>

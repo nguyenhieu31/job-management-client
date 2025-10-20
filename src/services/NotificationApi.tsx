@@ -1,12 +1,13 @@
 import type { Notification, NotificationResponse } from "@/types/notifications";
 import { ApiResponse } from "@/components/types/ApiResponse";
 import { PageResponse } from "@/components/types/Page";
+import { axiosInstance } from "@/lib/utils/axios-instance";
 
 // Mock notifications database (in real app, this would be on backend)
 const mockNotifications: Notification[] = [
   {
     id: 1,
-    type: "job_done",
+    type: "JOB_DONE",
     title: "Công việc hoàn thành",
     message: "Nhân viên Nguyễn Văn A vừa hoàn thành công việc JOB-001",
     jobCode: "JOB-001",
@@ -17,7 +18,7 @@ const mockNotifications: Notification[] = [
   },
   {
     id: 2,
-    type: "review_submitted",
+    type: "REVIEW_SUBMITTED",
     title: "Review hoàn thành",
     message: "QA Trần Thị B vừa submit review cho công việc JOB-001",
     jobCode: "JOB-001",
@@ -28,7 +29,7 @@ const mockNotifications: Notification[] = [
   },
   {
     id: 3,
-    type: "job_assigned",
+    type: "JOB_ASSIGNED",
     title: "Công việc được giao",
     message: "Bạn được giao công việc JOB-002 từ khách hàng ABC Company",
     jobCode: "JOB-002",
@@ -42,33 +43,8 @@ const mockNotifications: Notification[] = [
 // API: Get all notifications with pagination (GET /admin/notifications)
 export const getAllNotifications = async (data: { pageNumber: number; pageSize: number }) => {
   try {
-    // In real app: const res = await axiosInstance.get(`/admin/notifications`, { params: { pageNumber: data.pageNumber, pageSize: data.pageSize } });
-    
-    // Mock: simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 300));
-
-    const allNotifications = mockNotifications.sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
-
-    const start = data.pageNumber * data.pageSize;
-    const end = start + data.pageSize;
-    const paginatedNotifications = allNotifications.slice(start, end);
-    const unreadCount = mockNotifications.filter((n) => !n.isRead).length;
-
-    const response: PageResponse<Notification[]> = {
-      data: paginatedNotifications,
-      pageNumber: data.pageNumber,
-      pageSize: data.pageSize,
-      totalElements: allNotifications.length,
-      totalPages: Math.ceil(allNotifications.length / data.pageSize),
-    };
-
-    return {
-      data: response,
-      unreadCount,
-      count: allNotifications.length,
-    } as unknown as ApiResponse<PageResponse<Notification[]> & { unreadCount: number }>;
+    const res = await axiosInstance.get(`/admin/notifications`, { params: { pageNumber: data.pageNumber, pageSize: data.pageSize } });
+    return res as unknown as ApiResponse<PageResponse<Notification[]>>;
   } catch (err: any) {
     throw new Error(err.message);
   }
@@ -97,16 +73,8 @@ export const createNotification = async (data: Omit<Notification, "id" | "create
 // API: Delete notification (DELETE /admin/notifications/{id})
 export const deleteNotification = async (notificationId: number) => {
   try {
-    // In real app: const res = await axiosInstance.delete(`/admin/notifications/${notificationId}`);
-    
-    // Mock: remove notification
-    const index = mockNotifications.findIndex((n) => n.id === notificationId);
-    if (index > -1) {
-      mockNotifications.splice(index, 1);
-    }
-
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    return { data: null } as unknown as ApiResponse<null>;
+    const res = await axiosInstance.delete(`/admin/notifications/${notificationId}`);
+    return res as unknown as ApiResponse<void>;
   } catch (err: any) {
     throw new Error(err.message);
   }
@@ -115,16 +83,8 @@ export const deleteNotification = async (notificationId: number) => {
 // API: Mark notification as read (PUT /admin/notifications/{id}/read)
 export const readNotificationByIdAndAccountId = async (notificationId: number) => {
   try {
-    // In real app: const res = await axiosInstance.put(`/admin/notifications/${notificationId}/read`);
-    
-    // Mock: find and update notification
-    const notification = mockNotifications.find((n) => n.id === notificationId);
-    if (notification) {
-      notification.isRead = true;
-    }
-
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    return { data: notification } as unknown as ApiResponse<Notification>;
+    const res = await axiosInstance.put(`/admin/notifications/${notificationId}/read`);
+    return res as unknown as ApiResponse<Notification>;
   } catch (err: any) {
     throw new Error(err.message);
   }
@@ -133,18 +93,8 @@ export const readNotificationByIdAndAccountId = async (notificationId: number) =
 // API: Mark all notifications as read (PUT /admin/notifications/read-all)
 export const readAllNotificationsByIdsAndAccountId = async (ids: number[]) => {
   try {
-    // In real app: const res = await axiosInstance.put(`/admin/notifications/read-all`, { ids });
-    
-    // Mock: mark all as read
-    ids.forEach((id) => {
-      const notification = mockNotifications.find((n) => n.id === id);
-      if (notification) {
-        notification.isRead = true;
-      }
-    });
-
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    return { data: { success: true } } as unknown as ApiResponse<{ success: boolean }>;
+    const res = await axiosInstance.put(`/admin/notifications/read-all`, { ids });
+    return res as unknown as ApiResponse<void>;
   } catch (err: any) {
     throw new Error(err.message);
   }
@@ -194,22 +144,22 @@ export const addNotification = (notification: Omit<Notification, "id" | "created
 
 // Notification templates
 export const NOTIFICATION_TEMPLATES = {
-  job_done: {
+  "JOB_DONE": {
     title: "Công việc hoàn thành",
     getMessage: (employeeName: string, jobCode: string) =>
       `${employeeName} vừa hoàn thành công việc ${jobCode}`,
   },
-  review_submitted: {
+  "REVIEW_SUBMITTED": {
     title: "Review hoàn thành",
     getMessage: (qaName: string, jobCode: string) =>
       `${qaName} vừa submit review cho công việc ${jobCode}`,
   },
-  job_assigned: {
+  "JOB_ASSIGNED": {
     title: "Công việc được giao",
     getMessage: (jobCode: string, customerName: string) =>
       `Bạn được giao công việc ${jobCode} từ khách hàng ${customerName}`,
   },
-  review_assigned: {
+  "REVIEW_ASSIGNED": {
     title: "Yêu cầu review công việc",
     getMessage: (employeeName: string, jobCode: string) =>
       `Công việc ${jobCode} của ${employeeName} đang chờ review`,
