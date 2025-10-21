@@ -75,7 +75,7 @@ export const LoginAccountAction = createAsyncThunk<LoginResponse, LoginRequest>(
       const response = await LoginService(data);
       return response.data as LoginResponse;
     } catch (err: any) {
-      toast.error("Username or password incorrect");
+      toast.error("Tài khoản hoặc mật khẩu không đúng");
       throw new Error(err.message);
     }
   }

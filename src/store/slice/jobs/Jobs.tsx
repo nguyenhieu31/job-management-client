@@ -3,6 +3,7 @@ import { getJobFromDropbox } from "@/services/DropboxApi";
 import {
   createJob,
   deleteJobById,
+  deleteMultipleJobs,
   getAllJobs,
   getAllJobsByAssignee,
   getAllJobsByQualifiedAssignee,
@@ -71,8 +72,8 @@ export const GetAllJobsByQualifiedAssigneeAction = createAsyncThunk<
 
 export const UpdateJobStatusAction = createAsyncThunk<
   string,
-  { id: number; status: string }
->("UpdateJobStatusAction", async (data: { id: number; status: string }) => {
+  { id: number; status: string; qaNote?: string }
+>("UpdateJobStatusAction", async (data: { id: number; status: string; qaNote?: string }) => {
   try {
     const response = await updateJobStatus(data);
     return response.data as string;
@@ -206,6 +207,17 @@ export const DeleteJobByIdAction = createAsyncThunk<void, { id: number }>(
   }
 );
 
+export const DeleteMultipleJobsAction = createAsyncThunk<void, { ids: number[] }>(
+  "DeleteMultipleJobsAction",
+  async (data: { ids: number[] }) => {
+    try {
+      await deleteMultipleJobs(data.ids);
+    } catch (err: any) {
+      throw new Error(err.message);
+    }
+  }
+);
+
 const initialState: InitialValuesStyle = {
   loading: false,
   message: "",
@@ -260,6 +272,9 @@ const JobSlice = createSlice({
       .addCase(DeleteJobByIdAction.pending, (state) => {
         state.loading = true;
       })
+      .addCase(DeleteMultipleJobsAction.pending, (state) => {
+        state.loading = true;
+      })
       .addCase(
         GetAllJobsAction.fulfilled,
         (state, action: PayloadAction<PageResponse<JobResponse[]>>) => {
@@ -286,6 +301,7 @@ const JobSlice = createSlice({
         (state, action: PayloadAction<string>) => {
           state.loading = false;
           state.message = action.payload;
+          toast.success("Cập nhật trạng thái công việc thành công");
         }
       )
       .addCase(
@@ -390,6 +406,9 @@ const JobSlice = createSlice({
       .addCase(DeleteJobByIdAction.fulfilled, (state) => {
         state.loading = false;
       })
+      .addCase(DeleteMultipleJobsAction.fulfilled, (state) => {
+        state.loading = false;
+      })
       .addCase(GetAllJobsAction.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || "Get all jobs failed";
@@ -438,6 +457,10 @@ const JobSlice = createSlice({
       .addCase(DeleteJobByIdAction.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || "Delete job failed";
+      })
+      .addCase(DeleteMultipleJobsAction.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || "Delete multiple jobs failed";
       });
   },
 });

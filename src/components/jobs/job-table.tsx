@@ -20,7 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Eye } from "lucide-react";
+import { Eye, Trash2 } from "lucide-react";
 import { useState, useMemo, useCallback, useRef } from "react";
 import type {
   UserRole,
@@ -95,10 +95,10 @@ const columnLabels: Record<string, string> = {
   date: "Ngày",
   customerName: "Tên Khách Hàng",
   caseName: "Tên Job",
-  workRequest: "Yêu Cầu Công Việc",
+  workRequest: "Style hàng",
   totalPrice: "Tổng Giá",
-  linkInput: "Link Nhập",
-  linkDone: "Link Hoàn Thành",
+  linkInput: "Link Input",
+  linkDone: "Link Done",
   inputCount: "Số Lượng Input",
   outputCount: "Số Lượng Output",
   fileCount: "Số Lượng File",
@@ -108,6 +108,7 @@ const columnLabels: Record<string, string> = {
   jobStatus: "Tình Trạng Công Việc",
   paymentStatus: "Tình Trạng Thanh Toán",
   note: "Ghi Chú",
+  qaNote: "Ghi Chú QA",
   assignedEmployee: "Người Được Giao",
   qa: "QA",
   actions: "Hành Động",
@@ -135,7 +136,9 @@ export function JobTable({
 }: JobTableProps) {
   const dispatch = useAppDispatch();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
   const [jobToDelete, setJobToDelete] = useState<number | null>(null);
+  const [selectedJobIds, setSelectedJobIds] = useState<Set<number>>(new Set());
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
   const [previewJob, setPreviewJob] = useState<JobResponse | null>(null);
   const { roleName } = useAppSelector((state) => state.authenticate);
@@ -261,6 +264,46 @@ export function JobTable({
   const handleDeleteClick = (id: number) => {
     setJobToDelete(id);
     setDeleteDialogOpen(true);
+  };
+
+  const handleToggleSelect = (jobId: number) => {
+    const newSelected = new Set(selectedJobIds);
+    if (newSelected.has(jobId)) {
+      newSelected.delete(jobId);
+    } else {
+      newSelected.add(jobId);
+    }
+    setSelectedJobIds(newSelected);
+  };
+
+  const handleSelectAll = () => {
+    if (selectedJobIds.size === jobs.length) {
+      setSelectedJobIds(new Set());
+    } else {
+      setSelectedJobIds(new Set(jobs.map((j) => j.id)));
+    }
+  };
+
+  const handleBulkDeleteClick = () => {
+    if (selectedJobIds.size > 0) {
+      setBulkDeleteDialogOpen(true);
+    }
+  };
+
+  const handleConfirmBulkDelete = async () => {
+    for (const jobId of selectedJobIds) {
+      await dispatch(DeleteJobByIdAction({ id: jobId }));
+    }
+    if (roleName === "MANAGER") {
+      await dispatch(
+        GetAllJobsAction({
+          pageNumber: 0,
+          pageSize: 10,
+        })
+      );
+    }
+    setBulkDeleteDialogOpen(false);
+    setSelectedJobIds(new Set());
   };
 
   const handleConfirmDelete = async () => {
@@ -534,8 +577,15 @@ export function JobTable({
 
       case "note":
         return (
-          <span className="max-w-[200px] truncate" title={job.note}>
+          <span className="max-w-[400px] truncate block" title={job.note}>
             {job.note || "—"}
+          </span>
+        );
+        
+      case "qaNote":
+        return (
+          <span className="max-w-[400px] truncate block" title={job.qaNote ? job.qaNote : ""}>
+            {job.qaNote || "—"}
           </span>
         );
 
@@ -642,10 +692,42 @@ export function JobTable({
 
   return (
     <>
+      {userRole === "manager" && selectedJobIds.size > 0 && (
+        <div className="mb-4 flex items-center justify-between bg-blue-50 dark:bg-blue-950 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+          <span className="text-sm font-medium">
+            Đã chọn {selectedJobIds.size} công việc
+          </span>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={handleBulkDeleteClick}
+            className="gap-2"
+          >
+            <Trash2 className="h-4 w-4" />
+            Xóa được chọn
+          </Button>
+        </div>
+      )}
+
       <div className="rounded-lg border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
+              {userRole === "manager" && (
+                <TableHead className="w-12 text-center border-r">
+                  <input
+                    type="checkbox"
+                    checked={selectedJobIds.size === jobs.length && jobs.length > 0}
+                    onChange={handleSelectAll}
+                    className="w-4 h-4 cursor-pointer"
+                    ref={(el) => {
+                      if (el) {
+                        el.indeterminate = selectedJobIds.size > 0 && selectedJobIds.size < jobs.length;
+                      }
+                    }}
+                  />
+                </TableHead>
+              )}
               {visibleColumns.map((column) => (
                 <TableHead
                   key={column}
@@ -661,7 +743,17 @@ export function JobTable({
           </TableHeader>
           <TableBody>
             {jobs.map((job) => (
-              <TableRow key={job.id}>
+              <TableRow key={job.id} className={userRole === "manager" && selectedJobIds.has(job.id) ? "bg-blue-50 dark:bg-blue-950" : ""}>
+                {userRole === "manager" && (
+                  <TableCell className="w-12 text-center border-r">
+                    <input
+                      type="checkbox"
+                      checked={selectedJobIds.has(job.id)}
+                      onChange={() => handleToggleSelect(job.id)}
+                      className="w-4 h-4 cursor-pointer"
+                    />
+                  </TableCell>
+                )}
                 {visibleColumns.map((column) => (
                   <TableCell
                     key={`${job.id}-${column}`}
@@ -692,6 +784,26 @@ export function JobTable({
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Xóa
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác Nhận Xóa Hàng Loạt</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn sắp xóa {selectedJobIds.size} công việc. Hành động này không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmBulkDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Xóa Tất Cả
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

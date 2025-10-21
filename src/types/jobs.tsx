@@ -50,6 +50,7 @@ export interface JobResponse {
   inputLink: string;
   doneLink: string;
   note: string;
+  qaNote: string | null;
   assignee: AssigneeInfo;
   qualifiedAssignee: AssigneeInfo;
   customer: CustomerInfo;
@@ -89,9 +90,17 @@ export type JobAction =
   | "done-job"      // Employee marks job as done (in-progress -> done)
   | "take-review"   // QA takes job for review (done -> in-review)
   | "submit-review" // QA submits review (in-review -> reviewed)
+  | "rejected"      // QA rejects job (in-review -> in-progress)
   | "complete-job"  // Manager marks as completed (reviewed -> completed)
   | "edit"          // Manager edits job
   | "delete"        // Manager deletes job
+
+// For rejected action with note
+export interface JobActionPayload {
+  jobId: number;
+  action: JobAction;
+  qaNote?: string; // Note for rejected action
+}
 
 export type UserRole = "manager" | "qa" | "employee"
 
@@ -121,9 +130,9 @@ export const ROLE_COLUMNS = {
     "caseName",
     // "workRequest",
     // "linkInput",
-    // "inputCount",
     "outputCount",
-    "fileCount",
+    "inputCount",
+    // "fileCount",
     "filePrice",
     "totalPrice",
     "paymentStatus",
@@ -148,6 +157,7 @@ export const ROLE_COLUMNS = {
     "jobStatus",
     "assignedEmployee",
     "note",
+    "qaNote",
     "actions"
   ],
   employee: [
@@ -163,6 +173,7 @@ export const ROLE_COLUMNS = {
     "payPerFile",
     "totalPayPerFile",
     "note",
+    "qaNote",
     "actions"
   ]
 } as const

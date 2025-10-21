@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { redirect, usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Briefcase, Users, Menu, X, Settings, Lock } from "lucide-react"
@@ -58,7 +59,14 @@ export function Sidebar() {
       >
         <div className="flex flex-col h-full">
           {/* Logo/Brand */}
-          <div className="flex items-center h-16 px-6 border-b">
+          <div className="flex items-center h-16 px-6 border-b gap-3">
+            <Image
+              src="/logo.png"
+              alt="Job Manager Logo"
+              width={32}
+              height={32}
+              className="h-8 w-8 object-contain"
+            />
             <h1 className="text-xl font-bold">Job Manager</h1>
           </div>
 

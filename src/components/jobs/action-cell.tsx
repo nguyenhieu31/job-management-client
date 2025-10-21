@@ -10,17 +10,26 @@ import {
   Send,
   Save,
   X,
+  XCircle,
 } from "lucide-react";
-import { memo, forwardRef, useImperativeHandle, useReducer } from "react";
+import { memo, forwardRef, useImperativeHandle, useReducer, useState } from "react";
 import type { JobResponse, JobAction, UserRole } from "@/types/jobs";
 import { toast } from "react-toastify";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 interface ActionCellProps {
   job: JobResponse;
   userRole: UserRole;
   onEdit: (job: JobResponse) => void;
   onDelete: (id: number) => void;
-  onJobAction: (jobId: number, action: JobAction) => void;
+  onJobAction: (jobId: number, action: JobAction, qaNote?: string) => void;
   onSave: (jobId: number) => void;
   onCancel: (jobId: number) => void;
   pendingChangesRef: React.MutableRefObject<Record<number, any>>;
@@ -46,6 +55,8 @@ const ActionCellComponent = forwardRef<
     ref
   ) => {
     const [, forceUpdate] = useReducer((x) => x + 1, 0);
+    const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+    const [rejectNote, setRejectNote] = useState("");
 
     // Expose hasPendingChanges and forceUpdate to parent
     useImperativeHandle(ref, () => ({
@@ -90,6 +101,7 @@ const ActionCellComponent = forwardRef<
         // QA can submit review for in-review jobs
         if (job.jobStatus === "IN_REVIEW") {
           actions.push("submit-review");
+          actions.push("rejected");
         }
       }
 
@@ -103,32 +115,33 @@ const ActionCellComponent = forwardRef<
     const availableActions = getAvailableActions(job);
 
     return (
-      <div className="flex justify-center gap-2 flex-nowrap">
-        {/* Show ONLY Save and Cancel buttons for Manager if there are pending changes */}
-        {(userRole === "manager" || userRole === "employee") && hasPendingChanges ? (
-          <>
-            <Button
-              key="cancel"
-              variant="outline"
-              size="sm"
-              onClick={() => onCancel(job.id)}
-              className="border-orange-300 hover:bg-orange-100"
-            >
-              <X className="h-4 w-4 mr-1" />
-            </Button>
-            <Button
-              key="save"
-              variant="default"
-              size="sm"
-              onClick={() => onSave(job.id)}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              <Save className="h-4 w-4 mr-1" />
-            </Button>
-          </>
-        ) : (
-          // Show normal actions when no pending changes
-          availableActions.map((action) => {
+      <>
+        <div className="flex justify-center gap-2 flex-nowrap">
+          {/* Show ONLY Save and Cancel buttons for Manager if there are pending changes */}
+          {(userRole === "manager" || userRole === "employee") && hasPendingChanges ? (
+            <>
+              <Button
+                key="cancel"
+                variant="outline"
+                size="sm"
+                onClick={() => onCancel(job.id)}
+                className="border-orange-300 hover:bg-orange-100"
+              >
+                <X className="h-4 w-4 mr-1" />
+              </Button>
+              <Button
+                key="save"
+                variant="default"
+                size="sm"
+                onClick={() => onSave(job.id)}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                <Save className="h-4 w-4 mr-1" />
+              </Button>
+            </>
+          ) : (
+            // Show normal actions when no pending changes
+            availableActions.map((action) => {
             switch (action) {
               case "take-job":
                 return (
@@ -231,6 +244,20 @@ const ActionCellComponent = forwardRef<
                   </Button>
                 );
 
+              case "rejected":
+                return (
+                  <Button
+                    key="rejected"
+                    variant="default"
+                    size="sm"
+                    onClick={() => setRejectDialogOpen(true)}
+                    className="bg-red-600 hover:bg-red-700 text-center"
+                  >
+                    <XCircle className="h-4 w-4 mr-1" />
+                    Từ Chối
+                  </Button>
+                );
+
               case "complete-job":
                 return (
                   <Button
@@ -278,7 +305,51 @@ const ActionCellComponent = forwardRef<
             }
           })
         )}
-      </div>
+        </div>
+
+        {/* Reject Dialog */}
+        <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Từ Chối Công Việc</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <Textarea
+                placeholder="Nhập lý do từ chối (bắt buộc)..."
+                value={rejectNote}
+                onChange={(e) => setRejectNote(e.target.value)}
+                className="min-h-[120px]"
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setRejectDialogOpen(false);
+                  setRejectNote("");
+                }}
+              >
+                Hủy
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  if (!rejectNote.trim()) {
+                    toast.warning("Vui lòng nhập lý do từ chối");
+                    return;
+                  }
+                  // Pass rejectNote with the action
+                  onJobAction(job.id, "rejected", rejectNote);
+                  setRejectDialogOpen(false);
+                  setRejectNote("");
+                }}
+              >
+                Từ Chối
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </>
     );
   }
 );

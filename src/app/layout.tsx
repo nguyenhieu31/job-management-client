@@ -15,10 +15,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PT Editing Service - Job Management",
+  title: "Client Portal 24h",
   description: "Job Management Application for PT Editing Service",
   icons: {
-    icon: "/favicon.svg",
+    icon: "/logo.png",
     apple: "/favicon.svg",
   },
 };

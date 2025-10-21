@@ -41,7 +41,7 @@ export function CustomerTable({
           <TableRow>
             <TableHead>Email</TableHead>
             <TableHead>Họ Tên</TableHead>
-            <TableHead>Số Điện Thoại</TableHead>
+            {/* <TableHead>Số Điện Thoại</TableHead> */}
             <TableHead>Công Ty</TableHead>
             <TableHead className="text-right">Hành Động</TableHead>
           </TableRow>
@@ -58,7 +58,7 @@ export function CustomerTable({
               <TableRow key={customer.id}>
                 <TableCell className="font-medium">{customer.email}</TableCell>
                 <TableCell>{customer.name}</TableCell>
-                <TableCell>{customer.phone}</TableCell>
+                {/* <TableCell>{customer.phone}</TableCell> */}
                 <TableCell>{customer.company}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
