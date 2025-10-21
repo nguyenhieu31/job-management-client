@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
@@ -26,7 +25,6 @@ import { GetAllWorkRequestsAction } from "@/store/slice/work-request/WorkRequest
 import { GetAllCustomersAction } from "@/store/slice/customer/Customer";
 import { CustomerResponse } from "@/types/customers";
 import type { JobRequest } from "@/types/jobs";
-import { addNotification } from "@/services/NotificationApi";
 
 export default function JobsPage() {
   const dispatch = useAppDispatch();
@@ -94,20 +92,17 @@ export default function JobsPage() {
     }
   }, [dispatch]);
 
-  const handleJobAction = async (jobId: number, action: JobAction) => {
+  const handleJobAction = async (jobId: number, action: JobAction, qaNote?: string) => {
     const job = jobs? jobs.data.find((j) => j.id === jobId) : undefined;
     if (!job) return;
 
     let newStatus: JobStatus = job.jobStatus;
-    let message = "";
-    let notification = null;
 
     switch (action) {
       case "take-job":
         // Employee takes job: pending -> in-progress
         if (job.jobStatus === "PENDING") {
           newStatus = "IN_PROGRESS";
-          message = "Nhận công việc thành công";
         }
         break;
 
@@ -115,17 +110,6 @@ export default function JobsPage() {
         // Employee completes job: in-progress -> done
         if (job.jobStatus === "IN_PROGRESS") {
           newStatus = "DONE";
-          message = "Đánh dấu công việc hoàn thành";
-          // Create notification for managers/qa
-          notification = {
-            type: "job_done" as const,
-            title: "Công việc hoàn thành",
-            message: `${job.assignee.fullName} vừa hoàn thành công việc ${job.code}`,
-            jobCode: job.code,
-            senderName: job.assignee.fullName,
-            senderEmail: job.assignee.email,
-            isRead: false,
-          };
         }
         break;
 
@@ -133,7 +117,6 @@ export default function JobsPage() {
         // QA takes job for review: done -> in-review
         if (job.jobStatus === "DONE") {
           newStatus = "IN_REVIEW";
-          message = "Nhận công việc review thành công";
         }
         break;
 
@@ -141,17 +124,20 @@ export default function JobsPage() {
         // QA submits review: in-review -> reviewed
         if (job.jobStatus === "IN_REVIEW") {
           newStatus = "REVIEWED";
-          message = "Submit review thành công";
-          // Create notification for managers
-          notification = {
-            type: "review_submitted" as const,
-            title: "Review hoàn thành",
-            message: `${job.qualifiedAssignee.fullName} vừa submit review cho công việc ${job.code}`,
-            jobCode: job.code,
-            senderName: job.qualifiedAssignee.fullName,
-            senderEmail: job.qualifiedAssignee.email,
-            isRead: false,
-          };
+        }
+        break;
+
+      case "rejected":
+        // QA rejects job: in-review -> in-progress with qaNote
+        if (job.jobStatus === "IN_REVIEW") {
+          newStatus = "IN_PROGRESS";
+          // Update job with qaNote
+          const updatedJob = { ...job, jobStatus: newStatus, qaNote: qaNote || "" };
+          await Promise.all([
+            dispatch(UpdateJobStatusAction({id: jobId, status: "REJECTED", qaNote: qaNote})),
+            dispatch(updateJob(updatedJob))
+          ]);
+          return;
         }
         break;
 
@@ -159,7 +145,6 @@ export default function JobsPage() {
         // Manager completes job: reviewed -> completed
         if (job.jobStatus === "REVIEWED") {
           newStatus = "COMPLETED";
-          message = "Hoàn thành công việc thành công";
         }
         break;
 
@@ -172,15 +157,6 @@ export default function JobsPage() {
       dispatch(UpdateJobStatusAction({id: jobId, status: newStatus})),
       dispatch(updateJob({...job, jobStatus: newStatus}))
     ]);
-
-    // // Create notification if needed
-    // if (notification) {
-    //   addNotification(notification);
-    // }
-
-    // // TODO: Call API to update job status
-    // console.log(`Job ${jobId} action: ${action}, new status: ${newStatus}`);
-    // toast.success(message);
   };
 
   const handleFormClose = (open: boolean) => {

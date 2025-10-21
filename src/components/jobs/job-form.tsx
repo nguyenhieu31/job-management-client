@@ -31,7 +31,7 @@ import type {
 import type { WorkRequestResponse } from "@/types/work-requests";
 import { EmployeeResponse } from "@/types/employees";
 import { CustomerResponse } from "@/types/customers";
-import { formatCurrencyVND } from "@/lib/utils";
+import { formatCurrency, formatCurrencyVND } from "@/lib/utils";
 
 interface JobFormProps {
   open: boolean;
@@ -359,7 +359,7 @@ export function JobForm({
 
               {/* Work Request Dropdown */}
               <div className="grid gap-2">
-                <Label htmlFor="workRequest">Yêu Cầu Công Việc</Label>
+                <Label htmlFor="workRequest">Style hàng</Label>
                 <Select
                   value={formRef.current.workRequestId}
                   onValueChange={(v) => (formRef.current.workRequestId = v)}
@@ -425,32 +425,15 @@ export function JobForm({
                 </div>
               </div>
 
-              {/* File Count */}
-              <div className="grid gap-2">
-                <Label htmlFor="fileCount">
-                  Số lượng file <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="fileCount"
-                  type="number"
-                  min="0"
-                  defaultValue={formRef.current.fileCount}
-                  onChange={(e) => (formRef.current.fileCount = e.target.value)}
-                  placeholder="Nhập số lượng file"
-                  required
-                />
-              </div>
-
               {/* Total Price Display */}
               {formRef.current.inputNumber && formRef.current.filePrice && (
                 <div className="grid gap-2">
                   <Label>Tổng giá (Tính toán)</Label>
                   <div className="text-lg font-semibold text-primary">
-                    $
-                    {(
-                      parseFloat(formRef.current.fileCount || "0") *
-                      parseFloat(formRef.current.filePrice || "0")
-                    ).toFixed(2)}
+                    {formatCurrency(
+                      (parseFloat(formRef.current.inputNumber) *
+                        parseFloat(formRef.current.filePrice)) || 0
+                    )}
                   </div>
                 </div>
               )}

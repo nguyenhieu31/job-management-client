@@ -111,7 +111,7 @@ export function CustomerForm({
           </div>
 
           {/* Phone Number */}
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <Label htmlFor="phone">Số Điện Thoại</Label>
             <Input
               id="phone"
@@ -123,7 +123,7 @@ export function CustomerForm({
               placeholder="+84 123 456 789"
               required
             />
-          </div>
+          </div> */}
 
           {/* Company */}
           <div className="space-y-2">

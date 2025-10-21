@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { JobResponse } from "@/types/jobs";
 import type { UserRole } from "@/types/jobs";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatCurrencyVND, formatDate } from "@/lib/utils";
 import { useAppSelector } from "@/store/store";
 import {
   ExternalLink,
@@ -144,7 +144,7 @@ export function JobDetailDialog({
                   </p>
                 </div>
 
-                <div>
+                {/* <div>
                   <label className="text-sm text-muted-foreground flex items-center gap-1">
                     <Calendar className="h-3 w-3" />
                     Ngày Cập Nhật
@@ -152,7 +152,7 @@ export function JobDetailDialog({
                   <p className="font-medium">
                     {formatDate(job.updatedAt.toString())}
                   </p>
-                </div>
+                </div> */}
               </div>
             </div>
 
@@ -202,68 +202,92 @@ export function JobDetailDialog({
           {/* Work Request Information */}
           {job.workRequest && (
             <>
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5" />
-                  Yêu Cầu Công Việc
-                </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Left Column - Work Request Details */}
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-lg flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5" />
+                    Style hàng
+                  </h3>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm text-muted-foreground">
-                      Danh Mục
-                    </label>
-                    <p className="font-medium">
-                      {job.workRequest.categoryName}
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="text-sm text-muted-foreground">
-                      Loại File
-                    </label>
-                    <Badge variant="outline">{job.workRequest.fileType}</Badge>
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="text-sm text-muted-foreground">
-                      Tóm Tắt
-                    </label>
-                    <p className="text-sm">{job.workRequest.summaryNote}</p>
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="text-sm text-muted-foreground">
-                      Hướng Dẫn Chi Tiết
-                    </label>
-                    <p className="text-sm whitespace-pre-wrap">
-                      {job.workRequest.detailedNotes}
-                    </p>
-                  </div>
-
-                  {job.workRequest.colorNote && (
-                    <div className="md:col-span-2">
+                  <div className="space-y-4">
+                    <div>
                       <label className="text-sm text-muted-foreground">
-                        Ghi Chú Màu Sắc
+                        Danh Mục
                       </label>
-                      <p className="text-sm">{job.workRequest.colorNote}</p>
+                      <p className="font-medium">
+                        {job.workRequest.categoryName}
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="text-sm text-muted-foreground">
+                        Loại File
+                      </label>
+                      <Badge variant="outline">{job.workRequest.fileType}</Badge>
+                    </div>
+
+                    <div>
+                      <label className="text-sm text-muted-foreground">
+                        Tóm Tắt
+                      </label>
+                      <p className="text-sm">{job.workRequest.summaryNote}</p>
+                    </div>
+
+                    <div>
+                      <label className="text-sm text-muted-foreground">
+                        Hướng Dẫn Chi Tiết
+                      </label>
+                      <p className="text-sm whitespace-pre-wrap">
+                        {job.workRequest.detailedNotes}
+                      </p>
+                    </div>
+
+                    {job.workRequest.colorNote && (
+                      <div>
+                        <label className="text-sm text-muted-foreground">
+                          Ghi Chú Màu Sắc
+                        </label>
+                        <p className="text-sm">{job.workRequest.colorNote}</p>
+                      </div>
+                    )}
+
+                    {job.workRequest.linkSample && (
+                      <div>
+                        <label className="text-sm text-muted-foreground">
+                          Link Mẫu
+                        </label>
+                        <a
+                          href={job.workRequest.linkSample}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 text-blue-600 hover:underline"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                          Xem mẫu
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Right Column - Notes */}
+                <div className="space-y-4">
+                  {job.note && (
+                    <div className="space-y-2">
+                      <h3 className="font-semibold text-lg">Ghi Chú</h3>
+                      <p className="text-sm whitespace-pre-wrap bg-muted/50 p-4 rounded-lg">
+                        {job.note}
+                      </p>
                     </div>
                   )}
 
-                  {job.workRequest.linkSample && (
-                    <div className="md:col-span-2">
-                      <label className="text-sm text-muted-foreground">
-                        Link Mẫu
-                      </label>
-                      <a
-                        href={job.workRequest.linkSample}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1 text-blue-600 hover:underline"
-                      >
-                        <ExternalLink className="h-3 w-3" />
-                        Xem mẫu
-                      </a>
+                  {job.qaNote && (
+                    <div className="space-y-2">
+                      <h3 className="font-semibold text-lg">Ghi Chú QA</h3>
+                      <p className="text-sm whitespace-pre-wrap bg-red-500/10 p-4 rounded-lg border border-red-500/20">
+                        {job.qaNote}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -301,15 +325,6 @@ export function JobDetailDialog({
                   </label>
                   <p className="text-2xl font-bold">{job.fileCount}</p>
                 </div>
-
-                <div className="text-center p-4 bg-muted/50 rounded-lg">
-                  <label className="text-sm text-muted-foreground block mb-1">
-                    Giá File
-                  </label>
-                  <p className="text-2xl font-bold text-green-600">
-                    {formatCurrency(job.filePrice)}
-                  </p>
-                </div>
               </div>
 
               <div className="p-4 bg-primary/10 rounded-lg">
@@ -322,38 +337,6 @@ export function JobDetailDialog({
               </div>
             </div>
           )}
-
-          {/* Employee Payment Information - Visible to Employee and Manager */}
-          {(userRole === "employee" || userRole === "manager") && (
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg flex items-center gap-2">
-                <DollarSign className="h-5 w-5" />
-                Thông Tin Thanh Toán Nhân Viên
-              </h3>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 bg-blue-500/10 rounded-lg border border-blue-500/20">
-                  <label className="text-sm text-muted-foreground block mb-2">
-                    Trả/File
-                  </label>
-                  <p className="text-2xl font-bold text-blue-600">
-                    {formatCurrency(job.payPerFile)}
-                  </p>
-                </div>
-
-                <div className="p-4 bg-green-500/10 rounded-lg border border-green-500/20">
-                  <label className="text-sm text-muted-foreground block mb-2">
-                    Tổng Tiền Trả
-                  </label>
-                  <p className="text-2xl font-bold text-green-600">
-                    {formatCurrency(job.totalPayPerFile)}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <Separator />
 
           {/* Links */}
           <div className="space-y-4">
@@ -405,6 +388,40 @@ export function JobDetailDialog({
 
           <Separator />
 
+          {/* Employee Payment Information - Visible to Employee and Manager */}
+          {(userRole === "employee" || userRole === "manager") && (
+            <div className="space-y-4">
+              <h3 className="font-semibold text-lg flex items-center gap-2">
+                <DollarSign className="h-5 w-5" />
+                Thông Tin Thanh Toán Nhân Viên
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 bg-blue-500/10 rounded-lg border border-blue-500/20">
+                  <label className="text-sm text-muted-foreground block mb-2">
+                    Trả/File
+                  </label>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {formatCurrencyVND(job.payPerFile)}
+                  </p>
+                </div>
+
+                <div className="p-4 bg-green-500/10 rounded-lg border border-green-500/20">
+                  <label className="text-sm text-muted-foreground block mb-2">
+                    Tổng Tiền Trả
+                  </label>
+                  <p className="text-2xl font-bold text-green-600">
+                    {formatCurrencyVND(job.totalPayPerFile)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <Separator />
+
+          <Separator />
+
           {/* Assignment Information */}
           <div className="space-y-4">
             <h3 className="font-semibold text-lg flex items-center gap-2">
@@ -446,19 +463,6 @@ export function JobDetailDialog({
               ) : null}
             </div>
           </div>
-
-          {/* Note */}
-          {job.note && (
-            <>
-              <Separator />
-              <div className="space-y-2">
-                <h3 className="font-semibold text-lg">Ghi Chú</h3>
-                <p className="text-sm whitespace-pre-wrap bg-muted/50 p-4 rounded-lg">
-                  {job.note}
-                </p>
-              </div>
-            </>
-          )}
         </div>
       </DialogContent>
     </Dialog>

@@ -41,9 +41,9 @@ export const getAllJobsByQualifiedAssignee = async (data: PageRequest & { email:
     }
 }
 
-export const updateJobStatus = async (data: {id: number; status: string}) => {
+export const updateJobStatus = async (data: {id: number; status: string; qaNote?: string}) => {
     try {
-        const res = await axiosInstance.put(`/admin/jobs/update/status/${data.id}?status=${data.status}`);
+        const res = await axiosInstance.put(`/admin/jobs/update/status/${data.id}?status=${data.status}&qaNote=${data.qaNote || ""}`);
         return res as unknown as ApiResponse<string>;
     } catch (err: any) {
         throw new Error(err.message);
@@ -126,6 +126,15 @@ export const deleteJobById = async (jobId: number) => {
     try {
         const res = await axiosInstance.delete(`/admin/jobs/delete/${jobId}`);
         return res as unknown as ApiResponse<null>;
+    } catch (err: any) {
+        throw new Error(err.message);
+    }
+}
+
+export const deleteMultipleJobs = async (jobIds: number[]) => {
+    try {
+        const res = await axiosInstance.post(`/admin/jobs/delete/multiple-job`, { data: { ids: jobIds } });
+        return res as unknown as ApiResponse<void>;
     } catch (err: any) {
         throw new Error(err.message);
     }
