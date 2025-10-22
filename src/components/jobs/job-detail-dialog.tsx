@@ -272,20 +272,20 @@ export function JobDetailDialog({
                 </div>
 
                 {/* Right Column - Notes */}
-                <div className="space-y-4">
+                <div className="space-y-4 min-w-0">
                   {job.note && (
-                    <div className="space-y-2">
+                    <div className="space-y-2 min-w-0">
                       <h3 className="font-semibold text-lg">Ghi Chú</h3>
-                      <p className="text-sm whitespace-pre-wrap bg-muted/50 p-4 rounded-lg">
+                      <p className="text-sm whitespace-pre-wrap bg-muted/50 p-4 rounded-lg break-words overflow-wrap-break-word max-w-full">
                         {job.note}
                       </p>
                     </div>
                   )}
 
                   {job.qaNote && (
-                    <div className="space-y-2">
+                    <div className="space-y-2 min-w-0">
                       <h3 className="font-semibold text-lg">Ghi Chú QA</h3>
-                      <p className="text-sm whitespace-pre-wrap bg-red-500/10 p-4 rounded-lg border border-red-500/20">
+                      <p className="text-sm whitespace-pre-wrap bg-red-500/10 p-4 rounded-lg border border-red-500/20 break-words overflow-wrap-break-word max-w-full">
                         {job.qaNote}
                       </p>
                     </div>

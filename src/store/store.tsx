@@ -7,6 +7,7 @@ import EmployeeSlice from "./slice/employee/Employee";
 import WorkRequestSlice from "./slice/work-request/WorkRequest";
 import NotificationSlice from "./slice/notification/Notification";
 import SettingsSlice from "./slice/settings/Settings";
+import InvoicesSlice from "./slice/invoices/Invoices";
 import { injectStore } from "@/lib/utils/axios-instance";
 
 export const store= configureStore({
@@ -17,7 +18,8 @@ export const store= configureStore({
         customer: CustomerSlice,
         workRequest: WorkRequestSlice,
         notification: NotificationSlice,
-        settings: SettingsSlice
+        settings: SettingsSlice,
+        invoices: InvoicesSlice,
     }
 });
 

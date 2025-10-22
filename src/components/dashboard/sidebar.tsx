@@ -4,7 +4,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { redirect, usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { Briefcase, Users, Menu, X, Settings, Lock } from "lucide-react"
+import { Briefcase, Users, Menu, X, Settings, Lock, FileText } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
 import { useAppDispatch, useAppSelector } from "@/store/store"
@@ -17,6 +17,7 @@ const navigation = [
   { name: "Nhân Viên", href: "/dashboard/employees", icon: Users },
   { name: "Khách Hàng", href: "/dashboard/customers", icon: Users },
   { name: "Yêu Cầu Công Việc", href: "/dashboard/work-requests", icon: Settings },
+  { name: "Hoá Đơn", href: "/dashboard/invoices", icon: FileText },
   // { name: "Cấu Hình Thư Mục", href: "/dashboard/settings", icon: Folder },
   { name: "Thay Đổi Mật Khẩu", href: "/dashboard/change-password", icon: Lock },
 ]

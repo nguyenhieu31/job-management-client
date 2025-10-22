@@ -130,8 +130,8 @@ export const ROLE_COLUMNS = {
     "caseName",
     // "workRequest",
     // "linkInput",
-    "outputCount",
     "inputCount",
+    "outputCount",
     // "fileCount",
     "filePrice",
     "totalPrice",
@@ -142,7 +142,7 @@ export const ROLE_COLUMNS = {
     "totalPayPerFile",
     "assignedEmployee",
     "qa",
-    "note",
+    // "note",
     "actions"
   ],
   qa: [
@@ -156,7 +156,7 @@ export const ROLE_COLUMNS = {
     "outputCount",
     "jobStatus",
     "assignedEmployee",
-    "note",
+    // "note",
     "qaNote",
     "actions"
   ],
@@ -172,7 +172,7 @@ export const ROLE_COLUMNS = {
     "jobStatus",
     "payPerFile",
     "totalPayPerFile",
-    "note",
+    // "note",
     "qaNote",
     "actions"
   ]
