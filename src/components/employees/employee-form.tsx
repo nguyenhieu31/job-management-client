@@ -213,7 +213,6 @@ export function EmployeeForm({
               onChange={(e) =>
                 setFormData({ ...formData, dateOfBirth: e.target.value })
               }
-              required
             />
           </div>
 
@@ -228,7 +227,6 @@ export function EmployeeForm({
                 setFormData({ ...formData, phoneNumber: e.target.value })
               }
               placeholder="+84 123 456 789"
-              required
             />
           </div>
 

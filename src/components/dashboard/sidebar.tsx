@@ -4,7 +4,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { redirect, usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { Briefcase, Users, Menu, X, Settings, Lock, FileText } from "lucide-react"
+import { Briefcase, Users, Menu, X, Settings, Lock, FileText, DollarSign } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
 import { useAppDispatch, useAppSelector } from "@/store/store"
@@ -18,6 +18,8 @@ const navigation = [
   { name: "Khách Hàng", href: "/dashboard/customers", icon: Users },
   { name: "Yêu Cầu Công Việc", href: "/dashboard/work-requests", icon: Settings },
   { name: "Hoá Đơn", href: "/dashboard/invoices", icon: FileText },
+  { name: "Bảng Lương", href: "/dashboard/payroll", icon: DollarSign },
+  { name: "Bảng Lương Của Tôi", href: "/dashboard/my-payroll", icon: DollarSign },
   // { name: "Cấu Hình Thư Mục", href: "/dashboard/settings", icon: Folder },
   { name: "Thay Đổi Mật Khẩu", href: "/dashboard/change-password", icon: Lock },
 ]
@@ -31,9 +33,13 @@ export function Sidebar() {
   // Filter navigation based on role
   // Default to employee/QA view if roleName is not loaded yet (for security)
   const filteredNavigation = !roleName || roleName === 'EMPLOYEE' || roleName === 'QA' 
-    ? navigation.filter(item => item.href === '/dashboard/job' || item.href === '/dashboard/change-password')
+    ? navigation.filter(item => 
+        item.href === '/dashboard/job' || 
+        item.href === '/dashboard/my-payroll' ||
+        item.href === '/dashboard/change-password'
+      )
     : roleName === 'MANAGER'
-    ? navigation.filter(item => item.href !== '/dashboard/settings')
+    ? navigation.filter(item => item.href !== '/dashboard/my-payroll')
     : navigation;
 
   const handleClickLogout = async () => {

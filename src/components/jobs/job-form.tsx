@@ -32,6 +32,8 @@ import type { WorkRequestResponse } from "@/types/work-requests";
 import { EmployeeResponse } from "@/types/employees";
 import { CustomerResponse } from "@/types/customers";
 import { formatCurrency, formatCurrencyVND } from "@/lib/utils";
+import SearchableDropdown from "../ui/search-able-dropdown";
+import { filePriceOptions } from "./job-table";
 
 interface JobFormProps {
   open: boolean;
@@ -247,13 +249,12 @@ export function JobForm({
             <div className="grid gap-4 py-4">
               {/* Case Name */}
               <div className="grid gap-2">
-                <Label htmlFor="caseName">Tên trường hợp</Label>
+                <Label htmlFor="caseName">Tên Job</Label>
                 <Input
                   id="caseName"
                   defaultValue={formRef.current.caseName}
                   onChange={(e) => (formRef.current.caseName = e.target.value)}
                   placeholder="Nhập tên trường hợp"
-                
                 />
               </div>
 
@@ -389,9 +390,7 @@ export function JobForm({
               <div className="grid grid-cols-2 gap-4">
                 {/* Input Number */}
                 <div className="grid gap-2">
-                  <Label htmlFor="inputNumber">
-                    Số lượng input <span className="text-red-500">*</span>
-                  </Label>
+                  <Label htmlFor="inputNumber">Số lượng input</Label>
                   <Input
                     id="inputNumber"
                     type="number"
@@ -401,38 +400,57 @@ export function JobForm({
                       (formRef.current.inputNumber = e.target.value)
                     }
                     placeholder="Nhập số lượng input"
-                    required
                   />
                 </div>
+                {/* Output Number - Only show when editing */}
+                {editingJob && (
+                  <div className="grid gap-2">
+                    <Label htmlFor="outputNumber">Số lượng output</Label>
+                    <Input
+                      id="outputNumber"
+                      type="number"
+                      min="0"
+                      defaultValue={formRef.current.outputNumber}
+                      onChange={(e) =>
+                        (formRef.current.outputNumber = e.target.value)
+                      }
+                      placeholder="Nhập số lượng output"
+                    />
+                  </div>
+                )}
+              </div>
 
-                {/* File Price */}
-                <div className="grid gap-2">
-                  <Label htmlFor="filePrice">
-                    Giá mỗi file <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="filePrice"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    defaultValue={formRef.current.filePrice}
-                    onChange={(e) =>
-                      (formRef.current.filePrice = e.target.value)
-                    }
-                    placeholder="Nhập giá mỗi file"
-                    required
-                  />
-                </div>
+              {/* File Price */}
+              <div className="grid gap-2">
+                <Label htmlFor="filePrice">
+                  Giá mỗi file <span className="text-red-500">($)</span>
+                </Label>
+                <SearchableDropdown
+                  options={filePriceOptions}
+                  placeholder="Nhập giá mỗi file"
+                  onChange={(e) => (formRef.current.filePrice = e?.name.toString() || "")}
+                  defaultValue={{ id: 0, name: formRef.current.filePrice }}
+                  type="number"
+                />
+                {/* <Input
+                  id="filePrice"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  defaultValue={formRef.current.filePrice}
+                  onChange={(e) => (formRef.current.filePrice = e.target.value)}
+                  placeholder="Nhập giá mỗi file"
+                /> */}
               </div>
 
               {/* Total Price Display */}
-              {formRef.current.inputNumber && formRef.current.filePrice && (
+              {formRef.current.outputNumber && formRef.current.filePrice && (
                 <div className="grid gap-2">
                   <Label>Tổng giá (Tính toán)</Label>
                   <div className="text-lg font-semibold text-primary">
                     {formatCurrency(
-                      (parseFloat(formRef.current.inputNumber) *
-                        parseFloat(formRef.current.filePrice)) || 0
+                      parseFloat(formRef.current.outputNumber) *
+                        parseFloat(formRef.current.filePrice) || 0
                     )}
                   </div>
                 </div>
@@ -441,7 +459,8 @@ export function JobForm({
               {/* Pay Per File */}
               <div className="grid gap-2">
                 <Label htmlFor="payPerFile">
-                  Giá trả nhân viên/file (VNĐ) <span className="text-red-500">*</span>
+                  Giá trả nhân viên/file{" "}
+                  <span className="text-red-500">(VNĐ)</span>
                 </Label>
                 <Input
                   id="payPerFile"
@@ -453,53 +472,19 @@ export function JobForm({
                     (formRef.current.payPerFile = e.target.value)
                   }
                   placeholder="Nhập giá trả nhân viên cho mỗi file"
-                  required
                 />
               </div>
 
               {/* Total Pay Per File Display */}
-              {formRef.current.payPerFile && formRef.current.fileCount && (
+              {formRef.current.payPerFile && formRef.current.outputNumber && (
                 <div className="grid gap-2">
                   <Label>Tổng tiền trả nhân viên (VNĐ) (Tính toán)</Label>
                   <div className="text-lg font-semibold text-green-600">
                     {formatCurrencyVND(
                       parseFloat(formRef.current.payPerFile) *
-                      parseFloat(formRef.current.fileCount)
+                        parseFloat(formRef.current.outputNumber)
                     )}
                   </div>
-                </div>
-              )}
-
-              {/* Output Number - Only show when editing */}
-              {editingJob && (
-                <div className="grid gap-2">
-                  <Label htmlFor="outputNumber">Số lượng output</Label>
-                  <Input
-                    id="outputNumber"
-                    type="number"
-                    min="0"
-                    defaultValue={formRef.current.outputNumber}
-                    onChange={(e) =>
-                      (formRef.current.outputNumber = e.target.value)
-                    }
-                    placeholder="Nhập số lượng output"
-                  />
-                </div>
-              )}
-
-              {/* Done Link - Only show when editing */}
-              {editingJob && (
-                <div className="grid gap-2">
-                  <Label htmlFor="doneLink">Link hoàn thành</Label>
-                  <Input
-                    id="doneLink"
-                    type="url"
-                    defaultValue={formRef.current.doneLink}
-                    onChange={(e) =>
-                      (formRef.current.doneLink = e.target.value)
-                    }
-                    placeholder="https://drive.google.com/..."
-                  />
                 </div>
               )}
 
@@ -544,7 +529,9 @@ export function JobForm({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="UNPAID">Chưa thanh toán</SelectItem>
-                      <SelectItem value="PARTIAL">Một phần</SelectItem>
+                      <SelectItem value="INVOICE_SENT">
+                        Đã gửi hóa đơn
+                      </SelectItem>
                       <SelectItem value="PAID">Đã thanh toán</SelectItem>
                     </SelectContent>
                   </Select>
@@ -553,9 +540,7 @@ export function JobForm({
 
               {/* Input Link */}
               <div className="grid gap-2">
-                <Label htmlFor="inputLink">
-                  Input Link <span className="text-red-500">*</span>
-                </Label>
+                <Label htmlFor="inputLink">Input Link</Label>
                 <Input
                   id="inputLink"
                   type="url"
@@ -564,6 +549,22 @@ export function JobForm({
                   placeholder="https://drive.google.com/..."
                 />
               </div>
+
+              {/* Done Link - Only show when editing */}
+              {editingJob && (
+                <div className="grid gap-2">
+                  <Label htmlFor="doneLink">Link hoàn thành</Label>
+                  <Input
+                    id="doneLink"
+                    type="url"
+                    defaultValue={formRef.current.doneLink}
+                    onChange={(e) =>
+                      (formRef.current.doneLink = e.target.value)
+                    }
+                    placeholder="https://drive.google.com/..."
+                  />
+                </div>
+              )}
 
               {/* Note */}
               <div className="grid gap-2">

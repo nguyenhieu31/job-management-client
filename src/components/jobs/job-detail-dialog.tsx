@@ -55,14 +55,14 @@ const jobStatusLabels: Record<string, string> = {
 
 const paymentStatusColors = {
   UNPAID: "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20",
-  PARTIAL:
+  INVOICE_SENT:
     "bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/20",
   PAID: "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20",
 };
 
 const paymentStatusLabels: Record<string, string> = {
   UNPAID: "Chưa thanh toán",
-  PARTIAL: "Thanh toán một phần",
+  INVOICE_SENT: "Đã gửi hóa đơn",
   PAID: "Đã thanh toán",
 };
 
@@ -321,10 +321,17 @@ export function JobDetailDialog({
 
                 <div className="text-center p-4 bg-muted/50 rounded-lg">
                   <label className="text-sm text-muted-foreground block mb-1">
+                    Số Lượng Output Qa
+                  </label>
+                  <p className="text-2xl font-bold">{job.qaOutputNumber}</p>
+                </div>
+
+                {/* <div className="text-center p-4 bg-muted/50 rounded-lg">
+                  <label className="text-sm text-muted-foreground block mb-1">
                     Số Lượng File
                   </label>
                   <p className="text-2xl font-bold">{job.fileCount}</p>
-                </div>
+                </div> */}
               </div>
 
               <div className="p-4 bg-primary/10 rounded-lg">
@@ -419,7 +426,34 @@ export function JobDetailDialog({
           )}
 
           <Separator />
+          {(userRole === "qa" || userRole === "manager") && (
+            <div className="space-y-4">
+              <h3 className="font-semibold text-lg flex items-center gap-2">
+                <DollarSign className="h-5 w-5" />
+                Thông Tin Thanh Toán Nhân Viên QA
+              </h3>
 
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 bg-blue-500/10 rounded-lg border border-blue-500/20">
+                  <label className="text-sm text-muted-foreground block mb-2">
+                    Trả/File
+                  </label>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {formatCurrencyVND(job.payPerFile)}
+                  </p>
+                </div>
+
+                <div className="p-4 bg-green-500/10 rounded-lg border border-green-500/20">
+                  <label className="text-sm text-muted-foreground block mb-2">
+                    Tổng Tiền Trả
+                  </label>
+                  <p className="text-2xl font-bold text-green-600">
+                    {formatCurrencyVND(job.totalPayPerFileQa)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
           <Separator />
 
           {/* Assignment Information */}

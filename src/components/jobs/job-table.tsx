@@ -69,24 +69,24 @@ const jobStatusColors: Record<string, string> = {
 };
 
 const jobStatusLabels: Record<string, string> = {
-  PENDING: "Đang chờ",
-  IN_PROGRESS: "Đang tiến hành",
-  DONE: "Đã hoàn thành",
-  IN_REVIEW: "Đang xem xét",
-  REVIEWED: "Đã được xem xét",
-  COMPLETED: "Đã hoàn tất",
+  PENDING: "Chưa làm",
+  IN_PROGRESS: "Đang làm",
+  DONE: "Đang đợi xét duyệt",
+  IN_REVIEW: "Nhận xét duyệt",
+  REVIEWED: "Hoàn thành xét duyệt",
+  COMPLETED: "Đã hoàn thành",
 };
 
 const paymentStatusColors = {
   UNPAID: "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20",
-  PARTIAL:
+  INVOICE_SENT:
     "bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/20",
   PAID: "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20",
 };
 
 const paymentStatusOptions = [
   { value: "UNPAID", label: "Chưa thanh toán" },
-  { value: "PARTIAL", label: "Thanh toán một phần" },
+  { value: "INVOICE_SENT", label: "Đã gửi hóa đơn" },
   { value: "PAID", label: "Đã thanh toán" },
 ];
 
@@ -101,10 +101,12 @@ const columnLabels: Record<string, string> = {
   linkDone: "Link Done",
   inputCount: "Số Lượng Input",
   outputCount: "Số Lượng Output",
+  qaOutputNumber: "Số Lượng QA Output",
   fileCount: "Số Lượng File",
   filePrice: "Giá File",
   payPerFile: "Trả/File",
   totalPayPerFile: "Tổng Trả",
+  totalPayPerFileQa: "Tổng Trả QA",
   jobStatus: "Tình Trạng Công Việc",
   paymentStatus: "Tình Trạng Thanh Toán",
   note: "Ghi Chú",
@@ -114,7 +116,7 @@ const columnLabels: Record<string, string> = {
   actions: "Hành Động",
 };
 
-const filePriceOptions = [
+export const filePriceOptions = [
   { id: 1, name: 0.7 },
   { id: 2, name: 0.76 },
   { id: 3, name: 0.6 },
@@ -195,7 +197,7 @@ export function JobTable({
 
   // Save pending changes
   const handleSaveChanges = useCallback(
-    (jobId: number) => {
+    async (jobId: number) => {
       const changes = pendingChangesRef.current[jobId];
       if (changes) {
         const assigneeId = changes.assignee?.id;
@@ -209,16 +211,16 @@ export function JobTable({
           filePrice: changes.filePrice || null,
           inputNumber: changes.inputNumber || null,
           outputNumber: changes.outputNumber || null,
+          qaOutputNumber: changes.qaOutputNumber || null,
           qualifiedAssigneeId: qualifiedAssigneeId
             ? Number.parseInt(qualifiedAssigneeId.toString())
             : null,
           paymentStatus: changes.paymentStatus || null,
           doneLink: changes.doneLink || null,
         };
-
         // Dispatch API call
-        dispatch(UpdateGridViewJobAction(payload))
-          .then(() => {
+        const res = await dispatch(UpdateGridViewJobAction(payload));
+        if(res.meta.requestStatus === "fulfilled"){
             // Clear pending changes AFTER API succeeds
             delete pendingChangesRef.current[jobId];
             // Trigger re-render to show updated values from API
@@ -228,11 +230,10 @@ export function JobTable({
               actionCellRefs.current[jobId].forceUpdate?.();
             }
             toast.success("Cập nhật công việc thành công");
-          })
-          .catch((error) => {
-            toast.error("Lỗi khi cập nhật công việc");
-            console.error(error);
-          });
+        }else{
+          toast.error("Lỗi khi cập nhật công việc");
+          console.error("res", res);
+        }
       }
     },
     [dispatch]
@@ -352,6 +353,13 @@ export function JobTable({
   const createOutputNumberHandler = useCallback(
     (jobId: number) => (value: number) => {
       handleFieldChange(jobId, "outputNumber", value);
+    },
+    [handleFieldChange]
+  );
+
+  const createQaOutputNumberHandler = useCallback(
+    (jobId: number) => (value: number) => {
+      handleFieldChange(jobId, "qaOutputNumber", value);
     },
     [handleFieldChange]
   );
@@ -508,6 +516,20 @@ export function JobTable({
         }
         // Manager and QA: read-only
         return <span>{job.outputNumber}</span>;
+      
+      case "qaOutputNumber":
+        // QA can edit Output Count, Manager and Employee cannot
+        if (userRole === "qa" && job.jobStatus === "IN_REVIEW") {
+          return (
+            <EditableInput
+              value={getCurrentValue(job, "qaOutputNumber") as number}
+              onChange={createQaOutputNumberHandler(job.id)}
+              className="border-green-200 focus:border-green-400"
+            />
+          );
+        }
+        // Manager and QA: read-only
+        return <span>{job.qaOutputNumber}</span>;
 
       case "fileCount":
         return <span>{job.fileCount}</span>;
@@ -534,6 +556,13 @@ export function JobTable({
         return (
           <span className="font-medium">
             {formatCurrencyVND(job.totalPayPerFile)}
+          </span>
+        );
+
+      case "totalPayPerFileQa":
+        return (
+          <span className="font-medium">
+            {formatCurrencyVND(job.totalPayPerFileQa)}
           </span>
         );
 
@@ -728,6 +757,7 @@ export function JobTable({
                   />
                 </TableHead>
               )}
+              <TableHead className="w-12 text-center border-r font-bold">STT</TableHead>
               {visibleColumns.map((column) => (
                 <TableHead
                   key={column}
@@ -742,7 +772,7 @@ export function JobTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {jobs.map((job) => (
+            {jobs.map((job, index) => (
               <TableRow key={job.id} className={userRole === "manager" && selectedJobIds.has(job.id) ? "bg-blue-50 dark:bg-blue-950" : ""}>
                 {userRole === "manager" && (
                   <TableCell className="w-12 text-center border-r">
@@ -754,6 +784,7 @@ export function JobTable({
                     />
                   </TableCell>
                 )}
+                <TableCell className="w-12 text-center border-r font-medium">{index + 1}</TableCell>
                 {visibleColumns.map((column) => (
                   <TableCell
                     key={`${job.id}-${column}`}

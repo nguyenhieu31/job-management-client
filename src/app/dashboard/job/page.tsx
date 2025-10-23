@@ -254,13 +254,15 @@ export default function JobsPage() {
               Thêm Công Việc
             </Button>
           )}
-          <Button
-            onClick={handleClickGetJob}
-            className="sm:w-auto bg-green-600 hover:bg-green-700 cursor-pointer"
-          >
-            <ArrowDown className="mr-2 h-4 w-4" />
-            {userRole !== 'manager' ? 'Nhận Công Việc' : 'Lấy Công Việc'}
-          </Button>
+          {userRole === 'manager' && (
+            <Button
+              onClick={handleClickGetJob}
+              className="sm:w-auto bg-green-600 hover:bg-green-700 cursor-pointer"
+            >
+              <ArrowDown className="mr-2 h-4 w-4" />
+              Lấy Công Việc
+            </Button>
+          )}
         </div>
       </div>
 

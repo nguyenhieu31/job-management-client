@@ -21,6 +21,7 @@ import { PageResponse } from "@/components/types/Page";
 const NOTIFICATION_COLORS = {
   "JOB_DONE": "bg-blue-50 border-blue-200",
   "REVIEW_SUBMITTED": "bg-green-50 border-green-200",
+  "JOB_REJECTED": "bg-red-50 border-red-200",
   "JOB_ASSIGNED": "bg-purple-50 border-purple-200",
   "REVIEW_ASSIGNED": "bg-orange-50 border-orange-200",
 };
@@ -30,6 +31,7 @@ const NOTIFICATION_BADGE_COLORS = {
   "REVIEW_SUBMITTED": "bg-green-100 text-green-800",
   "JOB_ASSIGNED": "bg-purple-100 text-purple-800",
   "REVIEW_ASSIGNED": "bg-orange-100 text-orange-800",
+  "JOB_REJECTED": "bg-red-100 text-red-800",
 };
 
 const NOTIFICATION_LABELS = {
@@ -37,6 +39,7 @@ const NOTIFICATION_LABELS = {
   "REVIEW_SUBMITTED": "Review hoàn thành",
   "JOB_ASSIGNED": "Giao công việc",
   "REVIEW_ASSIGNED": "Chờ review",
+  "JOB_REJECTED": "Công việc bị từ chối"
 };
 
 export default function NotificationsPage() {

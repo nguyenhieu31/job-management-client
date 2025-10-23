@@ -100,7 +100,6 @@ export function WorkRequestForm({
                 setFormData({ ...formData, categoryName: e.target.value })
               }
               placeholder="Ví dụ: Multi Exposure RKe"
-              required
             />
           </div>
 
@@ -114,7 +113,6 @@ export function WorkRequestForm({
                 setFormData({ ...formData, summaryNote: e.target.value })
               }
               placeholder="Ví dụ: Sáng sạch đều màu (Fill đèn tivi)"
-              required
             />
           </div>
 
@@ -129,7 +127,6 @@ export function WorkRequestForm({
               }
               placeholder="Nhập hướng dẫn chi tiết tại đây..."
               rows={6}
-              required
               className="resize-none"
             />
             <p className="text-xs text-muted-foreground">
@@ -148,7 +145,6 @@ export function WorkRequestForm({
                 setFormData({ ...formData, linkSample: e.target.value })
               }
               placeholder="Ví dụ: https://byvn.net/1auK"
-              required
             />
           </div>
 
@@ -162,7 +158,6 @@ export function WorkRequestForm({
                 setFormData({ ...formData, fileType: e.target.value })
               }
               placeholder="Ví dụ: TIFF"
-              required
             />
           </div>
 
@@ -177,7 +172,6 @@ export function WorkRequestForm({
               }
               placeholder="Ví dụ: Trừ trắng hay xám đều tăng 3 tem..."
               rows={3}
-              required
               className="resize-none"
             />
           </div>

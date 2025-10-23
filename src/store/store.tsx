@@ -8,6 +8,8 @@ import WorkRequestSlice from "./slice/work-request/WorkRequest";
 import NotificationSlice from "./slice/notification/Notification";
 import SettingsSlice from "./slice/settings/Settings";
 import InvoicesSlice from "./slice/invoices/Invoices";
+import PayrollSlice from "./slice/payroll/Payroll";
+import PayrollPeriodSlice from "./slice/payroll-period/PayrollPeriod";
 import { injectStore } from "@/lib/utils/axios-instance";
 
 export const store= configureStore({
@@ -20,6 +22,8 @@ export const store= configureStore({
         notification: NotificationSlice,
         settings: SettingsSlice,
         invoices: InvoicesSlice,
+        payroll: PayrollSlice,
+        payrollPeriod: PayrollPeriodSlice,
     }
 });
 

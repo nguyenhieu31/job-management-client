@@ -45,6 +45,7 @@ export interface JobResponse {
   totalPrice: number;
   inputNumber: number;
   outputNumber: number;
+  qaOutputNumber: number;
   paymentStatus: PaymentStatus;
   jobStatus: JobStatus;
   inputLink: string;
@@ -57,6 +58,7 @@ export interface JobResponse {
   workRequest: WorkRequestResponse;
   payPerFile: number;
   totalPayPerFile: number;
+  totalPayPerFileQa: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -70,6 +72,7 @@ export interface JobRequest {
   payPerFile: number;
   inputNumber: number;
   outputNumber?: number | null;
+  qaOutputNumber?: number | null;
   paymentStatus: PaymentStatus;
   jobStatus: JobStatus;
   inputLink: string;
@@ -82,7 +85,7 @@ export interface JobRequest {
 }
 
 export type JobStatus = "PENDING" | "IN_PROGRESS" | "DONE" | "IN_REVIEW" | "REVIEWED" | "COMPLETED"
-export type PaymentStatus = "UNPAID" | "PARTIAL" | "PAID"
+export type PaymentStatus = "UNPAID" | "INVOICE_SENT" | "PAID"
 
 // Job action types for different roles
 export type JobAction = 
@@ -100,6 +103,7 @@ export interface JobActionPayload {
   jobId: number;
   action: JobAction;
   qaNote?: string; // Note for rejected action
+  qaOutputNumber?: number | null;
 }
 
 export type UserRole = "manager" | "qa" | "employee"
@@ -133,13 +137,13 @@ export const ROLE_COLUMNS = {
     "inputCount",
     "outputCount",
     // "fileCount",
-    "filePrice",
-    "totalPrice",
-    "paymentStatus",
+    // "filePrice",
+    // "totalPrice",
+    // "paymentStatus",
     "jobStatus",
     "linkDone",
-    "payPerFile",
-    "totalPayPerFile",
+    // "payPerFile",
+    // "totalPayPerFile",
     "assignedEmployee",
     "qa",
     // "note",
@@ -154,6 +158,9 @@ export const ROLE_COLUMNS = {
     "linkDone",
     "inputCount",
     "outputCount",
+    "qaOutputNumber",
+    "payPerFile",
+    "totalPayPerFileQa",
     "jobStatus",
     "assignedEmployee",
     // "note",

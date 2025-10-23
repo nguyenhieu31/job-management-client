@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SearchJobByConditionsAction } from "@/store/slice/jobs/Jobs";
-import { useAppDispatch } from "@/store/store";
+import { useAppDispatch, useAppSelector } from "@/store/store";
 import type {
   JobFilters,
   JobStatus,
@@ -28,6 +28,7 @@ interface FilterBarProps {
 
 export function FilterBar({ pagination, onPageChange }: FilterBarProps) {
   const dispatch = useAppDispatch();
+  const {roleName} = useAppSelector(state=>state.authenticate);
 
   const [filters, setFilters] = useState<JobFilters>({
     fromDate: "",
@@ -120,12 +121,12 @@ export function FilterBar({ pagination, onPageChange }: FilterBarProps) {
               <SelectValue placeholder="All Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="PENDING">Đang chờ</SelectItem>
-              <SelectItem value="IN_PROGRESS">Đang tiến hành</SelectItem>
-              <SelectItem value="DONE">Đã hoàn thành</SelectItem>
-              <SelectItem value="IN_REVIEW">Đang xem xét</SelectItem>
-              <SelectItem value="REVIEWED">Đã được xem xét</SelectItem>
-              <SelectItem value="COMPLETED">Đã hoàn tất</SelectItem>
+              <SelectItem value="PENDING">Chưa làm</SelectItem>
+              <SelectItem value="IN_PROGRESS">Đang làm</SelectItem>
+              <SelectItem value="DONE">Đang đợi xét duyệt</SelectItem>
+              <SelectItem value="IN_REVIEW">Nhận xét duyệt</SelectItem>
+              <SelectItem value="REVIEWED">Hoàn thành xét duyệt</SelectItem>
+              <SelectItem value="COMPLETED">Đã hoàn thành</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -146,7 +147,7 @@ export function FilterBar({ pagination, onPageChange }: FilterBarProps) {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="UNPAID">Chưa thanh toán</SelectItem>
-              <SelectItem value="PARTIAL">Thanh toán một phần</SelectItem>
+              <SelectItem value="INVOICE_SENT">Đã gửi hóa đơn</SelectItem>
               <SelectItem value="PAID">Đã thanh toán</SelectItem>
             </SelectContent>
           </Select>
@@ -162,7 +163,7 @@ export function FilterBar({ pagination, onPageChange }: FilterBarProps) {
             <Input
               id="search"
               type="text"
-              placeholder="Tên khách hàng, case name"
+              placeholder={roleName !== 'MANAGER' ? "Tìm theo tên job, mã job..." : "Tên khách hàng, tên job, mã job..."}
               value={filters.keyword}
               onChange={(e) => handleChange("keyword", e.target.value)}
               className="pl-9 w-full"
