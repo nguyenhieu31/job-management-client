@@ -1,4 +1,4 @@
-export type NotificationType = "JOB_DONE" | "REVIEW_SUBMITTED" | "JOB_ASSIGNED" | "REVIEW_ASSIGNED"
+export type NotificationType = "JOB_DONE" | "REVIEW_SUBMITTED" | "JOB_ASSIGNED" | "REVIEW_ASSIGNED" | "JOB_REJECTED"
 
 export interface Notification {
   id: number

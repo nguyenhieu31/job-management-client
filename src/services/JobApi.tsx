@@ -41,7 +41,7 @@ export const getAllJobsByQualifiedAssignee = async (data: PageRequest & { email:
     }
 }
 
-export const updateJobStatus = async (data: {id: number; status: string; qaNote?: string}) => {
+export const updateJobStatus = async (data: {id: number; status: string; qaNote?: string; qaOutputNumber?: number | null;}) => {
     try {
         const res = await axiosInstance.put(`/admin/jobs/update/status/${data.id}?status=${data.status}&qaNote=${data.qaNote || ""}`);
         return res as unknown as ApiResponse<string>;
@@ -90,6 +90,7 @@ export const updateGridViewJob = async (data: {
     filePrice : number | null;
     inputNumber : number | null;
     outputNumber?: number | null;
+    qaOutputNumber?: number | null;
     qualifiedAssigneeId : number | null;
     paymentStatus?: string | null;
     doneLink?: string | null;

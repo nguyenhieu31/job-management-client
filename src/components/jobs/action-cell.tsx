@@ -117,8 +117,8 @@ const ActionCellComponent = forwardRef<
     return (
       <>
         <div className="flex justify-center gap-2 flex-nowrap">
-          {/* Show ONLY Save and Cancel buttons for Manager if there are pending changes */}
-          {(userRole === "manager" || userRole === "employee") && hasPendingChanges ? (
+          {/* Show ONLY Save and Cancel buttons for Manager, Employee, or QA if there are pending changes */}
+          {(userRole === "manager" || userRole === "employee" || userRole === "qa") && hasPendingChanges ? (
             <>
               <Button
                 key="cancel"

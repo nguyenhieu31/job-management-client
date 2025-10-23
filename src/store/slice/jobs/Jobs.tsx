@@ -72,8 +72,8 @@ export const GetAllJobsByQualifiedAssigneeAction = createAsyncThunk<
 
 export const UpdateJobStatusAction = createAsyncThunk<
   string,
-  { id: number; status: string; qaNote?: string }
->("UpdateJobStatusAction", async (data: { id: number; status: string; qaNote?: string }) => {
+  { id: number; status: string; qaNote?: string; qaOutputNumber?: number | null }
+>("UpdateJobStatusAction", async (data: { id: number; status: string; qaNote?: string; qaOutputNumber?: number | null }) => {
   try {
     const response = await updateJobStatus(data);
     return response.data as string;
@@ -91,6 +91,7 @@ export const UpdateGridViewJobAction = createAsyncThunk<
     filePrice: number | null;
     inputNumber: number | null;
     outputNumber?: number | null;
+    qaOutputNumber?: number | null;
     qualifiedAssigneeId: number | null;
     paymentStatus?: string | null;
     doneLink?: string | null;
@@ -105,6 +106,7 @@ export const UpdateGridViewJobAction = createAsyncThunk<
     filePrice: number | null;
     inputNumber: number | null;
     outputNumber?: number | null;
+    qaOutputNumber?: number | null;
     qualifiedAssigneeId: number | null;
     paymentStatus?: string | null;
     doneLink?: string | null;
