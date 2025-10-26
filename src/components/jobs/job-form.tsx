@@ -73,6 +73,7 @@ export function JobForm({
     fileCount: "",
     inputNumber: "",
     outputNumber: "",
+    qaOutputNumber: "",
     paymentStatus: "UNPAID" as PaymentStatus,
     jobStatus: "PENDING" as JobStatus,
     inputLink: "",
@@ -83,6 +84,7 @@ export function JobForm({
     customerId: undefined as string | undefined,
     workRequestId: undefined as string | undefined,
     payPerFile: "",
+    payPerFileQa: "",
   });
 
   const isEditingRef = useRef(false);
@@ -94,6 +96,7 @@ export function JobForm({
         filePrice: String(editingJob.filePrice),
         inputNumber: String(editingJob.inputNumber),
         outputNumber: String(editingJob.outputNumber || ""),
+        qaOutputNumber: String(editingJob.qaOutputNumber || ""),
         doneLink: editingJob.doneLink || "",
         paymentStatus: editingJob.paymentStatus,
         jobStatus: editingJob.jobStatus,
@@ -113,6 +116,7 @@ export function JobForm({
           : undefined,
         fileCount: String(editingJob.fileCount),
         payPerFile: String(editingJob.payPerFile || ""),
+        payPerFileQa: String(editingJob.payPerFileQa || ""),
       };
       isEditingRef.current = true;
     } else {
@@ -122,6 +126,7 @@ export function JobForm({
         fileCount: "",
         inputNumber: "",
         outputNumber: "",
+        qaOutputNumber: "",
         doneLink: "",
         paymentStatus: "UNPAID",
         jobStatus: "PENDING",
@@ -132,6 +137,7 @@ export function JobForm({
         customerId: undefined,
         workRequestId: undefined,
         payPerFile: "",
+        payPerFileQa: "",
       };
       isEditingRef.current = false;
     }
@@ -149,8 +155,10 @@ export function JobForm({
       inputNumber,
       filePrice,
       payPerFile,
+      payPerFileQa,
       fileCount,
       outputNumber,
+      qaOutputNumber,
       paymentStatus,
       jobStatus,
       inputLink,
@@ -163,8 +171,10 @@ export function JobForm({
     const inputCount = parseInt(inputNumber) || 0;
     const price = parseFloat(filePrice) || 0;
     const payPerFileNum = parseFloat(payPerFile) || 0;
+    const payPerFileQaNum = parseFloat(payPerFileQa) || 0;
     const fileCountNum = parseInt(fileCount) || 0;
     const outputNum = parseInt(outputNumber) || 0;
+    const qaOutputNum = parseInt(qaOutputNumber) || 0;
     const customerId_ = customerId || null;
     const assigneeId_ = assignedEmployee || null;
     const qaId_ = qualifiedAssignee || null;
@@ -178,8 +188,10 @@ export function JobForm({
         caseName,
         inputNumber: inputCount,
         outputNumber: outputNum,
+        qaOutputNumber: qaOutputNum,
         filePrice: price,
         payPerFile: payPerFileNum,
+        payPerFileQa: payPerFileQaNum,
         fileCount: fileCountNum,
         paymentStatus,
         jobStatus,
@@ -221,12 +233,14 @@ export function JobForm({
       paymentStatus: "UNPAID",
       jobStatus: "PENDING",
       inputLink: "",
+      qaOutputNumber: "",
       note: "",
       assignedEmployee: undefined,
       qualifiedAssignee: undefined,
       customerId: undefined,
       workRequestId: undefined,
       payPerFile: "",
+      payPerFileQa: "",
     };
     onOpenChange(false);
   };
@@ -387,7 +401,7 @@ export function JobForm({
               </div>
 
               {/* Input Number and File Price in one row */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className={`grid ${editingJob ? "grid-cols-3" : "grid-cols-1"} gap-4`}>
                 {/* Input Number */}
                 <div className="grid gap-2">
                   <Label htmlFor="inputNumber">Số lượng input</Label>
@@ -415,6 +429,21 @@ export function JobForm({
                         (formRef.current.outputNumber = e.target.value)
                       }
                       placeholder="Nhập số lượng output"
+                    />
+                  </div>
+                )}
+                {editingJob && (
+                  <div className="grid gap-2">
+                    <Label htmlFor="outputNumber">Số lượng output QA</Label>
+                    <Input
+                      id="outputNumber"
+                      type="number"
+                      min="0"
+                      defaultValue={formRef.current.qaOutputNumber}
+                      onChange={(e) =>
+                        (formRef.current.qaOutputNumber = e.target.value)
+                      }
+                      placeholder="Nhập số lượng output QA"
                     />
                   </div>
                 )}
@@ -475,6 +504,25 @@ export function JobForm({
                 />
               </div>
 
+              {/* Pay Per File QA */}
+              <div className="grid gap-2">
+                <Label htmlFor="payPerFileQa">
+                  Giá trả nhân viên/file QA{" "}
+                  <span className="text-red-500">(VNĐ)</span>
+                </Label>
+                <Input
+                  id="payPerFileQa"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  defaultValue={formRef.current.payPerFileQa}
+                  onChange={(e) =>
+                    (formRef.current.payPerFileQa = e.target.value)
+                  }
+                  placeholder="Nhập giá trả nhân viên cho mỗi file QA"
+                />
+              </div>
+
               {/* Total Pay Per File Display */}
               {formRef.current.payPerFile && formRef.current.outputNumber && (
                 <div className="grid gap-2">
@@ -483,6 +531,19 @@ export function JobForm({
                     {formatCurrencyVND(
                       parseFloat(formRef.current.payPerFile) *
                         parseFloat(formRef.current.outputNumber)
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Total Pay Per File QA Display */}
+              {formRef.current.payPerFileQa && formRef.current.qaOutputNumber && (
+                <div className="grid gap-2">
+                  <Label>Tổng tiền trả nhân viên QA (VNĐ) (Tính toán)</Label>
+                  <div className="text-lg font-semibold text-green-600">
+                    {formatCurrencyVND(
+                      parseFloat(formRef.current.payPerFileQa) *
+                        parseFloat(formRef.current.qaOutputNumber)
                     )}
                   </div>
                 </div>
@@ -529,10 +590,14 @@ export function JobForm({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="UNPAID">Chưa thanh toán</SelectItem>
+                      <SelectItem value="INVOICE_DRAFT">
+                        Đã tạo hóa đơn
+                      </SelectItem>
                       <SelectItem value="INVOICE_SENT">
                         Đã gửi hóa đơn
                       </SelectItem>
                       <SelectItem value="PAID">Đã thanh toán</SelectItem>
+                      <SelectItem value="CANCELLED">Đã hủy</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

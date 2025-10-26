@@ -1,42 +1,49 @@
+import { ApiResponse } from "@/components/types/ApiResponse";
+import { PageResponse } from "@/components/types/Page";
 import { axiosInstance } from "@/lib/utils/axios-instance";
-import { InvoiceResponse, InvoiceRequest } from "@/types/invoices";
-import { AxiosResponse } from "axios";
+import { CustomerJobSummary, InvoicePageRequest, InvoiceRequest, InvoiceResponse } from "@/types/invoices";
 
-const API_BASE = "/admin/invoices";
+export const getCustomerJobSummary = async () => {
+    try {
+        const res = await axiosInstance.get(`/admin/paypal/customer-summary`);
+        return res as unknown as ApiResponse<CustomerJobSummary[]>;
+    } catch (err: any) {
+        throw new Error(err.message);
+    }
+}
 
-export const InvoiceApi = {
-  // Get all unpaid and partial payment jobs grouped by customer
-  getUnpaidJobs: async (): Promise<AxiosResponse<any>> => {
-    return await axiosInstance.get(`${API_BASE}/unpaid-jobs`);
-  },
+export const getAllInvoice = async (data: InvoicePageRequest) => {
+    try {
+        const res = await axiosInstance.get(`/admin/paypal/invoices`, { params: data });
+        return res as unknown as ApiResponse<PageResponse<InvoiceResponse[]>>;
+    } catch (err: any) {
+        throw new Error(err.message);
+    }
+}
 
-  // Generate invoice from selected jobs
-  createInvoice: async (data: InvoiceRequest): Promise<AxiosResponse<InvoiceResponse>> => {
-    return await axiosInstance.post(`${API_BASE}/create`, data);
-  },
+export const createInvoice = async (data : InvoiceRequest) => {
+    try {
+        const res = await axiosInstance.post(`/admin/paypal/create-invoice`, data);
+        return res as unknown as ApiResponse<InvoiceResponse>;
+    } catch (err: any) {
+        throw new Error(err.message);
+    }
+}
 
-  // Get invoice by ID
-  getInvoice: async (id: number): Promise<AxiosResponse<InvoiceResponse>> => {
-    return await axiosInstance.get(`${API_BASE}/${id}`);
-  },
+export const sendInvoice = async (invoiceId : string) => {
+    try {
+        const res = await axiosInstance.post(`/admin/paypal/send-invoice?invoiceId=${invoiceId}`);
+        return res as unknown as ApiResponse<string>;
+    } catch (err: any) {
+        throw new Error(err.message);
+    }
+}
 
-  // Get all invoices
-  getAllInvoices: async (page: number = 1, pageSize: number = 10): Promise<AxiosResponse<any>> => {
-    return await axiosInstance.get(`${API_BASE}?page=${page}&pageSize=${pageSize}`);
-  },
-
-  // Submit invoice to PayPal
-  submitInvoice: async (id: number): Promise<AxiosResponse<any>> => {
-    return await axiosInstance.post(`${API_BASE}/${id}/submit`);
-  },
-
-  // Cancel invoice
-  cancelInvoice: async (id: number): Promise<AxiosResponse<any>> => {
-    return await axiosInstance.put(`${API_BASE}/${id}/cancel`);
-  },
-
-  // Update invoice
-  updateInvoice: async (id: number, data: Partial<InvoiceRequest>): Promise<AxiosResponse<InvoiceResponse>> => {
-    return await axiosInstance.put(`${API_BASE}/${id}`, data);
-  },
-};
+export const cancelInvoice = async (invoiceId : string) => {
+    try {
+        const res = await axiosInstance.post(`/admin/paypal/cancel-invoice?invoiceId=${invoiceId}`);
+        return res as unknown as ApiResponse<string>;
+    } catch (err: any) {
+        throw new Error(err.message);
+    }
+}

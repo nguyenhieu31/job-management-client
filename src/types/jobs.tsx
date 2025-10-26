@@ -26,6 +26,7 @@ export interface AssigneeInfo {
   fullName: string;
   phoneNumber: string;
   role: string;
+  chatId: string;
 }
 
 export interface CustomerInfo {
@@ -57,6 +58,7 @@ export interface JobResponse {
   customer: CustomerInfo;
   workRequest: WorkRequestResponse;
   payPerFile: number;
+  payPerFileQa: number;
   totalPayPerFile: number;
   totalPayPerFileQa: number;
   createdAt: Date;
@@ -70,6 +72,7 @@ export interface JobRequest {
   fileCount: number;
   filePrice: number;
   payPerFile: number;
+  payPerFileQa: number;
   inputNumber: number;
   outputNumber?: number | null;
   qaOutputNumber?: number | null;
@@ -85,7 +88,7 @@ export interface JobRequest {
 }
 
 export type JobStatus = "PENDING" | "IN_PROGRESS" | "DONE" | "IN_REVIEW" | "REVIEWED" | "COMPLETED"
-export type PaymentStatus = "UNPAID" | "INVOICE_SENT" | "PAID"
+export type PaymentStatus = "UNPAID" | "INVOICE_SENT" | "PAID" | "INVOICE_DRAFT" | "CANCELLED"
 
 // Job action types for different roles
 export type JobAction = 
@@ -159,7 +162,7 @@ export const ROLE_COLUMNS = {
     "inputCount",
     "outputCount",
     "qaOutputNumber",
-    "payPerFile",
+    "payPerFileQa",
     "totalPayPerFileQa",
     "jobStatus",
     "assignedEmployee",

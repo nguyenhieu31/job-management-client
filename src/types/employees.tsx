@@ -5,6 +5,7 @@ export interface EmployeeResponse {
     fullName: string;
     phoneNumber: string;
     dateOfBirth: Date;
+    chatId?: string;
     isActive: boolean;
     role: RoleDto;
     createdAt: Date;
@@ -15,6 +16,7 @@ export interface EmployeeRequest {
     code?: string | undefined;
     email: string;
     password?: string | undefined;
+    chatId?: string;
     fullName: string;
     phoneNumber: string;
     dateOfBirth: Date;

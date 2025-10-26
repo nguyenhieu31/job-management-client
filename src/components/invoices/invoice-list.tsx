@@ -12,14 +12,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { JobsByCustomer } from "@/types/invoices";
+import { CustomerJobSummary } from "@/types/invoices";
 import { formatCurrency } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ChevronDown, ChevronRight } from "lucide-react";
+import { CustomerInfo, JobResponse } from "@/types/jobs";
 
 interface InvoiceListProps {
-  jobsByCustomer: JobsByCustomer[];
-  onCreateInvoice: (customerId: number, selectedJobIds: number[]) => void;
+  jobsByCustomer: CustomerJobSummary[];
+  onCreateInvoice: (customer: CustomerInfo, selectedJob: JobResponse[]) => void;
   loading?: boolean;
 }
 
@@ -53,7 +54,7 @@ export function InvoiceList({
     setSelectedJobs(newSelected);
   };
 
-  const toggleSelectAllJobs = (customerId: number, jobs: JobsByCustomer["jobs"]) => {
+  const toggleSelectAllJobs = (customerId: number, jobs: JobResponse[]) => {
     const newSelected = new Set(selectedJobs);
     const allJobsInCustomer = jobs.every((job) => newSelected.has(job.id));
 
@@ -67,7 +68,7 @@ export function InvoiceList({
 
   const getSelectedJobsByCustomer = (customerId: number): number[] => {
     return Array.from(selectedJobs).filter((jobId) => {
-      const customer = jobsByCustomer.find((c) => c.customerId === customerId);
+      const customer = jobsByCustomer.find((c) => c.customer.id === customerId);
       return customer?.jobs.some((j) => j.id === jobId);
     });
   };
@@ -77,7 +78,7 @@ export function InvoiceList({
       <Card>
         <CardContent className="pt-6">
           <p className="text-center text-muted-foreground">
-            Không có công việc chưa thanh toán hoặc thanh toán một phần
+            Không có công việc chưa thanh toán
           </p>
         </CardContent>
       </Card>
@@ -86,31 +87,31 @@ export function InvoiceList({
 
   return (
     <div className="space-y-4">
-      {jobsByCustomer.map((customer) => (
-        <Card key={customer.customerId} className="overflow-hidden">
+      {jobsByCustomer.map((customer, index) => (
+        <Card key={index} className="overflow-hidden">
           <div className="border-b p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4 flex-1 min-w-0">
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => toggleCustomer(customer.customerId)}
+                  onClick={() => toggleCustomer(customer.customer.id)}
                   className="h-6 w-6 p-0"
                 >
-                  {expandedCustomers.has(customer.customerId) ? (
+                  {expandedCustomers.has(customer.customer.id) ? (
                     <ChevronDown className="h-4 w-4" />
                   ) : (
                     <ChevronRight className="h-4 w-4" />
                   )}
                 </Button>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold">{customer.customerName}</h3>
+                  <h3 className="font-semibold">{customer.customer.name}</h3>
                   <p className="text-sm text-muted-foreground truncate">
-                    {customer.customerEmail}
+                    {customer.customer.email}
                   </p>
-                  {customer.customerCompany && (
+                  {customer.customer.company && (
                     <p className="text-sm text-muted-foreground">
-                      {customer.customerCompany}
+                      {customer.customer.company}
                     </p>
                   )}
                 </div>
@@ -126,7 +127,7 @@ export function InvoiceList({
             </div>
           </div>
 
-          {expandedCustomers.has(customer.customerId) && (
+          {expandedCustomers.has(customer.customer.id) && (
             <>
               <Table>
                 <TableHeader>
@@ -141,7 +142,7 @@ export function InvoiceList({
                           !customer.jobs.every((job) => selectedJobs.has(job.id))
                         }
                         onCheckedChange={() =>
-                          toggleSelectAllJobs(customer.customerId, customer.jobs)
+                          toggleSelectAllJobs(customer.customer.id, customer.jobs)
                         }
                       />
                     </TableHead>
@@ -187,18 +188,18 @@ export function InvoiceList({
                 <Button
                   onClick={() => {
                     const selectedJobIds = getSelectedJobsByCustomer(
-                      customer.customerId
+                      customer.customer.id
                     );
                     if (selectedJobIds.length > 0) {
-                      onCreateInvoice(customer.customerId, selectedJobIds);
+                      onCreateInvoice(customer.customer, customer.jobs.filter(job => selectedJobIds.includes(job.id)));
                     }
                   }}
                   disabled={
-                    getSelectedJobsByCustomer(customer.customerId).length === 0 ||
+                    getSelectedJobsByCustomer(customer.customer.id).length === 0 ||
                     loading
                   }
                 >
-                  Tạo Hoá Đơn ({getSelectedJobsByCustomer(customer.customerId).length})
+                  Tạo Hoá Đơn ({getSelectedJobsByCustomer(customer.customer.id).length})
                 </Button>
               </div>
             </>
