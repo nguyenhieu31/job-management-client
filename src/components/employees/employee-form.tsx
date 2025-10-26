@@ -44,6 +44,7 @@ export function EmployeeForm({
     password: "",
     fullName: "",
     dateOfBirth: "",
+    chatId: "",
     phoneNumber: "",
     roleId: "",
     isActive: true,
@@ -60,6 +61,7 @@ export function EmployeeForm({
         dateOfBirth: editingEmployee.dateOfBirth
           ? new Date(editingEmployee.dateOfBirth).toISOString().split("T")[0]
           : "",
+        chatId: editingEmployee.chatId || "",
         phoneNumber: editingEmployee.phoneNumber,
         roleId: editingEmployee.role.id.toString(),
         isActive: editingEmployee.isActive,
@@ -71,6 +73,7 @@ export function EmployeeForm({
         fullName: "",
         password: "",
         dateOfBirth: "",
+        chatId: "",
         phoneNumber: "",
         roleId: "",
         isActive: true,
@@ -89,6 +92,7 @@ export function EmployeeForm({
       code: formData.code,
       email: formData.email,
       fullName: formData.fullName,
+      chatId: formData.chatId,
       dateOfBirth: new Date(formData.dateOfBirth),
       phoneNumber: formData.phoneNumber,
       role: selectedRole.name,
@@ -227,6 +231,20 @@ export function EmployeeForm({
                 setFormData({ ...formData, phoneNumber: e.target.value })
               }
               placeholder="+84 123 456 789"
+            />
+          </div>
+
+          {/* Phone Number */}
+          <div className="space-y-2">
+            <Label htmlFor="chatId">Chat ID telegram</Label>
+            <Input
+              id="chatId"
+              type="text"
+              value={formData.chatId}
+              onChange={(e) =>
+                setFormData({ ...formData, chatId: e.target.value })
+              }
+              placeholder="6797071231"
             />
           </div>
 

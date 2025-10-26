@@ -1,46 +1,93 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/store";
 import {
-  fetchUnpaidJobs,
-  createInvoice,
-  submitInvoice,
   clearPreviewInvoice,
+  GetCustomerJobSummaryAction,
+  GetAllInvoicesAction,
+  CreateInvoiceAction,
+  updateCustomerCreatedInvoice,
+  SendInvoiceAction,
+  CancelInvoiceAction,
 } from "@/store/slice/invoices/Invoices";
 import { InvoiceList } from "@/components/invoices/invoice-list";
+import { InvoicesTable } from "@/components/invoices/invoices-table";
 import { InvoicePreviewDialog } from "@/components/invoices/invoice-preview-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { toast } from "react-toastify";
+import { CustomerJobSummary, InvoiceResponse, InvoiceStatus } from "@/types/invoices";
+import { formatCurrency } from "@/lib/utils";
+import { CustomerInfo, JobResponse } from "@/types/jobs";
+import { LoadingModal } from "@/components/ui/loading-modal";
+import { PageResponse } from "@/components/types/Page";
 
 export default function InvoicesPage() {
   const dispatch = useAppDispatch();
-  const { jobsByCustomer, previewInvoice, loading, error } = useAppSelector(
+  const { customerJobSummary, previewInvoice, loading, error, invoices } : {
+    customerJobSummary: CustomerJobSummary[];
+    invoices: PageResponse<InvoiceResponse[]> | undefined;
+    loading: boolean;
+    error: string | null;
+    previewInvoice: InvoiceResponse | null;
+  } = useAppSelector(
     (state) => state.invoices
   );
-  const [submitLoading, setSubmitLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [selectedStatus, setSelectedStatus] = useState<InvoiceStatus | "ALL">("ALL");
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  }
+
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setCurrentPage(1);
+  };
+
+  const handleStatusChange = (status: InvoiceStatus | "ALL") => {
+    setSelectedStatus(status);
+    setCurrentPage(1);
+  }
+
+  const fetchInvoices = useCallback(() => {
+    if (currentPage && pageSize) {
+      dispatch(GetAllInvoicesAction({ pageNumber: currentPage -1, pageSize, invoiceStatus: selectedStatus }));
+    }
+  }, [currentPage, pageSize, dispatch, selectedStatus]);
 
   useEffect(() => {
-    dispatch(fetchUnpaidJobs());
+    dispatch(GetCustomerJobSummaryAction());
   }, [dispatch]);
 
+  useEffect(() => {
+    fetchInvoices();
+  }, [fetchInvoices]);
+
   const handleCreateInvoice = async (
-    customerId: number,
-    selectedJobIds: number[]
+    customer: CustomerInfo,
+    selectedJobs: JobResponse[]
   ) => {
     try {
-      const result = await dispatch(
-        createInvoice({
-          customerId,
-          jobIds: selectedJobIds,
-          notes: "",
-        })
-      );
-
-      if (createInvoice.fulfilled.match(result)) {
+      // log the customer and selected jobs for debugging
+      console.log("Creating invoice for customer:", customer);
+      console.log("Selected jobs:", selectedJobs);
+      const payload = {
+        customerInfo: customer,
+        jobs: selectedJobs
+      }
+      console.log("Create invoice payload:", payload);
+      const res = await dispatch(CreateInvoiceAction(payload));
+      if(res.meta.requestStatus === "fulfilled") {
         toast.success("Tạo hoá đơn thành công!");
+        // Refresh data
+        await Promise.all([
+          dispatch(GetAllInvoicesAction({ pageNumber: currentPage -1, pageSize, invoiceStatus: selectedStatus })),
+          dispatch(updateCustomerCreatedInvoice(customer))
+        ]);
       } else {
         toast.error("Tạo hoá đơn thất bại!");
       }
@@ -49,27 +96,24 @@ export default function InvoicesPage() {
     }
   };
 
-  const handleSubmitInvoice = async (invoiceId: number) => {
-    setSubmitLoading(true);
-    try {
-      const result = await dispatch(submitInvoice(invoiceId));
-
-      if (submitInvoice.fulfilled.match(result)) {
-        toast.success("Gửi hoá đơn thành công!");
-        dispatch(clearPreviewInvoice());
-        // Refresh data
-        dispatch(fetchUnpaidJobs());
-      } else {
-        toast.error("Gửi hoá đơn thất bại!");
-      }
-    } catch {
-      toast.error("Có lỗi xảy ra!");
-    } finally {
-      setSubmitLoading(false);
-    }
+  const handleSendInvoice = async (invoice: InvoiceResponse) => {
+    console.log("Send invoice:", invoice);
+    await Promise.all([
+      dispatch(SendInvoiceAction(invoice.invoiceId)),
+      dispatch(GetAllInvoicesAction({ pageNumber: currentPage -1, pageSize, invoiceStatus: selectedStatus }))
+    ]);
   };
 
-  if (loading && jobsByCustomer.length === 0) {
+  const handleCancelInvoice = async (invoice: InvoiceResponse) => {
+    console.log("Cancel invoice:", invoice);
+    await Promise.all([
+      dispatch(CancelInvoiceAction(invoice.invoiceId)),
+      dispatch(GetCustomerJobSummaryAction()),
+      dispatch(GetAllInvoicesAction({ pageNumber: currentPage -1, pageSize, invoiceStatus: selectedStatus }))
+    ]);
+  };
+
+  if (loading && customerJobSummary.length === 0) {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="text-center">
@@ -84,6 +128,7 @@ export default function InvoicesPage() {
 
   return (
     <div className="space-y-6">
+      <LoadingModal isOpen={loading} message="Đang xử lý..." />
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold">Tạo Hoá Đơn Thanh Toán</h1>
@@ -101,7 +146,7 @@ export default function InvoicesPage() {
       )}
 
       {/* Stats */}
-      {jobsByCustomer.length > 0 && (
+      {customerJobSummary.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>
             <CardHeader className="pb-2">
@@ -110,7 +155,7 @@ export default function InvoicesPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{jobsByCustomer.length}</div>
+              <div className="text-2xl font-bold">{customerJobSummary.length}</div>
             </CardContent>
           </Card>
 
@@ -122,7 +167,7 @@ export default function InvoicesPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {jobsByCustomer.reduce((sum: number, c: any) => sum + c.jobs.length, 0)}
+                {customerJobSummary.reduce((sum: number, c: any) => sum + c.jobs.length, 0)}
               </div>
             </CardContent>
           </Card>
@@ -135,12 +180,7 @@ export default function InvoicesPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-primary">
-                {new Intl.NumberFormat("vi-VN", {
-                  style: "currency",
-                  currency: "VND",
-                }).format(
-                  jobsByCustomer.reduce((sum: number, c: any) => sum + c.totalAmount, 0)
-                )}
+                {formatCurrency(customerJobSummary.reduce((sum: number, c: any) => sum + c.totalAmount, 0))}
               </div>
             </CardContent>
           </Card>
@@ -149,9 +189,21 @@ export default function InvoicesPage() {
 
       {/* Invoice List */}
       <InvoiceList
-        jobsByCustomer={jobsByCustomer}
+        jobsByCustomer={customerJobSummary}
         onCreateInvoice={handleCreateInvoice}
         loading={loading}
+      />
+
+      {/* View Created Invoices */}
+      <InvoicesTable
+        invoices={invoices ? invoices : undefined}
+        loading={loading}
+        onSendInvoice={handleSendInvoice}
+        onCancelInvoice={handleCancelInvoice}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
+        onStatusChange={handleStatusChange}
+        status={selectedStatus}
       />
 
       {/* Preview Dialog */}
@@ -163,8 +215,7 @@ export default function InvoicesPage() {
           }
         }}
         invoice={previewInvoice}
-        onSubmit={handleSubmitInvoice}
-        loading={submitLoading}
+        loading={loading}
       />
     </div>
   );

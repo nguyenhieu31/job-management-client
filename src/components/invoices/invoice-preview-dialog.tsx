@@ -9,24 +9,23 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+// import { Card } from "@/components/ui/card";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  // Table,
+  // TableBody,
+  // TableCell,
+  // TableHead,
+  // TableHeader,
+  // TableRow,
 } from "@/components/ui/table";
 import { InvoiceResponse } from "@/types/invoices";
-import { formatCurrency, formatDate } from "@/lib/utils";
+// import { formatCurrency, formatDate } from "@/lib/utils";
 import { FileText, DollarSign } from "lucide-react";
 
 interface InvoicePreviewDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   invoice: InvoiceResponse | null;
-  onSubmit: (invoiceId: number) => void;
   loading?: boolean;
 }
 
@@ -34,7 +33,6 @@ export function InvoicePreviewDialog({
   open,
   onOpenChange,
   invoice,
-  onSubmit,
   loading = false,
 }: InvoicePreviewDialogProps) {
   if (!invoice) return null;
@@ -54,21 +52,21 @@ export function InvoicePreviewDialog({
 
         <div className="space-y-6 mt-6">
           {/* Invoice Header */}
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border">
+          {/* <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border">
             <div className="flex justify-between items-start mb-4">
               <div>
                 <h2 className="text-3xl font-bold text-primary">
-                  Hoá Đơn #{invoice.invoiceNumber}
+                  Hoá Đơn #{invoice.invoiceId}
                 </h2>
                 <p className="text-sm text-muted-foreground mt-1">
                   Ngày tạo: {formatDate(invoice.createdAt.toString())}
                 </p>
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* Customer Information */}
-          <div className="grid grid-cols-2 gap-6">
+          {/* <div className="grid grid-cols-2 gap-6">
             <div>
               <h3 className="font-semibold text-lg mb-3">Thông Tin Khách Hàng</h3>
               <div className="space-y-2">
@@ -114,10 +112,10 @@ export function InvoicePreviewDialog({
                 </div>
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* Items Table */}
-          <div>
+          {/* <div>
             <h3 className="font-semibold text-lg mb-3">Chi Tiết Công Việc</h3>
             <Card>
               <Table>
@@ -141,10 +139,10 @@ export function InvoicePreviewDialog({
                 </TableBody>
               </Table>
             </Card>
-          </div>
+          </div> */}
 
           {/* Summary */}
-          <div className="bg-muted/50 p-6 rounded-lg border space-y-3">
+          {/* <div className="bg-muted/50 p-6 rounded-lg border space-y-3">
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">Tổng Cộng:</span>
               <span className="font-medium">{formatCurrency(invoice.subtotal)}</span>
@@ -159,17 +157,17 @@ export function InvoicePreviewDialog({
                 {formatCurrency(invoice.total)}
               </span>
             </div>
-          </div>
+          </div> */}
 
           {/* Notes */}
-          {invoice.notes && (
+          {/* {invoice.notes && (
             <div>
               <h3 className="font-semibold text-lg mb-2">Ghi Chú</h3>
               <p className="text-sm bg-muted/50 p-4 rounded-lg whitespace-pre-wrap">
                 {invoice.notes}
               </p>
             </div>
-          )}
+          )} */}
         </div>
 
         <DialogFooter className="mt-8">
@@ -181,7 +179,6 @@ export function InvoicePreviewDialog({
             Hủy
           </Button>
           <Button
-            onClick={() => onSubmit(invoice.id)}
             disabled={loading}
             className="gap-2"
           >

@@ -1,107 +1,86 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { InvoiceApi } from "@/services/InvoiceApi";
-import { InvoiceResponse, JobsByCustomer } from "@/types/invoices";
-import { mockJobsByCustomer, mockInvoice } from "@/lib/mock-data";
-import { generateMockInvoice } from "@/hooks/use-invoice-data";
+import { CustomerJobSummary, InvoicePageRequest, InvoiceRequest, InvoiceResponse } from "@/types/invoices";
+import { cancelInvoice, createInvoice, getAllInvoice, getCustomerJobSummary, sendInvoice } from "@/services/InvoiceApi";
+import { PageResponse } from "@/components/types/Page";
+import { toast } from "react-toastify";
 
 interface InvoicesState {
-  jobsByCustomer: JobsByCustomer[];
+  customerJobSummary: CustomerJobSummary[];
   currentInvoice: InvoiceResponse | null;
-  invoices: InvoiceResponse[];
+  invoices: PageResponse<InvoiceResponse[]> | undefined;
   loading: boolean;
   error: string | null;
   previewInvoice: InvoiceResponse | null;
 }
 
 const initialState: InvoicesState = {
-  jobsByCustomer: [],
+  customerJobSummary: [],
   currentInvoice: null,
-  invoices: [],
+  invoices: undefined,
   loading: false,
   error: null,
   previewInvoice: null,
 };
 
-// Thunks
-export const fetchUnpaidJobs = createAsyncThunk(
-  "invoices/fetchUnpaidJobs",
-  async (_, { rejectWithValue }) => {
-    try {
-      // Check if using mock data
-      if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === "true") {
-        // Simulate API delay
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        return mockJobsByCustomer;
-      }
-      
-      const response = await InvoiceApi.getUnpaidJobs();
-      return response.data;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to fetch unpaid jobs");
-    }
+export const GetCustomerJobSummaryAction = createAsyncThunk<
+  CustomerJobSummary[],
+  void
+>("GetCustomerJobSummaryAction", async () => {
+  try {
+    const response = await getCustomerJobSummary();
+    return response.data as CustomerJobSummary[];
+  } catch (err: any) {
+    throw new Error(err.message);
   }
-);
+});
 
-export const createInvoice = createAsyncThunk(
-  "invoices/createInvoice",
-  async (
-    data: { jobIds: number[]; customerId: number; notes?: string },
-    { rejectWithValue }
-  ) => {
-    try {
-      // Check if using mock data
-      if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === "true") {
-        // Simulate API delay
-        await new Promise((resolve) => setTimeout(resolve, 800));
-        const mockInvoiceData = generateMockInvoice(data.customerId, data.jobIds);
-        return mockInvoiceData;
-      }
-      
-      const response = await InvoiceApi.createInvoice(data);
-      return response.data;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to create invoice");
-    }
+export const GetAllInvoicesAction = createAsyncThunk<
+  PageResponse<InvoiceResponse[]>,
+  InvoicePageRequest
+>("GetAllInvoicesAction", async (params) => {
+  try {
+    const response = await getAllInvoice(params);
+    return response.data as PageResponse<InvoiceResponse[]>;
+  } catch (err: any) {
+    throw new Error(err.message);
   }
-);
+});
 
-export const submitInvoice = createAsyncThunk(
-  "invoices/submitInvoice",
-  async (id: number, { rejectWithValue }) => {
-    try {
-      // Check if using mock data
-      if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === "true") {
-        // Simulate API delay
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        return {
-          ...mockInvoice,
-          status: "PENDING" as const,
-          id,
-        };
-      }
-      
-      const response = await InvoiceApi.submitInvoice(id);
-      return response.data;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to submit invoice");
-    }
+export const CreateInvoiceAction = createAsyncThunk<
+  InvoiceResponse,
+  InvoiceRequest
+>("CreateInvoiceAction", async (data: InvoiceRequest) => {
+  try {
+    const response = await createInvoice(data);
+    return response.data as InvoiceResponse;
+  } catch (err: any) {
+    throw new Error(err.message);
   }
-);
+});
 
-export const getAllInvoices = createAsyncThunk(
-  "invoices/getAllInvoices",
-  async (
-    { page, pageSize }: { page: number; pageSize: number },
-    { rejectWithValue }
-  ) => {
-    try {
-      const response = await InvoiceApi.getAllInvoices(page, pageSize);
-      return response.data;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to fetch invoices");
-    }
+export const SendInvoiceAction = createAsyncThunk<
+  string,
+  string
+>("SendInvoiceAction", async (invoiceId: string) => {
+  try {
+    const response = await sendInvoice(invoiceId);
+    return response.data as string;
+  } catch (err: any) {
+    throw new Error(err.message);
   }
-);
+});
+
+export const CancelInvoiceAction = createAsyncThunk<
+  string,
+  string
+>("CancelInvoiceAction", async (invoiceId: string) => {
+  try {
+    const response = await cancelInvoice(invoiceId);
+    return response.data as string;
+  } catch (err: any) {
+    throw new Error(err.message);
+  }
+});
 
 const invoicesSlice = createSlice({
   name: "invoices",
@@ -116,70 +95,96 @@ const invoicesSlice = createSlice({
     clearError: (state) => {
       state.error = null;
     },
+    updateCustomerCreatedInvoice: (state, action) => {
+      const updatedCustomer = action.payload;
+      state.customerJobSummary = state.customerJobSummary.filter(cj => cj.customer.id !== updatedCustomer.id);
+    },
   },
   extraReducers: (builder) => {
     // Fetch unpaid jobs
     builder
-      .addCase(fetchUnpaidJobs.pending, (state) => {
+      .addCase(GetCustomerJobSummaryAction.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchUnpaidJobs.fulfilled, (state, action) => {
+      .addCase(GetCustomerJobSummaryAction.fulfilled, (state, action) => {
         state.loading = false;
-        state.jobsByCustomer = action.payload;
+        state.customerJobSummary = action.payload;
       })
-      .addCase(fetchUnpaidJobs.rejected, (state, action) => {
+      .addCase(GetCustomerJobSummaryAction.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });
-
-    // Create invoice
     builder
-      .addCase(createInvoice.pending, (state) => {
+      .addCase(GetAllInvoicesAction.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(createInvoice.fulfilled, (state, action) => {
+      .addCase(GetAllInvoicesAction.fulfilled, (state, action) => {
         state.loading = false;
-        state.previewInvoice = action.payload;
+        state.invoices = action.payload;
       })
-      .addCase(createInvoice.rejected, (state, action) => {
+      .addCase(GetAllInvoicesAction.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });
-
-    // Submit invoice
     builder
-      .addCase(submitInvoice.pending, (state) => {
+      .addCase(CreateInvoiceAction.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(submitInvoice.fulfilled, (state, action) => {
+      .addCase(CreateInvoiceAction.fulfilled, (state, action) => {
         state.loading = false;
         state.currentInvoice = action.payload;
-        state.previewInvoice = null;
+        if (state.invoices && state.invoices.data) {
+            state.invoices.data.unshift(action.payload);
+            state.invoices.totalElements += 1;
+            // Optionally, you might want to limit the size of the jobs array
+            if (state.invoices.data.length > state.invoices.pageSize) {
+              state.invoices.data.pop();
+            }
+          } else {
+            state.invoices = {
+              data: [action.payload],
+              pageNumber: 1,
+              pageSize: 10,
+              totalElements: 1,
+              totalPages: 1,
+            };
+          }
       })
-      .addCase(submitInvoice.rejected, (state, action) => {
+      .addCase(CreateInvoiceAction.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });
-
-    // Get all invoices
     builder
-      .addCase(getAllInvoices.pending, (state) => {
+      .addCase(SendInvoiceAction.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(getAllInvoices.fulfilled, (state, action) => {
+      .addCase(SendInvoiceAction.fulfilled, (state) => {
         state.loading = false;
-        state.invoices = action.payload.data || [];
+        toast.success("Gửi hoá đơn thành công!");
       })
-      .addCase(getAllInvoices.rejected, (state, action) => {
+      .addCase(SendInvoiceAction.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
+    builder
+      .addCase(CancelInvoiceAction.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(CancelInvoiceAction.fulfilled, (state) => {
+        state.loading = false;
+        toast.success("Hủy hoá đơn thành công!");
+      })
+      .addCase(CancelInvoiceAction.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });
   },
 });
 
-export const { setPreviewInvoice, clearPreviewInvoice, clearError } = invoicesSlice.actions;
+export const { setPreviewInvoice, clearPreviewInvoice, clearError, updateCustomerCreatedInvoice } = invoicesSlice.actions;
 export default invoicesSlice.reducer;

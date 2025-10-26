@@ -99,6 +99,7 @@ export default function EmployeesPage() {
         email: employee.email || "",
         fullName: employee.fullName || "",
         phoneNumber: employee.phoneNumber || "",
+        chatId: employee.chatId || "",
         dateOfBirth: employee.dateOfBirth || new Date(),
         isActive: employee.isActive || true,
         role: employee.role || "EMPLOYEE"
@@ -111,6 +112,7 @@ export default function EmployeesPage() {
         fullName: employee.fullName || "",
         password: employee.password || "123456",
         phoneNumber: employee.phoneNumber || "",
+        chatId: employee.chatId || "",
         dateOfBirth: employee.dateOfBirth || new Date(),
         isActive: employee.isActive || true,
         role: employee.role || "EMPLOYEE"

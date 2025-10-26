@@ -132,26 +132,30 @@ export function FilterBar({ pagination, onPageChange }: FilterBarProps) {
         </div>
 
         {/* Payment Status */}
-        <div className="space-y-2">
-          <Label htmlFor="paymentStatus" className="text-sm font-medium">
-            Tình Trạng Thanh Toán
-          </Label>
-          <Select
-            value={filters.paymentStatus}
-            onValueChange={(value) =>
-              handleChange("paymentStatus", value as PaymentStatus | "all")
-            }
-          >
-            <SelectTrigger id="paymentStatus">
-              <SelectValue placeholder="Tất cả thanh toán" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="UNPAID">Chưa thanh toán</SelectItem>
-              <SelectItem value="INVOICE_SENT">Đã gửi hóa đơn</SelectItem>
-              <SelectItem value="PAID">Đã thanh toán</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+
+        {roleName === 'MANAGER' && (
+          <div className="space-y-2">
+            <Label htmlFor="paymentStatus" className="text-sm font-medium">
+              Tình Trạng Thanh Toán
+            </Label>
+            <Select
+              value={filters.paymentStatus}
+              onValueChange={(value) =>
+                handleChange("paymentStatus", value as PaymentStatus | "all")
+              }
+            >
+              <SelectTrigger id="paymentStatus">
+                <SelectValue placeholder="Tất cả thanh toán" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="UNPAID">Chưa thanh toán</SelectItem>
+                <SelectItem value="INVOICE_SENT">Đã gửi hóa đơn</SelectItem>
+                <SelectItem value="PAID">Đã thanh toán</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+        
 
         {/* Search */}
         <div className="space-y-2">

@@ -1,3 +1,5 @@
+import { CustomerInfo, JobResponse } from "./jobs";
+
 export type InvoiceStatus = "DRAFT" | "PENDING" | "PAID" | "CANCELLED"
 
 export interface InvoiceItem {
@@ -26,12 +28,18 @@ export interface Invoice {
 }
 
 export interface InvoiceRequest {
-  jobIds: number[];
-  customerId: number;
+  jobs: JobResponse[];
+  customerInfo: CustomerInfo;
   notes?: string;
 }
 
-export interface InvoiceResponse {
+export interface InvoicePageRequest {
+  pageNumber: number;
+  pageSize: number;
+  invoiceStatus?: InvoiceStatus | "ALL";
+}
+
+export interface InvoiceResponseDetail {
   id: number;
   invoiceNumber: string;
   customerId: number;
@@ -49,6 +57,22 @@ export interface InvoiceResponse {
   notes?: string;
 }
 
+export interface InvoiceResponse {
+  id: number;
+  invoiceId: string;
+  status: string;
+  dueAmount: Record<string, any>;
+  amount: Record<string, any>;
+  configuration: Record<string, any>;
+  items: Record<string, any>[];
+  primaryRecipients: Record<string, any>[];
+  invoicer: Record<string, any>;
+  detail: Record<string, any>;
+  createdAt: string;
+  createdBy: string;
+}
+
+
 // For grouping jobs by customer
 export interface JobsByCustomer {
   customerId: number;
@@ -64,4 +88,11 @@ export interface JobsByCustomer {
     paymentStatus: "UNPAID" | "PARTIAL" | "PAID";
   }[];
   totalAmount: number;
+}
+
+
+export interface CustomerJobSummary{
+  customer: CustomerInfo;
+  totalAmount: number;
+  jobs: JobResponse[];
 }

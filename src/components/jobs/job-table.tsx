@@ -82,6 +82,8 @@ const paymentStatusColors = {
   INVOICE_SENT:
     "bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/20",
   PAID: "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20",
+  INVOICE_DRAFT: "bg-gray-500/10 text-gray-700 dark:text-gray-400 border-gray-500/20",
+  CANCELLED: "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20",
 };
 
 const paymentStatusOptions = [
@@ -105,6 +107,7 @@ const columnLabels: Record<string, string> = {
   fileCount: "Số Lượng File",
   filePrice: "Giá File",
   payPerFile: "Trả/File",
+  payPerFileQa: "Trả/File QA",
   totalPayPerFile: "Tổng Trả",
   totalPayPerFileQa: "Tổng Trả QA",
   jobStatus: "Tình Trạng Công Việc",
@@ -551,6 +554,9 @@ export function JobTable({
 
       case "payPerFile":
         return <span>{formatCurrencyVND(job.payPerFile)}</span>;
+
+      case "payPerFileQa":
+        return <span>{formatCurrencyVND(job.payPerFileQa)}</span>;
 
       case "totalPayPerFile":
         return (

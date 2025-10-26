@@ -53,6 +53,7 @@ export function EmployeeTable({
             <TableHead>Họ Tên</TableHead>
             <TableHead>Ngày Sinh</TableHead>
             <TableHead>Số Điện Thoại</TableHead>
+            <TableHead>Chat ID</TableHead>
             <TableHead>Vai Trò</TableHead>
             <TableHead>Trạng Thái</TableHead>
             <TableHead className="text-right">Hành Động</TableHead>
@@ -73,6 +74,7 @@ export function EmployeeTable({
                 <TableCell>{employee.fullName}</TableCell>
                 <TableCell>{formatDate(employee.dateOfBirth)}</TableCell>
                 <TableCell>{employee.phoneNumber}</TableCell>
+                <TableCell>{employee.chatId}</TableCell>
                 <TableCell>
                   <Badge variant="outline">{employee.role.name}</Badge>
                 </TableCell>
