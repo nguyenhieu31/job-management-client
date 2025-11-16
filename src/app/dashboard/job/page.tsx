@@ -52,6 +52,7 @@ export default function JobsPage() {
     const role = roleName?.toLowerCase();
     if (role === "manager" || role === "admin") return "manager";
     if (role === "qa") return "qa";
+    if (role === "special") return "special";
     return "employee";
   };
 
@@ -123,6 +124,10 @@ export default function JobsPage() {
       case "submit-review":
         // QA submits review: in-review -> reviewed
         if (job.jobStatus === "IN_REVIEW") {
+          if(job.qaOutputNumber === null){
+            toast.error("Vui lòng nhập số liệu đầu ra QA trước khi gửi duyệt.");
+            return;
+          }
           newStatus = "REVIEWED";
         }
         break;
@@ -179,7 +184,7 @@ export default function JobsPage() {
 
   // Memoize filtered employee lists to avoid recreating on every render
   const employeeList = useMemo(() => 
-    employees?.data.filter((e) => e.role.name.toLowerCase() === "employee") || [], 
+    employees?.data.filter((e) => e.role.name.toLowerCase() === "employee" || e.role.name.toLowerCase() === "special") || [], 
     [employees]
   );
 
@@ -216,7 +221,7 @@ export default function JobsPage() {
       dispatch(GetAllJobsAction({pageNumber: pagination.currentPage - 1, pageSize: pagination.pageSize,}));
     }else if(roleName === "QA"){
       dispatch(GetAllJobsByQualifiedAssigneeAction({pageNumber: pagination.currentPage - 1, pageSize: pagination.pageSize, email: email || ""}));
-    }else if(roleName === "EMPLOYEE"){
+    }else if(roleName === "EMPLOYEE" || roleName === "SPECIAL"){
       dispatch(GetAllJobsByAssigneeAction({pageNumber: pagination.currentPage - 1, pageSize: pagination.pageSize, email: email || ""}));
     }
   }, [pagination.currentPage, pagination.pageSize, roleName, email, dispatch]);
@@ -270,6 +275,8 @@ export default function JobsPage() {
       <FilterBar
         pagination={pagination}
         onPageChange={handlePageChange}
+        employees={employeeList}
+        customers={customerList}
       />
 
       {/* Table */}

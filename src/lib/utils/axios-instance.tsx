@@ -1,6 +1,7 @@
 import { LogoutAction } from '@/store/slice/authentication/Authentication';
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { toast } from 'react-toastify';
 
 export const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8086/api/v1';
 
@@ -52,6 +53,7 @@ axiosInstance.interceptors.response.use(
     },
     async (error) => {
         const originalRequest = error.config;
+        console.log("Response error:", error);
         if (error.response.status === 403 && !originalRequest._retry) {
             originalRequest._retry = true;
 
@@ -78,6 +80,15 @@ axiosInstance.interceptors.response.use(
                 error.response.message = 'Vui lòng đăng nhập lại';
             }
             error.response.message = "Phiên đăng nhập hết hạn, vui lòng đăng nhập lại";
+            return Promise.reject(error.response);
+        }
+
+        if(error.response.status === 400){
+            if(error.response.data && error.response.data.message){
+                toast.error(error.response.data.message);
+            }else{
+                toast.error("Yêu cầu không hợp lệ");
+            }
             return Promise.reject(error.response);
         }
 

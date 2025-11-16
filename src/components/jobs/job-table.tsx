@@ -20,7 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Eye, Trash2 } from "lucide-react";
+import { Check, Eye, Trash2 } from "lucide-react";
 import { useState, useMemo, useCallback, useRef } from "react";
 import type {
   UserRole,
@@ -39,8 +39,11 @@ import SearchableDropdown from "../ui/search-able-dropdown";
 import { useAppDispatch, useAppSelector } from "@/store/store";
 import {
   DeleteJobByIdAction,
+  DeleteMultipleJobsAction,
   GetAllJobsAction,
   UpdateGridViewJobAction,
+  UpdatePaymentEmployeeMultipleJobsAction,
+  UpdatePaymentMultipleJobsAction,
 } from "@/store/slice/jobs/Jobs";
 import { toast } from "react-toastify";
 
@@ -82,7 +85,8 @@ const paymentStatusColors = {
   INVOICE_SENT:
     "bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/20",
   PAID: "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20",
-  INVOICE_DRAFT: "bg-gray-500/10 text-gray-700 dark:text-gray-400 border-gray-500/20",
+  INVOICE_DRAFT:
+    "bg-gray-500/10 text-gray-700 dark:text-gray-400 border-gray-500/20",
   CANCELLED: "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20",
 };
 
@@ -91,6 +95,16 @@ const paymentStatusOptions = [
   { value: "INVOICE_SENT", label: "Đã gửi hóa đơn" },
   { value: "PAID", label: "Đã thanh toán" },
 ];
+
+const paymentEmployeeOptions = [
+  { value: "UNPAID", label: "Chưa thanh toán" },
+  { value: "PAID", label: "Đã thanh toán" },
+];
+
+const paymentEmployeeColors = {
+  UNPAID: "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20",
+  PAID: "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20",
+};
 
 const columnLabels: Record<string, string> = {
   code: "Mã Công Việc",
@@ -112,8 +126,10 @@ const columnLabels: Record<string, string> = {
   totalPayPerFileQa: "Tổng Trả QA",
   jobStatus: "Tình Trạng Công Việc",
   paymentStatus: "Tình Trạng Thanh Toán",
+  paymentEmployee: "Thanh Toán NV",
   note: "Ghi Chú",
   qaNote: "Ghi Chú QA",
+  employeeNote: "Thuê ngoài",
   assignedEmployee: "Người Được Giao",
   qa: "QA",
   actions: "Hành Động",
@@ -142,10 +158,19 @@ export function JobTable({
   const dispatch = useAppDispatch();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+  const [bulkMarkAsPaidDialogOpen, setBulkMarkAsPaidDialogOpen] = useState(false);
   const [jobToDelete, setJobToDelete] = useState<number | null>(null);
   const [selectedJobIds, setSelectedJobIds] = useState<Set<number>>(new Set());
+  const [totalSelectedPrice, setTotalSelectedPrice] = useState<number>(0);
+  const [totalSelectedPriceCustomer, setTotalSelectedPriceCustomer] =
+    useState<number>(0);
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
   const [previewJob, setPreviewJob] = useState<JobResponse | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editField, setEditField] = useState<"employeeNote" | null
+  >(null);
+  const [editVideoId, setEditVideoId] = useState<number | null>(null);
+  const [editValue, setEditValue] = useState<string>("");
   const { roleName } = useAppSelector((state) => state.authenticate);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [updateTrigger, setUpdateTrigger] = useState(0);
@@ -163,6 +188,11 @@ export function JobTable({
     // Employee and QA cannot edit job status via dropdown anymore
     // Only Manager can edit via dropdown
     return userRole === "manager";
+  };
+
+  // Check if user can edit employeeNote and paymentEmployee (manager and special)
+  const canEditSpecialFields = (job: JobResponse) => {
+    return (userRole === "manager" || userRole === "special") && job.jobStatus !== "PENDING";
   };
 
   // Handle field change (store in pending changes instead of immediate save)
@@ -203,8 +233,22 @@ export function JobTable({
     async (jobId: number) => {
       const changes = pendingChangesRef.current[jobId];
       if (changes) {
+        const job = jobs.find((j) => j.id === jobId);
         const assigneeId = changes.assignee?.id;
         const qualifiedAssigneeId = changes.qualifiedAssignee?.id;
+
+        // Check if user cleared assignee or QA fields
+        const isDeleteAssignee = !!(
+          job?.assignee?.id &&
+          "assignee" in changes &&
+          !assigneeId
+        );
+        const isDeleteQualifiedAssignee = !!(
+          job?.qualifiedAssignee?.id &&
+          "qualifiedAssignee" in changes &&
+          !qualifiedAssigneeId
+        );
+
         const payload = {
           jobId: jobId,
           assigneeId: assigneeId
@@ -219,27 +263,31 @@ export function JobTable({
             ? Number.parseInt(qualifiedAssigneeId.toString())
             : null,
           paymentStatus: changes.paymentStatus || null,
-          doneLink: changes.doneLink || null,
+          paymentEmployee: changes.paymentEmployee || null,
+          doneLink: changes.doneLink || "",
+          employeeNote: changes.employeeNote || null,
+          isDeleteAssignee: isDeleteAssignee || undefined,
+          isDeleteQualifiedAssignee: isDeleteQualifiedAssignee || undefined,
         };
         // Dispatch API call
         const res = await dispatch(UpdateGridViewJobAction(payload));
-        if(res.meta.requestStatus === "fulfilled"){
-            // Clear pending changes AFTER API succeeds
-            delete pendingChangesRef.current[jobId];
-            // Trigger re-render to show updated values from API
-            setUpdateTrigger((prev) => prev + 1);
-            // Force re-render action cell
-            if (actionCellRefs.current[jobId]) {
-              actionCellRefs.current[jobId].forceUpdate?.();
-            }
-            toast.success("Cập nhật công việc thành công");
-        }else{
+        if (res.meta.requestStatus === "fulfilled") {
+          // Clear pending changes AFTER API succeeds
+          delete pendingChangesRef.current[jobId];
+          // Trigger re-render to show updated values from API
+          setUpdateTrigger((prev) => prev + 1);
+          // Force re-render action cell
+          if (actionCellRefs.current[jobId]) {
+            actionCellRefs.current[jobId].forceUpdate?.();
+          }
+          // toast.success("Cập nhật công việc thành công");
+        } else {
           toast.error("Lỗi khi cập nhật công việc");
           console.error("res", res);
         }
       }
     },
-    [dispatch]
+    [dispatch, jobs]
   );
 
   // Cancel pending changes
@@ -278,13 +326,48 @@ export function JobTable({
       newSelected.add(jobId);
     }
     setSelectedJobIds(newSelected);
+    // Update total selected price
+    const total = Array.from(newSelected).reduce((sum, id) => {
+      const job = jobs.find((j) => j.id === id);
+      if(userRole !== "manager") {
+        if(userRole !== "qa"){
+          return sum + (job?.payPerFile || 0) * (job?.outputNumber || 0);
+        }else{
+          return sum + (job?.payPerFileQa || 0) * (job?.qaOutputNumber || 0);
+        }
+      }
+      return sum + (job?.payPerFile || 0) * (job?.outputNumber || 0) + (job?.payPerFileQa || 0) * (job?.qaOutputNumber || 0);
+    }, 0);
+    setTotalSelectedPrice(total);
+    const totalCustomer = Array.from(newSelected).reduce((sum, id) => {
+      const job = jobs.find((j) => j.id === id);
+      return sum + (job?.filePrice || 0) * (job?.outputNumber || 0);
+    }, 0);
+    setTotalSelectedPriceCustomer(totalCustomer);
   };
 
   const handleSelectAll = () => {
     if (selectedJobIds.size === jobs.length) {
       setSelectedJobIds(new Set());
+      setTotalSelectedPrice(0);
+      setTotalSelectedPriceCustomer(0);
     } else {
       setSelectedJobIds(new Set(jobs.map((j) => j.id)));
+      const total = jobs.reduce((sum, job) => {
+        if(userRole !== "manager") {
+          if(userRole !== "qa"){
+            return sum + (job?.payPerFile || 0) * (job?.outputNumber || 0);
+          }else{
+            return sum + (job?.payPerFileQa || 0) * (job?.qaOutputNumber || 0);
+          }
+        }
+        return sum + (job?.payPerFile || 0) * (job?.outputNumber || 0) + (job?.payPerFileQa || 0) * (job?.qaOutputNumber || 0);
+      }, 0);
+      setTotalSelectedPrice(total);
+      const totalCustomer = jobs.reduce((sum, job) => {
+        return sum + (job.filePrice || 0) * (job.outputNumber || 0);
+      }, 0);
+      setTotalSelectedPriceCustomer(totalCustomer);
     }
   };
 
@@ -294,20 +377,65 @@ export function JobTable({
     }
   };
 
-  const handleConfirmBulkDelete = async () => {
-    for (const jobId of selectedJobIds) {
-      await dispatch(DeleteJobByIdAction({ id: jobId }));
+  const handleBulkMarkAsPaidClick = () => {
+    if (selectedJobIds.size > 0) {
+      setBulkMarkAsPaidDialogOpen(true);
     }
+  };
+
+  // const handleConfirmBulkDelete = async () => {
+  //   for (const jobId of selectedJobIds) {
+  //     await dispatch(DeleteJobByIdAction({ id: jobId }));
+  //   }
+  //   if (roleName === "MANAGER") {
+  //     await dispatch(
+  //       GetAllJobsAction({
+  //         pageNumber: 0,
+  //         pageSize: 10,
+  //       })
+  //     );
+  //   }
+  //   setBulkDeleteDialogOpen(false);
+  //   setSelectedJobIds(new Set());
+  //   setTotalSelectedPrice(0);
+  //   setTotalSelectedPriceCustomer(0);
+  // };
+
+  const handleConfirmBulkDeleteMultiple = async () => {
     if (roleName === "MANAGER") {
-      await dispatch(
-        GetAllJobsAction({
+      await dispatch(DeleteMultipleJobsAction({ ids: Array.from(selectedJobIds) }));
+      await dispatch(GetAllJobsAction({
           pageNumber: 0,
           pageSize: 10,
-        })
-      );
+        }));
     }
     setBulkDeleteDialogOpen(false);
     setSelectedJobIds(new Set());
+    setTotalSelectedPrice(0);
+  };
+
+  const handleConfirmBulkMarkAsPaid = async () => {
+    if (roleName === "SPECIAL") {
+      await Promise.all([
+        dispatch(UpdatePaymentEmployeeMultipleJobsAction({ ids: Array.from(selectedJobIds) })),
+        dispatch(GetAllJobsAction({
+          pageNumber: 0,
+          pageSize: 10,
+        }))
+      ])
+    }else if(roleName === "MANAGER"){
+      await Promise.all([
+        dispatch(UpdatePaymentMultipleJobsAction({ ids: Array.from(selectedJobIds) })),
+        dispatch(GetAllJobsAction({
+          pageNumber: 0,
+          pageSize: 10,
+        }))
+      ])
+    }
+    setBulkMarkAsPaidDialogOpen(false);
+    setSelectedJobIds(new Set());
+    setTotalSelectedPrice(0);
+    setTotalSelectedPriceCustomer(0);
   };
 
   const handleConfirmDelete = async () => {
@@ -329,9 +457,9 @@ export function JobTable({
 
   const handlePreviewClick = (job: JobResponse) => {
     if (
-      (userRole === "employee" && job.jobStatus === "PENDING") ||
+      ((userRole === "employee" || userRole === "special") && job.jobStatus === "PENDING") ||
       (userRole === "qa" && job.jobStatus === "DONE")
-    ){
+    ) {
       toast.info("Nhận job này để xem chi tiết");
       return;
     }
@@ -380,6 +508,51 @@ export function JobTable({
     },
     [handleFieldChange]
   );
+
+  const createEmployeeChangeHandler = useCallback(
+    (jobId: number) => (value: any) => {
+      if (value === null) {
+        // User cleared the field - set to null to indicate deletion
+        handleFieldChange(jobId, "assignee", null);
+        return;
+      }
+      const employee = employees?.find((e) => e.id === value.id);
+      handleFieldChange(jobId, "assignee", employee);
+    },
+    [handleFieldChange, employees]
+  );
+
+  const createQaChangeHandler = useCallback(
+    (jobId: number) => (value: any) => {
+      if (value === null) {
+        // User cleared the field - set to null to indicate deletion
+        handleFieldChange(jobId, "qualifiedAssignee", null);
+        return;
+      }
+      const qa = qaList?.find((q) => q.id === value.id);
+      handleFieldChange(jobId, "qualifiedAssignee", qa);
+    },
+    [handleFieldChange, qaList]
+  );
+
+  // Handle saving from edit dialog
+  const handleSaveEditDialog = () => {
+    if (editVideoId !== null && editField !== null) {
+      handleFieldChange(editVideoId, editField, editValue);
+      setEditDialogOpen(false);
+      setEditVideoId(null);
+      setEditField(null);
+      setEditValue("");
+    }
+  };
+
+  // Handle cancel edit dialog
+  const handleCancelEditDialog = () => {
+    setEditDialogOpen(false);
+    setEditVideoId(null);
+    setEditField(null);
+    setEditValue("");
+  };
 
   const renderCell = (job: JobResponse, column: string) => {
     // console.log("Rendering cell for job", job.id, "column", column);
@@ -466,7 +639,7 @@ export function JobTable({
 
       case "linkDone":
         // EMPLOYEE can edit Link Done when job is IN_PROGRESS
-        if (userRole === "employee" && job.jobStatus === "IN_PROGRESS") {
+        if ((userRole === "employee" || userRole === "special") && job.jobStatus === "IN_PROGRESS") {
           const currentDoneLink = getCurrentValue(job, "doneLink") as string;
           return (
             <input
@@ -508,7 +681,7 @@ export function JobTable({
 
       case "outputCount":
         // Employee can edit Output Count, Manager and QA cannot
-        if (userRole === "employee" && job.jobStatus === "IN_PROGRESS") {
+        if ((userRole === "employee" || userRole === "special") && job.jobStatus === "IN_PROGRESS") {
           return (
             <EditableInput
               value={getCurrentValue(job, "outputNumber") as number}
@@ -519,7 +692,7 @@ export function JobTable({
         }
         // Manager and QA: read-only
         return <span>{job.outputNumber}</span>;
-      
+
       case "qaOutputNumber":
         // QA can edit Output Count, Manager and Employee cannot
         if (userRole === "qa" && job.jobStatus === "IN_REVIEW") {
@@ -610,43 +783,121 @@ export function JobTable({
           </Badge>
         );
 
+      case "paymentEmployee":
+        if (canEditSpecialFields(job)) {
+          const currentPaymentEmployee = getCurrentValue(
+            job,
+            "paymentEmployee"
+          ) as string;
+          // Get color class based on current value
+          const colorClass = currentPaymentEmployee === "PAID" 
+            ? "bg-green-50 dark:bg-green-950 border-green-300 dark:border-green-700" 
+            : "bg-red-50 dark:bg-red-950 border-red-300 dark:border-red-700";
+          return (
+            <div className={`rounded-md ${colorClass} p-1`}>
+              <EditableSelect
+                value={currentPaymentEmployee}
+                options={paymentEmployeeOptions}
+                onSave={(value) =>
+                  handleFieldChange(job.id, "paymentEmployee", value)
+                }
+                className="w-[100%]"
+              />
+            </div>
+          );
+        }
+        return (
+          <Badge
+            variant="outline"
+            className={paymentEmployeeColors[job.paymentEmployee]}
+          >
+            {
+              paymentEmployeeOptions.find(
+                (o) => o.value === job.paymentEmployee
+              )?.label
+            }
+          </Badge>
+        );
+
       case "note":
         return (
-          <span className="max-w-[400px] truncate block" title={job.note}>
+          <span
+            className="max-w-[400px] truncate block cursor-pointer"
+            title={job.note}
+            onClick={() => handlePreviewClick(job)}
+          >
             {job.note || "—"}
           </span>
         );
-        
+
       case "qaNote":
         return (
-          <span className="max-w-[400px] truncate block" title={job.qaNote ? job.qaNote : ""}>
+          <span
+            className="max-w-[400px] truncate block cursor-pointer"
+            title={job.qaNote ? job.qaNote : ""}
+            onClick={() => handlePreviewClick(job)}
+          >
             {job.qaNote || "—"}
+          </span>
+        );
+
+      case "employeeNote":
+        const currentEmployeeNote = getCurrentValue(
+          job,
+          "employeeNote"
+        ) as string;
+        if (canEditSpecialFields(job)) {
+          return (
+            <div
+              className="max-w-[400px] truncate cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1 rounded"
+              onClick={() => {
+                setEditVideoId(job.id);
+                setEditField("employeeNote");
+                setEditValue(currentEmployeeNote || "");
+                setEditDialogOpen(true);
+              }}
+              title="Click để chỉnh sửa"
+            >
+              {currentEmployeeNote || "Nhấp để nhập..."}
+            </div>
+          );
+        }
+        return (
+          <span
+            className="max-w-[400px] truncate block"
+            title={currentEmployeeNote || ""}
+          >
+            {currentEmployeeNote || "—"}
           </span>
         );
 
       case "assignedEmployee":
         if (canEditField() && employees && employees.length > 0) {
           const currentAssignee = getCurrentValue(job, "assignee") as any;
-          // Get employee id from pending changes or from original job
-          const employeeId = currentAssignee?.id || job.assignee?.id;
 
           return (
-            <EditableSelect
-              value={employeeId?.toString() || ""}
+            <SearchableDropdown
               options={employees.map((e) => ({
-                value: e.id.toString(),
-                label: e.fullName,
+                id: e.id,
+                name: e.fullName,
               }))}
-              onSave={(value) => {
-                // Find the full employee object and pass it
-                const employee = employees.find(
-                  (e) => e.id.toString() === value
-                );
-                if (employee) {
-                  handleFieldChange(job.id, "assignee", employee);
-                }
-              }}
+              placeholder="Tìm kiếm nhân viên..."
+              onChange={createEmployeeChangeHandler(job.id)}
+              defaultValue={
+                currentAssignee
+                  ? {
+                      id: currentAssignee.id,
+                      name: currentAssignee.fullName,
+                    }
+                  : job.assignee
+                  ? {
+                      id: job.assignee.id,
+                      name: job.assignee.fullName,
+                    }
+                  : null
+              }
               className="w-[150px]"
+              type="text"
             />
           );
         }
@@ -661,24 +912,30 @@ export function JobTable({
       case "qa":
         if (canEditField() && qaList && qaList.length > 0) {
           const currentQA = getCurrentValue(job, "qualifiedAssignee") as any;
-          // Get QA id from pending changes or from original job
-          const qaId = currentQA?.id || job.qualifiedAssignee?.id;
 
           return (
-            <EditableSelect
-              value={qaId?.toString() || ""}
+            <SearchableDropdown
               options={qaList.map((q) => ({
-                value: q.id.toString(),
-                label: q.fullName,
+                id: q.id,
+                name: q.fullName,
               }))}
-              onSave={(value) => {
-                // Find the full QA object and pass it
-                const qa = qaList.find((q) => q.id.toString() === value);
-                if (qa) {
-                  handleFieldChange(job.id, "qualifiedAssignee", qa);
-                }
-              }}
+              placeholder="Tìm kiếm QA..."
+              onChange={createQaChangeHandler(job.id)}
+              defaultValue={
+                currentQA
+                  ? {
+                      id: currentQA.id,
+                      name: currentQA.fullName,
+                    }
+                  : job.qualifiedAssignee
+                  ? {
+                      id: job.qualifiedAssignee.id,
+                      name: job.qualifiedAssignee.fullName,
+                    }
+                  : null
+              }
               className="w-[150px]"
+              type="text"
             />
           );
         }
@@ -727,20 +984,42 @@ export function JobTable({
 
   return (
     <>
-      {userRole === "manager" && selectedJobIds.size > 0 && (
+      {selectedJobIds.size > 0 && (
         <div className="mb-4 flex items-center justify-between bg-blue-50 dark:bg-blue-950 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
           <span className="text-sm font-medium">
             Đã chọn {selectedJobIds.size} công việc
           </span>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={handleBulkDeleteClick}
-            className="gap-2"
-          >
-            <Trash2 className="h-4 w-4" />
-            Xóa được chọn
-          </Button>
+          {userRole === "manager" && (
+            <span className="text-sm font-medium">
+              Tổng tiền khách hàng: {formatCurrency(totalSelectedPriceCustomer)}
+            </span>
+          )}
+          
+          <span className="text-sm font-medium">
+            Tổng tiền: {formatCurrencyVND(totalSelectedPrice)}
+          </span>
+          {userRole === "manager" && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleBulkDeleteClick}
+              className="gap-2"
+            >
+              <Trash2 className="h-4 w-4" />
+              Xóa được chọn
+            </Button>
+          )}
+          {(userRole === "special" || userRole === "manager") && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleBulkMarkAsPaidClick}
+              className="gap-2"
+            >
+              <Check className="h-4 w-4" />
+              Đánh dấu đã thanh toán
+            </Button>
+          )}
         </div>
       )}
 
@@ -748,22 +1027,26 @@ export function JobTable({
         <Table>
           <TableHeader>
             <TableRow>
-              {userRole === "manager" && (
-                <TableHead className="w-12 text-center border-r">
+              <TableHead className="w-12 text-center border-r">
                   <input
                     type="checkbox"
-                    checked={selectedJobIds.size === jobs.length && jobs.length > 0}
+                    checked={
+                      selectedJobIds.size === jobs.length && jobs.length > 0
+                    }
                     onChange={handleSelectAll}
                     className="w-4 h-4 cursor-pointer"
                     ref={(el) => {
                       if (el) {
-                        el.indeterminate = selectedJobIds.size > 0 && selectedJobIds.size < jobs.length;
+                        el.indeterminate =
+                          selectedJobIds.size > 0 &&
+                          selectedJobIds.size < jobs.length;
                       }
                     }}
                   />
                 </TableHead>
-              )}
-              <TableHead className="w-12 text-center border-r font-bold">STT</TableHead>
+              <TableHead className="w-12 text-center border-r font-bold">
+                STT
+              </TableHead>
               {visibleColumns.map((column) => (
                 <TableHead
                   key={column}
@@ -779,9 +1062,15 @@ export function JobTable({
           </TableHeader>
           <TableBody>
             {jobs.map((job, index) => (
-              <TableRow key={job.id} className={userRole === "manager" && selectedJobIds.has(job.id) ? "bg-blue-50 dark:bg-blue-950" : ""}>
-                {userRole === "manager" && (
-                  <TableCell className="w-12 text-center border-r">
+              <TableRow
+                key={job.id}
+                className={
+                  userRole === "manager" && selectedJobIds.has(job.id)
+                    ? "bg-blue-50 dark:bg-blue-950"
+                    : ""
+                }
+              >
+                 <TableCell className="w-12 text-center border-r">
                     <input
                       type="checkbox"
                       checked={selectedJobIds.has(job.id)}
@@ -789,8 +1078,9 @@ export function JobTable({
                       className="w-4 h-4 cursor-pointer"
                     />
                   </TableCell>
-                )}
-                <TableCell className="w-12 text-center border-r font-medium">{index + 1}</TableCell>
+                <TableCell className="w-12 text-center border-r font-medium">
+                  {index + 1}
+                </TableCell>
                 {visibleColumns.map((column) => (
                   <TableCell
                     key={`${job.id}-${column}`}
@@ -826,21 +1116,82 @@ export function JobTable({
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+      <AlertDialog
+        open={bulkDeleteDialogOpen}
+        onOpenChange={setBulkDeleteDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Xác Nhận Xóa Hàng Loạt</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn sắp xóa {selectedJobIds.size} công việc. Hành động này không thể hoàn tác.
+              Bạn sắp xóa {selectedJobIds.size} công việc. Hành động này không
+              thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Hủy</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleConfirmBulkDelete}
+              onClick={handleConfirmBulkDeleteMultiple}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Xóa Tất Cả
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={bulkMarkAsPaidDialogOpen}
+        onOpenChange={setBulkMarkAsPaidDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác Nhận Đánh Dấu Đã Thanh Toán Hàng Loạt</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn sắp đánh dấu {selectedJobIds.size} công việc là đã thanh toán. Hành động này không
+              thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmBulkMarkAsPaid}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Đánh Dấu Tất Cả
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Edit Dialog for CaseName and Note */}
+      <AlertDialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <AlertDialogContent className="max-w-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Chỉnh Sửa thuê ngoài</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vui lòng nhập thông tin bên dưới và nhấn Lưu để cập nhật.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4">
+            <input
+              type="text"
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              placeholder="Nhập thuê ngoài..."
+              className="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              autoFocus
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelEditDialog}>
+              Hủy
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleSaveEditDialog}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              Lưu
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

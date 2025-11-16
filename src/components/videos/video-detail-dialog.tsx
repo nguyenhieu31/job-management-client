@@ -9,8 +9,8 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { JobResponse } from "@/types/jobs";
-import type { UserRole } from "@/types/jobs";
+import { VideoResponse } from "@/types/videos";
+import type { UserRole } from "@/types/videos";
 import { formatCurrency, formatCurrencyVND, formatDate } from "@/lib/utils";
 import { useAppSelector } from "@/store/store";
 import {
@@ -24,13 +24,13 @@ import {
   CheckCircle,
 } from "lucide-react";
 
-interface JobDetailDialogProps {
+interface VideoDetailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  job: JobResponse | null;
+  video: VideoResponse | null;
 }
 
-const jobStatusColors: Record<string, string> = {
+const videoStatusColors: Record<string, string> = {
   PENDING:
     "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/20",
   IN_PROGRESS:
@@ -44,7 +44,7 @@ const jobStatusColors: Record<string, string> = {
     "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20",
 };
 
-const jobStatusLabels: Record<string, string> = {
+const videoStatusLabels: Record<string, string> = {
   PENDING: "Đang chờ",
   IN_PROGRESS: "Đang tiến hành",
   DONE: "Đã hoàn thành",
@@ -70,11 +70,11 @@ const paymentStatusLabels: Record<string, string> = {
   CANCELLED: "Đã hủy",
 };
 
-export function JobDetailDialog({
+export function VideoDetailDialog({
   open,
   onOpenChange,
-  job,
-}: JobDetailDialogProps) {
+  video,
+}: VideoDetailDialogProps) {
   const { roleName } = useAppSelector((state) => state.authenticate);
   
   // Map role to UserRole type
@@ -87,7 +87,7 @@ export function JobDetailDialog({
 
   const userRole = getUserRole();
   
-  if (!job) return null;
+  if (!video) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -97,7 +97,7 @@ export function JobDetailDialog({
       >
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">
-            Chi Tiết Công Việc #{job.code}
+            Chi Tiết Công Việc #{video.code}
           </DialogTitle>
           <DialogDescription>
             Thông tin chi tiết về công việc và trạng thái hiện tại
@@ -107,15 +107,15 @@ export function JobDetailDialog({
         <div className="space-y-6 mt-4">
           {/* Status Badges */}
           <div className="flex gap-3 flex-wrap">
-            <Badge variant="outline" className={jobStatusColors[job.jobStatus]}>
-              {jobStatusLabels[job.jobStatus]}
+            <Badge variant="outline" className={videoStatusColors[video.jobStatus]}>
+              {videoStatusLabels[video.jobStatus]}
             </Badge>
             {userRole === "manager" && (
               <Badge
                 variant="outline"
-                className={paymentStatusColors[job.paymentStatus]}
+                className={paymentStatusColors[video.paymentStatus]}
               >
-                {paymentStatusLabels[job.paymentStatus]}
+                {paymentStatusLabels[video.paymentStatus]}
               </Badge>
             )}
           </div>
@@ -135,7 +135,7 @@ export function JobDetailDialog({
                   <label className="text-sm text-muted-foreground">
                     Tên Job
                   </label>
-                  <p className="font-medium">{job.caseName}</p>
+                  <p className="font-medium">{video.caseName}</p>
                 </div>
 
                 <div>
@@ -144,7 +144,7 @@ export function JobDetailDialog({
                     Ngày Tạo
                   </label>
                   <p className="font-medium">
-                    {formatDate(job.createdAt.toString())}
+                    {formatDate(video.createdAt.toString())}
                   </p>
                 </div>
 
@@ -154,7 +154,7 @@ export function JobDetailDialog({
                     Ngày Cập Nhật
                   </label>
                   <p className="font-medium">
-                    {formatDate(job.updatedAt.toString())}
+                    {formatDate(video.updatedAt.toString())}
                   </p>
                 </div> */}
               </div>
@@ -173,27 +173,27 @@ export function JobDetailDialog({
                     <label className="text-sm text-muted-foreground">
                       Tên Khách Hàng
                     </label>
-                    <p className="font-medium">{job.customer.name}</p>
+                    <p className="font-medium">{video.customer.name}</p>
                   </div>
 
                   <div>
                     <label className="text-sm text-muted-foreground">Email</label>
-                    <p className="font-medium">{job.customer.email}</p>
+                    <p className="font-medium">{video.customer.email}</p>
                   </div>
 
                   <div>
                     <label className="text-sm text-muted-foreground">
                       Số Điện Thoại
                     </label>
-                    <p className="font-medium">{job.customer.phone}</p>
+                    <p className="font-medium">{video.customer.phone}</p>
                   </div>
 
-                  {job.customer.company && (
+                  {video.customer.company && (
                     <div>
                       <label className="text-sm text-muted-foreground">
                         Công Ty
                       </label>
-                      <p className="font-medium">{job.customer.company}</p>
+                      <p className="font-medium">{video.customer.company}</p>
                     </div>
                   )}
                 </div>
@@ -204,7 +204,7 @@ export function JobDetailDialog({
           <Separator />
 
           {/* Work Request Information */}
-          {job.workRequest && (
+          {video.workRequest && (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Left Column - Work Request Details */}
@@ -220,7 +220,7 @@ export function JobDetailDialog({
                         Danh Mục
                       </label>
                       <p className="font-medium">
-                        {job.workRequest.categoryName}
+                        {video.workRequest.categoryName}
                       </p>
                     </div>
 
@@ -228,14 +228,14 @@ export function JobDetailDialog({
                       <label className="text-sm text-muted-foreground">
                         Loại File
                       </label>
-                      <Badge variant="outline">{job.workRequest.fileType}</Badge>
+                      <Badge variant="outline">{video.workRequest.fileType}</Badge>
                     </div>
 
                     <div>
                       <label className="text-sm text-muted-foreground">
                         Tóm Tắt
                       </label>
-                      <p className="text-sm">{job.workRequest.summaryNote}</p>
+                      <p className="text-sm">{video.workRequest.summaryNote}</p>
                     </div>
 
                     <div>
@@ -243,26 +243,26 @@ export function JobDetailDialog({
                         Hướng Dẫn Chi Tiết
                       </label>
                       <p className="text-sm whitespace-pre-wrap">
-                        {job.workRequest.detailedNotes}
+                        {video.workRequest.detailedNotes}
                       </p>
                     </div>
 
-                    {job.workRequest.colorNote && (
+                    {video.workRequest.colorNote && (
                       <div>
                         <label className="text-sm text-muted-foreground">
                           Ghi Chú Màu Sắc
                         </label>
-                        <p className="text-sm">{job.workRequest.colorNote}</p>
+                        <p className="text-sm">{video.workRequest.colorNote}</p>
                       </div>
                     )}
 
-                    {job.workRequest.linkSample && (
+                    {video.workRequest.linkSample && (
                       <div>
                         <label className="text-sm text-muted-foreground">
                           Link Mẫu
                         </label>
                         <a
-                          href={job.workRequest.linkSample}
+                          href={video.workRequest.linkSample}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex items-center gap-1 text-blue-600 hover:underline"
@@ -277,20 +277,11 @@ export function JobDetailDialog({
 
                 {/* Right Column - Notes */}
                 <div className="space-y-4 min-w-0">
-                  {job.note && (
+                  {video.note && (
                     <div className="space-y-2 min-w-0">
                       <h3 className="font-semibold text-lg">Ghi Chú</h3>
                       <p className="text-sm whitespace-pre-wrap bg-muted/50 p-4 rounded-lg break-words overflow-wrap-break-word max-w-full">
-                        {job.note}
-                      </p>
-                    </div>
-                  )}
-
-                  {job.qaNote && (
-                    <div className="space-y-2 min-w-0">
-                      <h3 className="font-semibold text-lg">Ghi Chú QA</h3>
-                      <p className="text-sm whitespace-pre-wrap bg-red-500/10 p-4 rounded-lg border border-red-500/20 break-words overflow-wrap-break-word max-w-full">
-                        {job.qaNote}
+                        {video.note}
                       </p>
                     </div>
                   )}
@@ -313,28 +304,27 @@ export function JobDetailDialog({
                   <label className="text-sm text-muted-foreground block mb-1">
                     Số Lượng Input
                   </label>
-                  <p className="text-2xl font-bold">{job.inputNumber}</p>
+                  <p className="text-2xl font-bold">{video.inputNumber}</p>
                 </div>
 
                 <div className="text-center p-4 bg-muted/50 rounded-lg">
                   <label className="text-sm text-muted-foreground block mb-1">
                     Số Lượng Output
                   </label>
-                  <p className="text-2xl font-bold">{job.outputNumber}</p>
+                  <p className="text-2xl font-bold">{video.outputNumber}</p>
                 </div>
 
                 <div className="text-center p-4 bg-muted/50 rounded-lg">
                   <label className="text-sm text-muted-foreground block mb-1">
                     Số Lượng Output Qa
                   </label>
-                  <p className="text-2xl font-bold">{job.qaOutputNumber}</p>
                 </div>
 
                 {/* <div className="text-center p-4 bg-muted/50 rounded-lg">
                   <label className="text-sm text-muted-foreground block mb-1">
                     Số Lượng File
                   </label>
-                  <p className="text-2xl font-bold">{job.fileCount}</p>
+                  <p className="text-2xl font-bold">{video.fileCount}</p>
                 </div> */}
               </div>
 
@@ -343,7 +333,7 @@ export function JobDetailDialog({
                   Tổng Giá
                 </label>
                 <p className="text-3xl font-bold text-primary">
-                  {formatCurrency(job.filePrice * job.outputNumber)}
+                  {formatCurrency(video.filePrice * video.outputNumber)}
                 </p>
               </div>
             </div>
@@ -361,15 +351,15 @@ export function JobDetailDialog({
                 <label className="text-sm text-muted-foreground block mb-2">
                   Link Input
                 </label>
-                {job.inputLink ? (
+                {video.inputLink ? (
                   <a
-                    href={job.inputLink}
+                    href={video.inputLink}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 text-blue-600 hover:underline break-all"
                   >
                     <ExternalLink className="h-4 w-4 flex-shrink-0" />
-                    {job.inputLink}
+                    {video.inputLink}
                   </a>
                 ) : (
                   <p className="text-muted-foreground">—</p>
@@ -380,15 +370,15 @@ export function JobDetailDialog({
                 <label className="text-sm text-muted-foreground block mb-2">
                   Link Hoàn Thành
                 </label>
-                {job.doneLink ? (
+                {video.doneLink ? (
                   <a
-                    href={job.doneLink}
+                    href={video.doneLink}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 text-blue-600 hover:underline break-all"
                   >
                     <ExternalLink className="h-4 w-4 flex-shrink-0" />
-                    {job.doneLink}
+                    {video.doneLink}
                   </a>
                 ) : (
                   <p className="text-muted-foreground">—</p>
@@ -413,7 +403,7 @@ export function JobDetailDialog({
                     Trả/File
                   </label>
                   <p className="text-2xl font-bold text-blue-600">
-                    {formatCurrencyVND(job.payPerFile)}
+                    {formatCurrencyVND(video.payPerFile)}
                   </p>
                 </div>
 
@@ -422,37 +412,7 @@ export function JobDetailDialog({
                     Tổng Tiền Trả
                   </label>
                   <p className="text-2xl font-bold text-green-600">
-                    {formatCurrencyVND(job.payPerFile * job.outputNumber)}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <Separator />
-          {(userRole === "qa" || userRole === "manager") && (
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg flex items-center gap-2">
-                <DollarSign className="h-5 w-5" />
-                Thông Tin Thanh Toán Nhân Viên QA
-              </h3>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 bg-blue-500/10 rounded-lg border border-blue-500/20">
-                  <label className="text-sm text-muted-foreground block mb-2">
-                    Trả/File
-                  </label>
-                  <p className="text-2xl font-bold text-blue-600">
-                    {formatCurrencyVND(job.payPerFileQa)}
-                  </p>
-                </div>
-
-                <div className="p-4 bg-green-500/10 rounded-lg border border-green-500/20">
-                  <label className="text-sm text-muted-foreground block mb-2">
-                    Tổng Tiền Trả
-                  </label>
-                  <p className="text-2xl font-bold text-green-600">
-                    {formatCurrencyVND(job.payPerFileQa * job.qaOutputNumber)}
+                    {formatCurrencyVND(video.payPerFile * video.outputNumber)}
                   </p>
                 </div>
               </div>
@@ -474,28 +434,12 @@ export function JobDetailDialog({
                   <label className="text-sm text-muted-foreground block mb-2">
                     Người Được Giao
                   </label>
-                  <p className="font-medium">{job.assignee.fullName}</p>
+                  <p className="font-medium">{video.assignee.fullName}</p>
                   <p className="text-sm text-muted-foreground">
-                    {job.assignee.email}
+                    {video.assignee.email}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {job.assignee.phoneNumber}
-                  </p>
-                </div>
-              ) : null}
-
-              {/* Show QA info only for Manager and QA */}
-              {userRole === "manager" || userRole === "qa" ? (
-                <div className="p-4 bg-muted/50 rounded-lg">
-                  <label className="text-sm text-muted-foreground block mb-2">
-                    QA
-                  </label>
-                  <p className="font-medium">{job.qualifiedAssignee.fullName}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {job.qualifiedAssignee.email}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {job.qualifiedAssignee.phoneNumber}
+                    {video.assignee.phoneNumber}
                   </p>
                 </div>
               ) : null}

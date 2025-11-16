@@ -163,6 +163,7 @@ export function EmployeePayrollTable({
                 <thead>
                   <tr className="border-b">
                     <th className="px-3 py-2 text-left font-medium">Mã Job</th>
+                    <th className="px-3 py-2 text-left font-medium">Ngày</th>
                     <th className="px-3 py-2 text-left font-medium">Tên Job</th>
                     <th className="px-3 py-2 text-center font-medium">Số lượng</th>
                     <th className="px-3 py-2 text-center font-medium">Tiền</th>
@@ -173,6 +174,7 @@ export function EmployeePayrollTable({
                   {selectedPayroll.jobs.map((item, idx) => (
                     <tr key={idx} className="border-b">
                       <td className="px-3 py-2">{item.code}</td>
+                      <td className="px-3 py-2">{formatDate(item.createdAt)}</td>
                       <td className="px-3 py-2">{item.caseName}</td>
                       <td className="px-3 py-2 text-center">{item.outputNumber}</td>
                       <td className="px-3 py-2 text-center">{formatCurrencyVND(item.payPerFile)}</td>

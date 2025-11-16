@@ -24,6 +24,7 @@ const rolesList: RoleDto[] = [
   { id: 2, name: "MANAGER" },
   { id: 3, name: "EMPLOYEE" },
   { id: 4, name: "QA" },
+  { id: 5, name: "SPECIAL" }
 ];
 
 export default function EmployeesPage() {

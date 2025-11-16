@@ -1,22 +1,22 @@
-import { WorkRequestResponse } from "./work-requests"
+import { WorkRequestResponse } from "./work-requests";
 
 export interface Job {
-  id: number
-  code: string
-  date: string
-  customerName: string
-  caseName: string
-  linkInput: string
-  linkDone: string
-  inputCount: number
-  outputCount: number
-  filePrice: number
-  totalPrice: number
-  jobStatus: JobStatus
-  paymentStatus: PaymentStatus
-  note: string
-  assignedEmployee: string // ID hoặc tên người phụ trách
-  qa: string // ID hoặc tên QA
+  id: number;
+  code: string;
+  date: string;
+  customerName: string;
+  caseName: string;
+  linkInput: string;
+  linkDone: string;
+  inputCount: number;
+  outputCount: number;
+  filePrice: number;
+  totalPrice: number;
+  jobStatus: JobStatus;
+  paymentStatus: PaymentStatus;
+  note: string;
+  assignedEmployee: string; // ID hoặc tên người phụ trách
+  qa: string; // ID hoặc tên QA
 }
 
 export interface AssigneeInfo {
@@ -37,6 +37,14 @@ export interface CustomerInfo {
   company: string;
 }
 
+export interface JobViewResponse {
+  id: number;
+  jobId: number;
+  code: string;
+  caseName: string;
+  isDeleted: boolean;
+}
+
 export interface JobResponse {
   id: number;
   code: string;
@@ -48,11 +56,14 @@ export interface JobResponse {
   outputNumber: number;
   qaOutputNumber: number;
   paymentStatus: PaymentStatus;
+  paymentEmployee: EmployeePaymentStatus;
+  paymentEmployeeQa: EmployeePaymentStatus;
   jobStatus: JobStatus;
   inputLink: string;
   doneLink: string;
   note: string;
   qaNote: string | null;
+  employeeNote?: string | null;
   assignee: AssigneeInfo;
   qualifiedAssignee: AssigneeInfo;
   customer: CustomerInfo;
@@ -77,29 +88,48 @@ export interface JobRequest {
   outputNumber?: number | null;
   qaOutputNumber?: number | null;
   paymentStatus: PaymentStatus;
+  paymentEmployee?: EmployeePaymentStatus;
+  paymentEmployeeQa?: EmployeePaymentStatus;
   jobStatus: JobStatus;
   inputLink: string;
   doneLink?: string | null;
   note: string | null;
+  employeeNote?: string | null;
   assigneeId: number | null;
   qualifiedAssigneeId: number | null;
   customerId: number | null;
   workRequestId: number | null;
+  isDeleteAssignee?: boolean;
+  isDeleteQualifiedAssignee?: boolean;
 }
 
-export type JobStatus = "PENDING" | "IN_PROGRESS" | "DONE" | "IN_REVIEW" | "REVIEWED" | "COMPLETED"
-export type PaymentStatus = "UNPAID" | "INVOICE_SENT" | "PAID" | "INVOICE_DRAFT" | "CANCELLED"
+export type JobStatus =
+  | "PENDING"
+  | "IN_PROGRESS"
+  | "DONE"
+  | "IN_REVIEW"
+  | "REVIEWED"
+  | "COMPLETED";
+export type PaymentStatus =
+  | "UNPAID"
+  | "INVOICE_SENT"
+  | "PAID"
+  | "INVOICE_DRAFT"
+  | "CANCELLED";
+export type EmployeePaymentStatus =
+  | "UNPAID"
+  | "PAID";
 
 // Job action types for different roles
-export type JobAction = 
-  | "take-job"      // Employee takes the job (pending -> in-progress)
-  | "done-job"      // Employee marks job as done (in-progress -> done)
-  | "take-review"   // QA takes job for review (done -> in-review)
+export type JobAction =
+  | "take-job" // Employee takes the job (pending -> in-progress)
+  | "done-job" // Employee marks job as done (in-progress -> done)
+  | "take-review" // QA takes job for review (done -> in-review)
   | "submit-review" // QA submits review (in-review -> reviewed)
-  | "rejected"      // QA rejects job (in-review -> in-progress)
-  | "complete-job"  // Manager marks as completed (reviewed -> completed)
-  | "edit"          // Manager edits job
-  | "delete"        // Manager deletes job
+  | "rejected" // QA rejects job (in-review -> in-progress)
+  | "complete-job" // Manager marks as completed (reviewed -> completed)
+  | "edit" // Manager edits job
+  | "delete"; // Manager deletes job
 
 // For rejected action with note
 export interface JobActionPayload {
@@ -109,23 +139,25 @@ export interface JobActionPayload {
   qaOutputNumber?: number | null;
 }
 
-export type UserRole = "manager" | "qa" | "employee"
+export type UserRole = "manager" | "qa" | "employee" | "special";
 
 // Filter interface
 export interface JobFilters {
-  fromDate: string
-  toDate: string
-  jobStatus: JobStatus | ""
-  paymentStatus: PaymentStatus | ""
-  keyword: string // Search by email or fullname
+  fromDate: string;
+  toDate: string;
+  jobStatus: JobStatus | "";
+  paymentStatus: PaymentStatus | "";
+  paymentEmployee: EmployeePaymentStatus | "";
+  keyword: string;
+  selectedEmployeeIds?: number[];
 }
 
 // Pagination interface
 export interface Pagination {
-  currentPage: number
-  pageSize: number
-  totalItems: number
-  totalPages: number
+  currentPage: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
 }
 
 // Columns visible for each role
@@ -136,7 +168,7 @@ export const ROLE_COLUMNS = {
     "customerName",
     "caseName",
     // "workRequest",
-    // "linkInput",
+    "linkInput",
     "inputCount",
     "outputCount",
     // "fileCount",
@@ -147,10 +179,12 @@ export const ROLE_COLUMNS = {
     "linkDone",
     // "payPerFile",
     // "totalPayPerFile",
+    // "employeeNote",
+    // "paymentEmployee",
     "assignedEmployee",
     "qa",
     // "note",
-    "actions"
+    "actions",
   ],
   qa: [
     "code",
@@ -166,9 +200,9 @@ export const ROLE_COLUMNS = {
     "totalPayPerFileQa",
     "jobStatus",
     "assignedEmployee",
-    // "note",
+    "note",
     "qaNote",
-    "actions"
+    "actions",
   ],
   employee: [
     "code",
@@ -182,8 +216,39 @@ export const ROLE_COLUMNS = {
     "jobStatus",
     "payPerFile",
     "totalPayPerFile",
-    // "note",
+    "note",
     "qaNote",
-    "actions"
-  ]
-} as const
+    "actions",
+  ],
+  special: [
+    "code",
+    "date",
+    "caseName",
+    "workRequest",
+    "linkInput",
+    "linkDone",
+    "inputCount",
+    "outputCount",
+    "jobStatus",
+    "payPerFile",
+    "totalPayPerFile",
+    "note",
+    "qaNote",
+    "employeeNote",
+    "paymentEmployee",
+    "actions",
+  ],
+} as const;
+
+export const PAYROLL_DAY_COLUMN = [
+  "code",
+  "date",
+  "customerName",
+  "caseName",
+  "outputCount",
+  "filePrice",
+  "totalPrice",
+  "payPerFile",
+  "totalPayPerFile",
+  "assignedEmployee"
+];

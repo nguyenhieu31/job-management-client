@@ -27,9 +27,9 @@ import { Textarea } from "@/components/ui/textarea";
 interface ActionCellProps {
   job: JobResponse;
   userRole: UserRole;
-  onEdit: (job: JobResponse) => void;
+  onEdit?: (job: JobResponse) => void;
   onDelete: (id: number) => void;
-  onJobAction: (jobId: number, action: JobAction, qaNote?: string) => void;
+  onJobAction?: (jobId: number, action: JobAction, qaNote?: string) => void;
   onSave: (jobId: number) => void;
   onCancel: (jobId: number) => void;
   pendingChangesRef: React.MutableRefObject<Record<number, any>>;
@@ -76,10 +76,24 @@ const ActionCellComponent = forwardRef<
       if (userRole === "manager") {
         actions.push("edit", "delete");
         // Manager can complete job after QA review
+        if (
+          job.jobStatus !== "IN_REVIEW" &&
+          job.jobStatus !== "REVIEWED" &&
+          job.jobStatus !== "COMPLETED" &&
+          job.jobStatus !== "PENDING" &&
+          job.jobStatus !== "IN_PROGRESS"
+        ) {
+          actions.push("take-review");
+        }
+        // QA can submit review for in-review jobs
+        if (job.jobStatus === "IN_REVIEW") {
+          actions.push("submit-review");
+          actions.push("rejected");
+        }
         if (job.jobStatus === "REVIEWED") {
           actions.push("complete-job");
         }
-      } else if (userRole === "employee") {
+      } else if (userRole === "employee" || userRole === "special") {
         // Employee can take pending jobs
         if (job.jobStatus === "PENDING") {
           actions.push("take-job");
@@ -117,8 +131,8 @@ const ActionCellComponent = forwardRef<
     return (
       <>
         <div className="flex justify-center gap-2 flex-nowrap">
-          {/* Show ONLY Save and Cancel buttons for Manager, Employee, or QA if there are pending changes */}
-          {(userRole === "manager" || userRole === "employee" || userRole === "qa") && hasPendingChanges ? (
+          {/* Show ONLY Save and Cancel buttons for Manager, Employee, Special or QA if there are pending changes */}
+          {(userRole === "manager" || userRole === "employee" || userRole === "special" || userRole === "qa") && hasPendingChanges ? (
             <>
               <Button
                 key="cancel"
@@ -149,7 +163,7 @@ const ActionCellComponent = forwardRef<
                     key="take-job"
                     variant="default"
                     size="sm"
-                    onClick={() => onJobAction(job.id, "take-job")}
+                    onClick={() => onJobAction?.(job.id, "take-job")}
                     className="bg-blue-600 hover:bg-blue-700 text-center"
                   >
                     <PlayCircle className="h-4 w-4 mr-1" />
@@ -163,7 +177,7 @@ const ActionCellComponent = forwardRef<
                     key="done-job"
                     variant="default"
                     size="sm"
-                    onClick={() => {
+                    onClick={async () => {
                       // Check if done link is filled
                       const currentDoneLink = getCurrentValue(
                         job,
@@ -175,11 +189,13 @@ const ActionCellComponent = forwardRef<
                         );
                         return;
                       }
-                      // If there are pending changes, save them first
-                      if (hasPendingChanges) {
+                      // If there are pending changes, save them first (for employee and special roles)
+                      if (hasPendingChanges && (userRole === "employee" || userRole === "special")) {
                         onSave(job.id);
+                        // Wait a bit for the save to complete
+                        await new Promise(resolve => setTimeout(resolve, 500));
                       }
-                      onJobAction(job.id, "done-job");
+                      onJobAction?.(job.id, "done-job");
                     }}
                     className="bg-green-600 hover:bg-green-700 text-center"
                   >
@@ -221,7 +237,7 @@ const ActionCellComponent = forwardRef<
                         );
                         return;
                       }
-                      onJobAction(job.id, "take-review");
+                      onJobAction?.(job.id, "take-review");
                     }}
                     className="bg-purple-600 hover:bg-purple-700 text-center"
                   >
@@ -236,7 +252,7 @@ const ActionCellComponent = forwardRef<
                     key="submit-review"
                     variant="default"
                     size="sm"
-                    onClick={() => onJobAction(job.id, "submit-review")}
+                    onClick={() => onJobAction?.(job.id, "submit-review")}
                     className="bg-indigo-600 hover:bg-indigo-700 text-center"
                   >
                     <Send className="h-4 w-4 mr-1" />
@@ -264,7 +280,7 @@ const ActionCellComponent = forwardRef<
                     key="complete-job"
                     variant="default"
                     size="sm"
-                    onClick={() => onJobAction(job.id, "complete-job")}
+                    onClick={() => onJobAction?.(job.id, "complete-job")}
                     className="bg-emerald-600 hover:bg-emerald-700 text-center"
                   >
                     <CheckCircle className="h-4 w-4 mr-1" />
@@ -278,7 +294,7 @@ const ActionCellComponent = forwardRef<
                     key="edit"
                     variant="ghost"
                     size="icon"
-                    onClick={() => onEdit(job)}
+                    onClick={() => onEdit?.(job)}
                     aria-label="Edit job"
                     className="text-center"
                   >
@@ -339,7 +355,7 @@ const ActionCellComponent = forwardRef<
                     return;
                   }
                   // Pass rejectNote with the action
-                  onJobAction(job.id, "rejected", rejectNote);
+                  onJobAction?.(job.id, "rejected", rejectNote);
                   setRejectDialogOpen(false);
                   setRejectNote("");
                 }}

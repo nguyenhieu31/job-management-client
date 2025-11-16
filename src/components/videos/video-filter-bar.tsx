@@ -11,19 +11,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  SearchJobByConditionsAction,
-  SearchJobViewAction,
-} from "@/store/slice/jobs/Jobs";
+  SearchVideoByConditionsAction,
+  SearchVideoViewAction,
+} from "@/store/slice/videos/Videos";
 import { useAppDispatch, useAppSelector } from "@/store/store";
 import type {
-  JobFilters,
-  JobStatus,
+  VideoFilters,
+  VideoStatus,
   PaymentStatus,
   Pagination as PaginationType,
   CustomerInfo,
-  JobViewResponse,
-  EmployeePaymentStatus,
-} from "@/types/jobs";
+  VideoViewResponse,
+} from "@/types/videos";
 import { Search, RotateCcw, Loader2 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import MultiSelectDropdown from "../ui/multi-select-dropdown";
@@ -35,24 +34,25 @@ interface FilterBarProps {
   onPageChange: (page: number) => void;
   employees?: EmployeeResponse[];
   customers?: CustomerInfo[];
+  onFiltersChange?: (filters: any) => void;
 }
 
-export function FilterBar({
+export function VideoFilterBar({
   pagination,
   onPageChange,
   employees,
   customers,
+  onFiltersChange,
 }: FilterBarProps) {
   const dispatch = useAppDispatch();
   const { roleName } = useAppSelector((state) => state.authenticate);
   const searchBoxRef = useRef<HTMLDivElement>(null);
 
-  const [filters, setFilters] = useState<JobFilters>({
+  const [filters, setFilters] = useState<VideoFilters>({
     fromDate: "",
     toDate: "",
-    jobStatus: "",
+    videoStatus: "",
     paymentStatus: "",
-    paymentEmployee: "",
     keyword: "",
   });
   const [selectedEmployees, setSelectedEmployees] = useState<
@@ -70,12 +70,12 @@ export function FilterBar({
   // Redux store
   const {
     loadingSearching,
-    jobView,
-  }: { loadingSearching: boolean; jobView: JobViewResponse[] } = useAppSelector(
-    (state) => state.job
+    videoView,
+  }: { loadingSearching: boolean; videoView: VideoViewResponse[] } = useAppSelector(
+    (state) => state.video
   );
 
-  const handleChange = (field: keyof JobFilters, value: string) => {
+  const handleChange = (field: keyof VideoFilters, value: string) => {
     setFilters((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -97,7 +97,7 @@ export function FilterBar({
   // Auto search when debounced term changes
   useEffect(() => {
     if (debouncedSearchTerm.trim()) {
-      dispatch(SearchJobViewAction(debouncedSearchTerm.trim())).finally(() => {
+      dispatch(SearchVideoViewAction(debouncedSearchTerm.trim())).finally(() => {
         setShowSearchResults(true);
       });
     } else {
@@ -116,29 +116,29 @@ export function FilterBar({
       pageNumber: 0,
       pageSize: pagination.pageSize,
       keyword,
-      jobStatus: filters.jobStatus || null,
+      videoStatus: filters.videoStatus || null,
       paymentStatus: !filters.paymentStatus
         ? null
         : (filters.paymentStatus as string),
-      paymentEmployee: !filters.paymentEmployee
-        ? null
-        : (filters.paymentEmployee as string),
       startDate: filters.fromDate || null,
       endDate: filters.toDate || null,
       selectedEmployeeIds: selectedEmployees ? selectedEmployees.map((e) => e.id) : undefined,
       selectedCustomerIds: selectedCustomers ? selectedCustomers.map((c) => c.id) : undefined,
     };
+    
+    // Save active filters for pagination
+    onFiltersChange?.(payload);
+    
     onPageChange(1);
-    dispatch(SearchJobByConditionsAction(payload));
+    dispatch(SearchVideoByConditionsAction(payload));
   };
 
   const handleResetFilters = () => {
-    const resetFilters: JobFilters = {
+    const resetFilters: VideoFilters = {
       fromDate: "",
       toDate: "",
-      jobStatus: "",
+      videoStatus: "",
       paymentStatus: "",
-      paymentEmployee: "",
       keyword: "",
     };
     setFilters(resetFilters);
@@ -146,6 +146,9 @@ export function FilterBar({
     setSelectedCustomers([]);
     setSearchTerm("");
     setShowSearchResults(false);
+    
+    // Clear active filters
+    onFiltersChange?.(null);
     // onPageChange(1);
   };
 
@@ -182,26 +185,24 @@ export function FilterBar({
             />
           </div>
 
-          {/* Job Status */}
+          {/* Video Status */}
           <div className="space-y-2">
-            <Label htmlFor="jobStatus" className="text-sm font-medium">
-              Tình Trạng Công Việc
+            <Label htmlFor="videoStatus" className="text-sm font-medium">
+              Tình Trạng Video
             </Label>
             <Select
-              value={filters.jobStatus}
+              value={filters.videoStatus}
               onValueChange={(value) =>
-                handleChange("jobStatus", value as JobStatus)
+                handleChange("videoStatus", value as VideoStatus)
               }
             >
-              <SelectTrigger id="jobStatus" className="w-[200px] min-w-[100px]">
+              <SelectTrigger id="videoStatus" className="w-[200px] min-w-[100px]">
                 <SelectValue placeholder="All Status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="PENDING">Chưa làm</SelectItem>
                 <SelectItem value="IN_PROGRESS">Đang làm</SelectItem>
                 <SelectItem value="DONE">Đang đợi xét duyệt</SelectItem>
-                <SelectItem value="IN_REVIEW">Nhận xét duyệt</SelectItem>
-                <SelectItem value="REVIEWED">Hoàn thành xét duyệt</SelectItem>
                 <SelectItem value="COMPLETED">Đã hoàn thành</SelectItem>
               </SelectContent>
             </Select>
@@ -225,28 +226,6 @@ export function FilterBar({
                 <SelectContent>
                   <SelectItem value="UNPAID">Chưa thanh toán</SelectItem>
                   <SelectItem value="INVOICE_SENT">Đã gửi hóa đơn</SelectItem>
-                  <SelectItem value="PAID">Đã thanh toán</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          {roleName === "SPECIAL" && (
-            <div className="space-y-2">
-              <Label htmlFor="paymentEmployee" className="text-sm font-medium">
-                Thanh Toán nhân viên
-              </Label>
-              <Select
-                value={filters.paymentEmployee}
-                onValueChange={(value) =>
-                  handleChange("paymentEmployee", value as EmployeePaymentStatus | "all")
-                }
-              >
-                <SelectTrigger id="paymentStatus" className="w-[200px] min-w-[100px]">
-                  <SelectValue placeholder="Tất cả thanh toán" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="UNPAID">Chưa thanh toán</SelectItem>
                   <SelectItem value="PAID">Đã thanh toán</SelectItem>
                 </SelectContent>
               </Select>
@@ -314,7 +293,7 @@ export function FilterBar({
                     handleChange("keyword", e.target.value);
                   }}
                   onFocus={() => {
-                    if (searchTerm.trim() && jobView.length) {
+                    if (searchTerm.trim() && videoView.length) {
                       setShowSearchResults(true);
                     }
                   }}
@@ -332,30 +311,30 @@ export function FilterBar({
                           Đang tìm kiếm...
                         </p>
                       </div>
-                    ) : jobView && jobView.length > 0 ? (
+                    ) : videoView && videoView.length > 0 ? (
                       <div className="overflow-y-auto max-h-72">
                         <div className="p-2 border-b border-border bg-muted/50">
                           <p className="text-xs font-medium text-muted-foreground">
-                            Tìm thấy {jobView.length} kết quả
+                            Tìm thấy {videoView.length} kết quả
                           </p>
                         </div>
-                        {jobView.map((job: JobViewResponse) => (
+                        {videoView.map((video: VideoViewResponse) => (
                           <div
-                            key={job.id}
+                            key={video.id}
                             className="px-3 py-2.5 hover:bg-accent cursor-pointer transition-colors border-b border-border/50 last:border-b-0"
                             onClick={() => {
-                              setSearchTerm(job.caseName);
-                              handleChange("keyword", job.caseName);
+                              setSearchTerm(video.caseName);
+                              handleChange("keyword", video.caseName);
                               setShowSearchResults(false);
                             }}
                           >
                             <div className="flex items-center justify-between gap-2">
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium text-foreground truncate">
-                                  #{job.code}
+                                  #{video.code}
                                 </p>
                                 <p className="text-xs text-muted-foreground truncate">
-                                  {job.caseName}
+                                  {video.caseName}
                                 </p>
                               </div>
                             </div>
@@ -401,7 +380,7 @@ export function FilterBar({
                     handleChange("keyword", e.target.value);
                   }}
                   onFocus={() => {
-                    if (searchTerm.trim() && jobView.length) {
+                    if (searchTerm.trim() && videoView.length) {
                       setShowSearchResults(true);
                     }
                   }}
@@ -419,30 +398,30 @@ export function FilterBar({
                           Đang tìm kiếm...
                         </p>
                       </div>
-                    ) : jobView && jobView.length > 0 ? (
+                    ) : videoView && videoView.length > 0 ? (
                       <div className="overflow-y-auto max-h-72">
                         <div className="p-2 border-b border-border bg-muted/50">
                           <p className="text-xs font-medium text-muted-foreground">
-                            Tìm thấy {jobView.length} kết quả
+                            Tìm thấy {videoView.length} kết quả
                           </p>
                         </div>
-                        {jobView.map((job: JobViewResponse) => (
+                        {videoView.map((video: VideoViewResponse) => (
                           <div
-                            key={job.id}
+                            key={video.id}
                             className="px-3 py-2.5 hover:bg-accent cursor-pointer transition-colors border-b border-border/50 last:border-b-0"
                             onClick={() => {
-                              setSearchTerm(job.caseName);
-                              handleChange("keyword", job.caseName);
+                              setSearchTerm(video.caseName);
+                              handleChange("keyword", video.caseName);
                               setShowSearchResults(false);
                             }}
                           >
                             <div className="flex items-center justify-between gap-2">
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium text-foreground truncate">
-                                  #{job.code}
+                                  #{video.code}
                                 </p>
                                 <p className="text-xs text-muted-foreground truncate">
-                                  {job.caseName}
+                                  {video.caseName}
                                 </p>
                               </div>
                             </div>

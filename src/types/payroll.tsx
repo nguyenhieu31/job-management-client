@@ -4,6 +4,7 @@ export type PayrollStatus = "PENDING" | "APPROVED" | "PAID" | "REJECTED"
 
 export interface PayrollItem {
   code: string;
+  createdAt?: Date;
   caseName: string;
   outputNumber: number;
   payPerFile: number;

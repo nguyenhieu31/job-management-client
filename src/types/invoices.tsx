@@ -68,6 +68,7 @@ export interface InvoiceResponse {
   primaryRecipients: Record<string, any>[];
   invoicer: Record<string, any>;
   detail: Record<string, any>;
+  numberJob: number;
   createdAt: string;
   createdBy: string;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Table,
   TableBody,
@@ -13,10 +13,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { CustomerJobSummary } from "@/types/invoices";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, Filter } from "lucide-react";
 import { CustomerInfo, JobResponse } from "@/types/jobs";
+import { Label } from "@/components/ui/label";
+import MultiSelectDropdown from "@/components/ui/multi-select-dropdown";
 
 interface InvoiceListProps {
   jobsByCustomer: CustomerJobSummary[];
@@ -33,6 +35,20 @@ export function InvoiceList({
     new Set()
   );
   const [selectedJobs, setSelectedJobs] = useState<Set<number>>(new Set());
+  const [selectedCustomers, setSelectedCustomers] = useState<
+    { id: number; name: string }[]
+  >([]);
+
+  // Filter customers based on selection
+  const filteredCustomers = useMemo(() => {
+    if (selectedCustomers.length === 0) {
+      return jobsByCustomer;
+    }
+    const selectedIds = selectedCustomers.map((c) => c.id);
+    return jobsByCustomer.filter((customer) =>
+      selectedIds.includes(customer.customer.id)
+    );
+  }, [jobsByCustomer, selectedCustomers]);
 
   const toggleCustomer = (customerId: number) => {
     const newExpanded = new Set(expandedCustomers);
@@ -87,7 +103,51 @@ export function InvoiceList({
 
   return (
     <div className="space-y-4">
-      {jobsByCustomer.map((customer, index) => (
+      {/* Filter Bar */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex items-end gap-4">
+            <div className="flex-1 space-y-2">
+              <Label htmlFor="customers" className="text-sm font-medium">
+                <Filter className="inline h-4 w-4 mr-1" />
+                Lọc theo Khách Hàng
+              </Label>
+              <MultiSelectDropdown
+                options={jobsByCustomer.map((c) => ({
+                  id: c.customer.id,
+                  name: c.customer.name,
+                }))}
+                placeholder="Chọn khách hàng..."
+                onChange={(values) => setSelectedCustomers(values)}
+                defaultValue={selectedCustomers}
+                className="w-full"
+              />
+            </div>
+            {selectedCustomers.length > 0 && (
+              <Button
+                variant="outline"
+                size="default"
+                onClick={() => setSelectedCustomers([])}
+              >
+                Xóa bộ lọc
+              </Button>
+            )}
+          </div>
+          {filteredCustomers.length > 0 && (
+            <div className="mt-4 pt-4 border-t">
+              <p className="text-sm text-muted-foreground">
+                Hiển thị <span className="font-semibold text-foreground">{filteredCustomers.length}</span> khách hàng
+                {selectedCustomers.length > 0 && (
+                  <span> (đã lọc từ {jobsByCustomer.length} khách hàng)</span>
+                )}
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Customer List */}
+      {filteredCustomers.map((customer, index) => (
         <Card key={index} className="overflow-hidden">
           <div className="border-b p-4">
             <div className="flex items-center justify-between">
@@ -146,10 +206,13 @@ export function InvoiceList({
                         }
                       />
                     </TableHead>
+                    <TableHead>Ngày</TableHead>
                     <TableHead>Mã Job</TableHead>
                     <TableHead>Tên Job</TableHead>
-                    <TableHead>Trạng Thái Thanh Toán</TableHead>
-                    <TableHead className="text-right">Số Tiền</TableHead>
+                    <TableHead className="text-center">Số file</TableHead>
+                    <TableHead className="text-right">Giá file</TableHead>
+                    <TableHead className="text-right">Thành tiền</TableHead>
+                    <TableHead className="text-right">Trạng Thái Thanh Toán</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -161,9 +224,17 @@ export function InvoiceList({
                           onCheckedChange={() => toggleJobSelect(job.id)}
                         />
                       </TableCell>
+                      <TableCell className="font-medium">{formatDate(job.createdAt)}</TableCell>
                       <TableCell className="font-medium">{job.code}</TableCell>
                       <TableCell>{job.caseName}</TableCell>
-                      <TableCell>
+                      <TableCell className="text-center">{job.outputNumber}</TableCell>
+                      <TableCell className="text-right font-medium">
+                        {formatCurrency(job.filePrice)}
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        {formatCurrency(job.filePrice * job.outputNumber)}
+                      </TableCell>
+                      <TableCell className="text-right">
                         <Badge
                           variant="outline"
                           className={
@@ -176,9 +247,6 @@ export function InvoiceList({
                             ? "Chưa Thanh Toán"
                             : "Thanh Toán Một Phần"}
                         </Badge>
-                      </TableCell>
-                      <TableCell className="text-right font-medium">
-                        {formatCurrency(job.totalPrice)}
                       </TableCell>
                     </TableRow>
                   ))}

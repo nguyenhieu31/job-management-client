@@ -24,6 +24,17 @@ import {
 } from "@/components/ui/select";
 import { Pagination } from "@/components/jobs/pagination";
 import { PageResponse } from "../types/Page";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useState } from "react";
 
 interface InvoicesTableProps {
   invoices: PageResponse<InvoiceResponse[]> | undefined;
@@ -61,6 +72,35 @@ export function InvoicesTable({
   onStatusChange,
   status,
 }: InvoicesTableProps) {
+  const [sendDialogOpen, setSendDialogOpen] = useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState<InvoiceResponse | null>(null);
+
+  const handleSendClick = (invoice: InvoiceResponse) => {
+    setSelectedInvoice(invoice);
+    setSendDialogOpen(true);
+  };
+
+  const handleCancelClick = (invoice: InvoiceResponse) => {
+    setSelectedInvoice(invoice);
+    setCancelDialogOpen(true);
+  };
+
+  const confirmSend = () => {
+    if (selectedInvoice) {
+      onSendInvoice?.(selectedInvoice);
+    }
+    setSendDialogOpen(false);
+    setSelectedInvoice(null);
+  };
+
+  const confirmCancel = () => {
+    if (selectedInvoice) {
+      onCancelInvoice?.(selectedInvoice);
+    }
+    setCancelDialogOpen(false);
+    setSelectedInvoice(null);
+  };
 
   const renderActions = (invoice: InvoiceResponse) => {
     const status = invoice.status as InvoiceStatus;
@@ -85,7 +125,7 @@ export function InvoicesTable({
             size="sm"
             className="h-8 w-8 p-0 flex items-center justify-center"
             title="Gửi hoá đơn"
-            onClick={() => onSendInvoice?.(invoice)}
+            onClick={() => handleSendClick(invoice)}
           >
             <Send className="h-4 w-4" />
           </Button>
@@ -98,7 +138,7 @@ export function InvoicesTable({
             size="sm"
             className="h-8 w-8 p-0 flex items-center justify-center"
             title="Hủy hoá đơn"
-            onClick={() => onCancelInvoice?.(invoice)}
+            onClick={() => handleCancelClick(invoice)}
           >
             <X className="h-4 w-4" />
           </Button>
@@ -177,7 +217,7 @@ export function InvoicesTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {invoices !== undefined && invoices.data ? invoices.data.map((invoice, index) => {
+              {!loading && invoices !== undefined && invoices.data ? invoices.data.map((invoice, index) => {
                 const customerInfo = invoice.primaryRecipients?.map((recipient: any) => {
                   return {
                     name: recipient.billing_info?.name?.full_name || "Unknown",
@@ -200,7 +240,7 @@ export function InvoicesTable({
                       </div>
                     </TableCell>
                     <TableCell className="text-center border-r font-medium">
-                      {invoice.items?.length || 0}
+                      {invoice.numberJob || 0}
                     </TableCell>
                     <TableCell className="text-right border-r font-bold text-lg">
                       {formatCurrency(invoice.dueAmount?.value || 0)}
@@ -249,6 +289,46 @@ export function InvoicesTable({
           onPageSizeChange={onPageSizeChange}
         />
       </CardContent>
+
+      {/* Send Invoice Confirmation Dialog */}
+      <AlertDialog open={sendDialogOpen} onOpenChange={setSendDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận gửi hoá đơn</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn gửi hoá đơn <strong>{selectedInvoice?.invoiceId}</strong> cho khách hàng không?
+              <br />
+              Sau khi gửi, trạng thái hoá đơn sẽ chuyển sang &quot;Chờ Thanh Toán&quot;.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmSend} className="bg-blue-600 hover:bg-blue-700">
+              Xác nhận gửi
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Cancel Invoice Confirmation Dialog */}
+      <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận hủy hoá đơn</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn hủy hoá đơn <strong>{selectedInvoice?.invoiceId}</strong> không?
+              <br />
+              <span className="text-red-600 font-semibold">Hành động này không thể hoàn tác!</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Không, giữ lại</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmCancel} className="bg-red-600 hover:bg-red-700">
+              Xác nhận hủy
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

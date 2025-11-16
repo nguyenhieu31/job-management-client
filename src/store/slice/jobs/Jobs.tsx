@@ -9,11 +9,14 @@ import {
   getAllJobsByQualifiedAssignee,
   getRandomJob,
   searchJobByConditions,
+  searchJobView,
   updateGridViewJob,
   updateJobFull,
   updateJobStatus,
+  updatePaymentEmployeeMultipleJobs,
+  updatePaymentMultipleJobs,
 } from "@/services/JobApi";
-import { JobRequest, JobResponse } from "@/types/jobs";
+import { JobRequest, JobResponse, JobViewResponse } from "@/types/jobs";
 import {
   createSlice,
   createAsyncThunk,
@@ -23,8 +26,10 @@ import { toast } from "react-toastify";
 
 interface InitialValuesStyle {
   loading: boolean;
+  loadingSearching: boolean;
   message: string;
   jobs: PageResponse<JobResponse[]> | undefined;
+  jobView: JobViewResponse[];
   error: string;
 }
 
@@ -94,8 +99,12 @@ export const UpdateGridViewJobAction = createAsyncThunk<
     qaOutputNumber?: number | null;
     qualifiedAssigneeId: number | null;
     paymentStatus?: string | null;
+    paymentEmployee?: string | null;
     doneLink?: string | null;
     payPerFile?: number | null;
+    employeeNote?: string | null;
+    isDeleteAssignee?: boolean;
+    isDeleteQualifiedAssignee?: boolean;
   }
 >(
   "UpdateGridViewJobAction",
@@ -109,8 +118,12 @@ export const UpdateGridViewJobAction = createAsyncThunk<
     qaOutputNumber?: number | null;
     qualifiedAssigneeId: number | null;
     paymentStatus?: string | null;
+    paymentEmployee?: string | null;
     doneLink?: string | null;
     payPerFile?: number | null;
+    employeeNote?: string | null;
+    isDeleteAssignee?: boolean;
+    isDeleteQualifiedAssignee?: boolean;
   }) => {
     try {
       const response = await updateGridViewJob(data);
@@ -151,8 +164,11 @@ export const SearchJobByConditionsAction = createAsyncThunk<
     keyword: string | null;
     jobStatus: string | null;
     paymentStatus: string | null;
+    paymentEmployee: string | null;
     startDate: string | null;
     endDate: string | null;
+    selectedEmployeeIds?: number[];
+    selectedCustomerIds?: number[];
   }
 >(
   "SearchJobByConditionsAction",
@@ -161,13 +177,31 @@ export const SearchJobByConditionsAction = createAsyncThunk<
       keyword: string | null;
       jobStatus: string | null;
       paymentStatus: string | null;
+      paymentEmployee: string | null;
       startDate: string | null;
       endDate: string | null;
+      selectedEmployeeIds?: number[];
+      selectedCustomerIds?: number[];
     }
   ) => {
     try {
       const response = await searchJobByConditions(data);
       return response.data as PageResponse<JobResponse[]>;
+    } catch (err: any) {
+      throw new Error(err.message);
+    }
+  }
+);
+
+export const SearchJobViewAction = createAsyncThunk<
+  JobViewResponse[],
+  string
+>(
+  "SearchJobViewAction",
+  async (keyword: string) => {
+    try {
+      const response = await searchJobView(keyword);
+      return response.data as JobViewResponse[];
     } catch (err: any) {
       throw new Error(err.message);
     }
@@ -220,11 +254,35 @@ export const DeleteMultipleJobsAction = createAsyncThunk<void, { ids: number[] }
   }
 );
 
+export const UpdatePaymentEmployeeMultipleJobsAction = createAsyncThunk<void, { ids: number[] }>(
+  "UpdatePaymentEmployeeMultipleJobsAction",
+  async (data: { ids: number[] }) => {
+    try {
+      await updatePaymentEmployeeMultipleJobs(data.ids);
+    } catch (err: any) {
+      throw new Error(err.message);
+    }
+  }
+);
+
+export const UpdatePaymentMultipleJobsAction = createAsyncThunk<void, { ids: number[] }>(
+  "UpdatePaymentMultipleJobsAction",
+  async (data: { ids: number[] }) => {
+    try {
+      await updatePaymentMultipleJobs(data.ids);
+    } catch (err: any) {
+      throw new Error(err.message);
+    }
+  }
+);
+
 const initialState: InitialValuesStyle = {
   loading: false,
+  loadingSearching: false,
   message: "",
   jobs: undefined,
   error: "",
+  jobView: []
 };
 
 const JobSlice = createSlice({
@@ -276,6 +334,15 @@ const JobSlice = createSlice({
       })
       .addCase(DeleteMultipleJobsAction.pending, (state) => {
         state.loading = true;
+      })
+      .addCase(UpdatePaymentEmployeeMultipleJobsAction.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(UpdatePaymentMultipleJobsAction.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(SearchJobViewAction.pending, (state) => {
+        state.loadingSearching = true;
       })
       .addCase(
         GetAllJobsAction.fulfilled,
@@ -349,6 +416,7 @@ const JobSlice = createSlice({
               job.id === action.payload.id ? action.payload : job
             );
           }
+          toast.success("Cập nhật công việc thành công");
         }
       )
       .addCase(
@@ -371,6 +439,7 @@ const JobSlice = createSlice({
               totalPages: 1,
             };
           }
+          toast.success("Tạo công việc thành công");
         }
       )
       .addCase(
@@ -382,6 +451,7 @@ const JobSlice = createSlice({
               job.id === action.payload.id ? action.payload : job
             );
           }
+          toast.success("Cập nhật công việc thành công");
         }
       )
       .addCase(GetJobFromDropboxAction.fulfilled, (state, action) => {
@@ -410,6 +480,18 @@ const JobSlice = createSlice({
       })
       .addCase(DeleteMultipleJobsAction.fulfilled, (state) => {
         state.loading = false;
+      })
+      .addCase(UpdatePaymentEmployeeMultipleJobsAction.fulfilled, (state) => {
+        state.loading = false;
+        toast.success("Cập nhật trạng thái thanh toán cho nhân viên thành công");
+      })
+      .addCase(UpdatePaymentMultipleJobsAction.fulfilled, (state) => {
+        state.loading = false;
+        toast.success("Cập nhật trạng thái thanh toán thành công");
+      })
+      .addCase(SearchJobViewAction.fulfilled, (state, action: PayloadAction<JobViewResponse[]>) => {
+        state.loadingSearching = false;
+        state.jobView = action.payload;
       })
       .addCase(GetAllJobsAction.rejected, (state, action) => {
         state.loading = false;
@@ -463,6 +545,18 @@ const JobSlice = createSlice({
       .addCase(DeleteMultipleJobsAction.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || "Delete multiple jobs failed";
+      })
+      .addCase(UpdatePaymentEmployeeMultipleJobsAction.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || "Update payment employee multiple jobs failed";
+      })
+      .addCase(UpdatePaymentMultipleJobsAction.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || "Update payment multiple jobs failed";
+      })
+      .addCase(SearchJobViewAction.rejected, (state, action) => {
+        state.loadingSearching = false;
+        state.error = action.error.message || "Search job view failed";
       });
   },
 });

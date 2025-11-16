@@ -1,7 +1,6 @@
 "use client";
 
 import type React from "react";
-
 import { useEffect, useRef, useReducer, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,47 +22,45 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import type {
-  JobRequest,
-  JobResponse,
-  JobStatus,
+  VideoRequest,
+  VideoResponse,
+  VideoStatus,
   PaymentStatus,
-  EmployeePaymentStatus,
-} from "@/types/jobs";
+} from "@/types/videos";
 import type { WorkRequestResponse } from "@/types/work-requests";
 import { EmployeeResponse } from "@/types/employees";
 import { CustomerResponse } from "@/types/customers";
 import { formatCurrency, formatCurrencyVND } from "@/lib/utils";
 import SearchableDropdown from "../ui/search-able-dropdown";
-import { filePriceOptions } from "./job-table";
+import { filePriceOptions } from "./video-table";
 
-interface JobFormProps {
+interface VideoFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (
-    job:
+    video:
       | Omit<
-          JobRequest,
+          VideoRequest,
           "id" | "code" | "date" | "totalPrice" | "outputCount" | "linkDone"
         >
-      | JobRequest
+      | VideoRequest
   ) => void;
-  editingJob?: JobResponse | null;
+  editingVideo?: VideoResponse | null;
   customers?: CustomerResponse[];
   employees?: EmployeeResponse[];
   qaList?: EmployeeResponse[];
   workRequests?: WorkRequestResponse[];
 }
 
-export function JobForm({
+export function VideoForm({
   open,
   onOpenChange,
   onSubmit,
-  editingJob,
+  editingVideo,
   customers = [],
   employees = [],
-  qaList = [],
   workRequests = [],
-}: JobFormProps) {
+}: VideoFormProps) {
   // Use useReducer for re-render trigger
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
@@ -74,21 +71,15 @@ export function JobForm({
     fileCount: "",
     inputNumber: "",
     outputNumber: "",
-    qaOutputNumber: "",
     paymentStatus: "UNPAID" as PaymentStatus,
-    paymentEmployee: "UNPAID" as EmployeePaymentStatus,
-    paymentEmployeeQa: "UNPAID" as EmployeePaymentStatus,
-    jobStatus: "PENDING" as JobStatus,
+    jobStatus: "PENDING" as VideoStatus,
     inputLink: "",
     doneLink: "",
     note: "",
-    employeeNote: "",
     assignedEmployee: undefined as string | undefined,
-    qualifiedAssignee: undefined as string | undefined,
     customerId: undefined as string | undefined,
     workRequestId: undefined as string | undefined,
     payPerFile: "",
-    payPerFileQa: "",
   });
 
   const isEditingRef = useRef(false);
@@ -109,41 +100,31 @@ export function JobForm({
   };
 
   useEffect(() => {
-    if (editingJob) {
+    if (editingVideo) {
       formRef.current = {
-        caseName: editingJob.caseName,
-        filePrice: String(editingJob.filePrice),
-        inputNumber: String(editingJob.inputNumber),
-        outputNumber: String(editingJob.outputNumber || ""),
-        qaOutputNumber: String(editingJob.qaOutputNumber || ""),
-        doneLink: editingJob.doneLink || "",
-        paymentStatus: editingJob.paymentStatus,
-        paymentEmployee: editingJob.paymentEmployee,
-        paymentEmployeeQa: editingJob.paymentEmployeeQa,
-        jobStatus: editingJob.jobStatus,
-        inputLink: editingJob.inputLink,
-        note: editingJob.note || "",
-        employeeNote: editingJob.employeeNote || "",
-        assignedEmployee: editingJob.assignee?.id
-          ? editingJob.assignee.id.toString()
+        caseName: editingVideo.caseName,
+        filePrice: String(editingVideo.filePrice),
+        inputNumber: String(editingVideo.inputNumber),
+        outputNumber: String(editingVideo.outputNumber || ""),
+        doneLink: editingVideo.doneLink || "",
+        paymentStatus: editingVideo.paymentStatus,
+        jobStatus: editingVideo.jobStatus,
+        inputLink: editingVideo.inputLink,
+        note: editingVideo.note || "",
+        assignedEmployee: editingVideo.assignee?.id
+          ? editingVideo.assignee.id.toString()
           : undefined,
-        qualifiedAssignee: editingJob.qualifiedAssignee?.id
-          ? editingJob.qualifiedAssignee.id.toString()
+        customerId: editingVideo.customer?.id
+          ? editingVideo.customer.id.toString()
           : undefined,
-        customerId: editingJob.customer?.id
-          ? editingJob.customer.id.toString()
+        workRequestId: editingVideo.workRequest?.id
+          ? editingVideo.workRequest.id.toString()
           : undefined,
-        workRequestId: editingJob.workRequest?.id
-          ? editingJob.workRequest.id.toString()
-          : undefined,
-        fileCount: String(editingJob.fileCount),
+        fileCount: String(editingVideo.fileCount),
         // Format pay per file with thousand separators
-        payPerFile: editingJob.payPerFile
-          ? formatVNDInput(String(editingJob.payPerFile))
-          : "",
-        payPerFileQa: editingJob.payPerFileQa
-          ? formatVNDInput(String(editingJob.payPerFileQa))
-          : "",
+        payPerFile: editingVideo.payPerFile
+          ? formatVNDInput(String(editingVideo.payPerFile))
+          : ""
       };
       isEditingRef.current = true;
     } else {
@@ -153,27 +134,21 @@ export function JobForm({
         fileCount: "",
         inputNumber: "",
         outputNumber: "",
-        qaOutputNumber: "",
         doneLink: "",
         paymentStatus: "UNPAID",
-        paymentEmployee: "UNPAID",
-        paymentEmployeeQa: "UNPAID",
         jobStatus: "PENDING",
         inputLink: "",
         note: "",
-        employeeNote: "",
         assignedEmployee: undefined,
-        qualifiedAssignee: undefined,
         customerId: undefined,
         workRequestId: undefined,
         payPerFile: "",
-        payPerFileQa: "",
       };
       isEditingRef.current = false;
     }
     // Trigger re-render to update UI
     forceUpdate();
-  }, [editingJob, open]);
+  }, [editingVideo, open]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -185,19 +160,13 @@ export function JobForm({
       inputNumber,
       filePrice,
       payPerFile,
-      payPerFileQa,
       fileCount,
       outputNumber,
-      qaOutputNumber,
       paymentStatus,
-      paymentEmployee,
-      paymentEmployeeQa,
       jobStatus,
       inputLink,
       doneLink,
       note,
-      employeeNote,
-      qualifiedAssignee,
       workRequestId,
     } = formRef.current;
 
@@ -205,48 +174,36 @@ export function JobForm({
     const price = parseFloat(filePrice) || 0;
     // Parse VND formatted strings back to numbers
     const payPerFileNum = parseVNDInput(payPerFile);
-    const payPerFileQaNum = parseVNDInput(payPerFileQa);
     const fileCountNum = parseInt(fileCount) || 0;
     const outputNum = parseInt(outputNumber) || 0;
-    const qaOutputNum = parseInt(qaOutputNumber) || 0;
     const customerId_ = customerId || null;
     const assigneeId_ = assignedEmployee || null;
-    const qaId_ = qualifiedAssignee || null;
     const workReqId_ = workRequestId || null;
 
-    if (isEditingRef.current && editingJob) {
+    if (isEditingRef.current && editingVideo) {
       // Check if user cleared assignee or QA fields
-      const isDeleteAssignee = editingJob.assignee?.id && !assignedEmployee;
-      const isDeleteQualifiedAssignee =
-        editingJob.qualifiedAssignee?.id && !qualifiedAssignee;
+      const isDeleteAssignee = editingVideo.assignee?.id && !assignedEmployee;
 
       // Update: send all fields including id and hidden fields
       onSubmit({
-        id: editingJob.id,
-        code: editingJob.code,
+        id: editingVideo.id,
+        code: editingVideo.code,
         caseName,
         inputNumber: inputCount,
         outputNumber: outputNum,
-        qaOutputNumber: qaOutputNum,
         filePrice: price,
         payPerFile: payPerFileNum,
-        payPerFileQa: payPerFileQaNum,
         fileCount: fileCountNum,
         paymentStatus,
-        paymentEmployee,
-        paymentEmployeeQa,
         jobStatus,
         inputLink: inputLink,
         doneLink: doneLink,
         note: note,
-        employeeNote: employeeNote || null,
         assigneeId: assigneeId_,
-        qualifiedAssigneeId: qaId_,
         customerId: customerId_,
         workRequestId: workReqId_,
-        isDeleteAssignee: isDeleteAssignee,
-        isDeleteQualifiedAssignee: isDeleteQualifiedAssignee,
-      } as JobRequest);
+        isDeleteAssignee: isDeleteAssignee
+      } as VideoRequest);
     } else {
       // Create: send only required fields, skip id, code, outputNumber, doneLink
       onSubmit({
@@ -256,16 +213,13 @@ export function JobForm({
         payPerFile: payPerFileNum,
         fileCount: fileCountNum,
         paymentStatus,
-        paymentEmployee,
         jobStatus,
         inputLink: inputLink,
         note: note || null,
-        employeeNote: employeeNote || null,
         assigneeId: assigneeId_,
-        qualifiedAssigneeId: qaId_,
         customerId: customerId_,
         workRequestId: workReqId_,
-      } as Omit<JobRequest, "id" | "code" | "outputNumber" | "doneLink">);
+      } as Omit<VideoRequest, "id" | "code" | "outputNumber" | "doneLink">);
     }
 
     // Reset form
@@ -277,19 +231,13 @@ export function JobForm({
       outputNumber: "",
       doneLink: "",
       paymentStatus: "UNPAID",
-      paymentEmployee: "UNPAID",
-      paymentEmployeeQa: "UNPAID",
       jobStatus: "PENDING",
       inputLink: "",
-      qaOutputNumber: "",
       note: "",
-      employeeNote: "",
       assignedEmployee: undefined,
-      qualifiedAssignee: undefined,
       customerId: undefined,
       workRequestId: undefined,
-      payPerFile: "",
-      payPerFileQa: "",
+      payPerFile: ""
     };
     onOpenChange(false);
   };
@@ -300,10 +248,10 @@ export function JobForm({
         <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editingJob ? "Cập nhật công việc" : "Thêm công việc mới"}
+              {editingVideo ? "Cập nhật công việc" : "Thêm công việc mới"}
             </DialogTitle>
             <DialogDescription>
-              {editingJob
+              {editingVideo
                 ? "Cập nhật thông tin công việc bên dưới."
                 : "Điền thông tin để tạo công việc mới."}
             </DialogDescription>
@@ -329,7 +277,7 @@ export function JobForm({
                     Khách hàng <span className="text-red-500">*</span>
                   </Label>
                   <SearchableDropdown
-                    options={customers.map((customer) => ({
+                    options={customers.map((customer: any) => ({
                       id: customer.id,
                       name: customer.name,
                     }))}
@@ -358,7 +306,7 @@ export function JobForm({
                 <div className="grid gap-2">
                   <Label htmlFor="assignedEmployee">Nhân viên được giao</Label>
                   <SearchableDropdown
-                    options={employees.map((employee) => ({
+                    options={employees.map((employee: any) => ({
                       id: employee.id,
                       name: employee.fullName,
                     }))}
@@ -387,45 +335,11 @@ export function JobForm({
                 </div>
               </div>
 
-              {/* QA Dropdown */}
-              <div className="grid gap-2">
-                <Label htmlFor="qualifiedAssignee">
-                  QA (Nhân viên kiểm tra chất lượng)
-                </Label>
-                <SearchableDropdown
-                  options={qaList.map((qa) => ({
-                    id: qa.id,
-                    name: qa.fullName,
-                  }))}
-                  placeholder="Tìm kiếm QA..."
-                  onChange={(option) => {
-                    formRef.current.qualifiedAssignee = option
-                      ? option.id.toString()
-                      : undefined;
-                    forceUpdate();
-                  }}
-                  defaultValue={
-                    formRef.current.qualifiedAssignee
-                      ? {
-                          id: parseInt(formRef.current.qualifiedAssignee),
-                          name:
-                            qaList.find(
-                              (q) =>
-                                q.id.toString() ===
-                                formRef.current.qualifiedAssignee
-                            )?.fullName || "",
-                        }
-                      : null
-                  }
-                  type="text"
-                />
-              </div>
-
               {/* Work Request Dropdown */}
               <div className="grid gap-2">
                 <Label htmlFor="workRequest">Style hàng</Label>
                 <SearchableDropdown
-                  options={workRequests.map((wr) => ({
+                  options={workRequests.map((wr: any) => ({
                     id: wr.id,
                     name: `${wr.categoryName} - ${wr.fileType}`,
                   }))}
@@ -466,7 +380,7 @@ export function JobForm({
               {/* Input Number and File Price in one row */}
               <div
                 className={`grid ${
-                  editingJob ? "grid-cols-3" : "grid-cols-1"
+                  editingVideo ? "grid-cols-3" : "grid-cols-1"
                 } gap-4`}
               >
                 {/* Input Number */}
@@ -484,7 +398,7 @@ export function JobForm({
                   />
                 </div>
                 {/* Output Number - Only show when editing */}
-                {editingJob && (
+                {editingVideo && (
                   <div className="grid gap-2">
                     <Label htmlFor="outputNumber">Số lượng output</Label>
                     <Input
@@ -496,21 +410,6 @@ export function JobForm({
                         (formRef.current.outputNumber = e.target.value)
                       }
                       placeholder="Nhập số lượng output"
-                    />
-                  </div>
-                )}
-                {editingJob && (
-                  <div className="grid gap-2">
-                    <Label htmlFor="outputNumber">Số lượng output QA</Label>
-                    <Input
-                      id="outputNumber"
-                      type="number"
-                      min="0"
-                      defaultValue={formRef.current.qaOutputNumber}
-                      onChange={(e) =>
-                        (formRef.current.qaOutputNumber = e.target.value)
-                      }
-                      placeholder="Nhập số lượng output QA"
                     />
                   </div>
                 )}
@@ -565,26 +464,6 @@ export function JobForm({
                 />
               </div>
 
-              {/* Pay Per File QA */}
-              <div className="grid gap-2">
-                <Label htmlFor="payPerFileQa">
-                  Giá trả nhân viên/file QA{" "}
-                  <span className="text-red-500">(VNĐ)</span>
-                </Label>
-                <Input
-                  id="payPerFileQa"
-                  type="text"
-                  defaultValue={formRef.current.payPerFileQa}
-                  onChange={(e) => {
-                    const formatted = formatVNDInput(e.target.value);
-                    formRef.current.payPerFileQa = formatted;
-                    e.target.value = formatted;
-                    forceUpdate();
-                  }}
-                  placeholder="Nhập giá trả nhân viên cho mỗi file QA (VD: 1.000)"
-                />
-              </div>
-
               {/* Total Pay Per File Display */}
               {formRef.current.payPerFile && formRef.current.outputNumber && (
                 <div className="grid gap-2">
@@ -598,33 +477,19 @@ export function JobForm({
                 </div>
               )}
 
-              {/* Total Pay Per File QA Display */}
-              {formRef.current.payPerFileQa &&
-                formRef.current.qaOutputNumber && (
-                  <div className="grid gap-2">
-                    <Label>Tổng tiền trả nhân viên QA (VNĐ) (Tính toán)</Label>
-                    <div className="text-lg font-semibold text-green-600">
-                      {formatCurrencyVND(
-                        parseVNDInput(formRef.current.payPerFileQa) *
-                          parseFloat(formRef.current.qaOutputNumber)
-                      )}
-                    </div>
-                  </div>
-                )}
-
               {/* Job Status and Payment Status in one row */}
               <div className="grid grid-cols-2 gap-4">
                 {/* Job Status */}
                 <div className="grid gap-2">
-                  <Label htmlFor="jobStatus">Trạng thái công việc</Label>
+                  <Label htmlFor="videoStatus">Trạng thái công việc</Label>
                   <Select
                     value={formRef.current.jobStatus}
                     onValueChange={(value) =>
-                      (formRef.current.jobStatus = value as JobStatus)
+                      (formRef.current.jobStatus = value as VideoStatus)
                     }
                     disabled={true}
                   >
-                    <SelectTrigger id="jobStatus" className="w-full">
+                    <SelectTrigger id="videoStatus" className="w-full">
                       <SelectValue placeholder="Chọn trạng thái công việc" />
                     </SelectTrigger>
                     <SelectContent>
@@ -668,53 +533,6 @@ export function JobForm({
                 </div>
               </div>
 
-              {/* Payment Employee Status */}
-              {editingJob && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="paymentEmployee">
-                      Thanh toán nhân viên
-                    </Label>
-                    <Select
-                      value={formRef.current.paymentEmployee}
-                      onValueChange={(value) => {
-                        formRef.current.paymentEmployee =
-                          value as EmployeePaymentStatus;
-                        forceUpdate(); // Trigger re-render để cập nhật UI
-                      }}
-                    >
-                      <SelectTrigger id="paymentEmployee" className="w-full">
-                        <SelectValue placeholder="Chọn trạng thái thanh toán nhân viên" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="UNPAID">Chưa thanh toán</SelectItem>
-                        <SelectItem value="PAID">Đã thanh toán</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="paymentEmployee">
-                      Thanh toán nhân viên QA
-                    </Label>
-                    <Select
-                      value={formRef.current.paymentEmployeeQa}
-                      onValueChange={(value) => {
-                        formRef.current.paymentEmployeeQa =
-                          value as EmployeePaymentStatus;
-                        forceUpdate(); // Trigger re-render để cập nhật UI
-                      }}
-                    >
-                      <SelectTrigger id="paymentEmployeeQa" className="w-full">
-                        <SelectValue placeholder="Chọn trạng thái thanh toán nhân viên QA" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="UNPAID">Chưa thanh toán</SelectItem>
-                        <SelectItem value="PAID">Đã thanh toán</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              )}
               {/* Input Link */}
               <div className="grid gap-2">
                 <Label htmlFor="inputLink">Input Link</Label>
@@ -728,7 +546,7 @@ export function JobForm({
               </div>
 
               {/* Done Link - Only show when editing */}
-              {editingJob && (
+              {editingVideo && (
                 <div className="grid gap-2">
                   <Label htmlFor="doneLink">Link hoàn thành</Label>
                   <Input
@@ -754,20 +572,6 @@ export function JobForm({
                   rows={3}
                 />
               </div>
-
-              {/* Employee Note */}
-              {/* {editingJob && (
-                <div className="grid gap-2">
-                  <Label htmlFor="employeeNote">Thuê ngoài</Label>
-                  <Textarea
-                    id="employeeNote"
-                    defaultValue={formRef.current.employeeNote}
-                    onChange={(e) => (formRef.current.employeeNote = e.target.value)}
-                    placeholder="Nhập thuê ngoài"
-                    rows={3}
-                  />
-                </div>
-              )} */}
             </div>
             <DialogFooter>
               <Button
@@ -778,7 +582,7 @@ export function JobForm({
                 Hủy
               </Button>
               <Button type="submit">
-                {editingJob ? "Cập nhật công việc" : "Tạo công việc"}
+                {editingVideo ? "Cập nhật công việc" : "Tạo công việc"}
               </Button>
             </DialogFooter>
           </form>
@@ -788,4 +592,4 @@ export function JobForm({
   );
 }
 
-export default memo(JobForm);
+export default memo(VideoForm);

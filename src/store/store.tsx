@@ -10,6 +10,7 @@ import SettingsSlice from "./slice/settings/Settings";
 import InvoicesSlice from "./slice/invoices/Invoices";
 import PayrollSlice from "./slice/payroll/Payroll";
 import PayrollPeriodSlice from "./slice/payroll-period/PayrollPeriod";
+import VideoSlice from "./slice/videos/Videos";
 import { injectStore } from "@/lib/utils/axios-instance";
 
 export const store= configureStore({
@@ -17,6 +18,7 @@ export const store= configureStore({
         authenticate: AuthenticateSlice,
         employee: EmployeeSlice,
         job: JobSlice,
+        video: VideoSlice,
         customer: CustomerSlice,
         workRequest: WorkRequestSlice,
         notification: NotificationSlice,

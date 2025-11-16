@@ -13,12 +13,14 @@ import NotificationBell from "@/components/notifications/notification-bell"
 
 const navigation = [
   // { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Công Việc", href: "/dashboard/job", icon: Briefcase },
+  { name: "Công Việc Photo", href: "/dashboard/job", icon: Briefcase },
+  { name: "Công Việc Video", href: "/dashboard/video", icon: Briefcase },
   { name: "Nhân Viên", href: "/dashboard/employees", icon: Users },
   { name: "Khách Hàng", href: "/dashboard/customers", icon: Users },
   { name: "Yêu Cầu Công Việc", href: "/dashboard/work-requests", icon: Settings },
   { name: "Hoá Đơn", href: "/dashboard/invoices", icon: FileText },
-  { name: "Bảng Lương", href: "/dashboard/payroll", icon: DollarSign },
+  { name: "Bảng Lương Tháng", href: "/dashboard/payroll", icon: DollarSign },
+  { name: "Bảng Lương Ngày", href: "/dashboard/payroll-day", icon: DollarSign },
   { name: "Bảng Lương Của Tôi", href: "/dashboard/my-payroll", icon: DollarSign },
   // { name: "Cấu Hình Thư Mục", href: "/dashboard/settings", icon: Folder },
   { name: "Thay Đổi Mật Khẩu", href: "/dashboard/change-password", icon: Lock },
@@ -32,9 +34,10 @@ export function Sidebar() {
 
   // Filter navigation based on role
   // Default to employee/QA view if roleName is not loaded yet (for security)
-  const filteredNavigation = !roleName || roleName === 'EMPLOYEE' || roleName === 'QA' 
+  const filteredNavigation = !roleName || roleName === 'EMPLOYEE' || roleName === 'QA' || roleName === 'SPECIAL'
     ? navigation.filter(item => 
         item.href === '/dashboard/job' || 
+        item.href === '/dashboard/video' ||
         item.href === '/dashboard/my-payroll' ||
         item.href === '/dashboard/change-password'
       )

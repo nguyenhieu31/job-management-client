@@ -77,6 +77,7 @@ export default function PayrollDetailDialog({
                   <thead>
                     <tr className="border-b">
                       <th className="text-left py-2 px-2">Mã job</th>
+                      <th className="text-left py-2 px-2">Ngày</th>
                       <th className="text-left py-2 px-2">Tên job</th>
                       <th className="text-left py-2 px-2">Số lượng output</th>
                       <th className="text-right py-2 px-2">Số Tiền</th>
@@ -87,6 +88,7 @@ export default function PayrollDetailDialog({
                     {payroll.jobs.map((item, index) => (
                       <tr key={index} className="border-b hover:bg-gray-50">
                         <td className="py-2 px-2 font-mono text-xs">{item.code}</td>
+                        <td className="py-2 px-2 font-mono text-xs">{formatDate(item.createdAt)}</td>
                         <td className="py-2 px-2">{item.caseName}</td>
                         <td className="py-2 px-2">{item.outputNumber}</td>
                         <td className="py-2 px-2 text-right font-medium">

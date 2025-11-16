@@ -15,7 +15,7 @@ export default function MyPayrollPage() {
   const [hasAccess, setHasAccess] = useState(false);
 
   useEffect(() => {
-    if (roleName === "EMPLOYEE" || roleName === "QA") {
+    if (roleName === "EMPLOYEE" || roleName === "QA" || roleName === "SPECIAL") {
       setHasAccess(true);
       dispatch(GetPayrollByEmployeeAction());
     }
