@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, ArrowDown } from "lucide-react";
 import { JobForm } from "@/components/jobs/job-form";
@@ -30,7 +30,6 @@ export default function JobsPage() {
   const dispatch = useAppDispatch();
   const [formOpen, setFormOpen] = useState(false);
   const [editingJob, setEditingJob] = useState<JobResponse | null>(null);
-  const lastFetchRef = useRef<string | null>(null);
 
   // Pagination state
   const [pagination, setPagination] = useState<PaginationType>({
@@ -207,23 +206,26 @@ export default function JobsPage() {
   useEffect(()=>{
     if(roleName === undefined) return;
     
-    // Create a unique key for this fetch request
-    const fetchKey = `${roleName}-${pagination.currentPage}-${pagination.pageSize}`;
+    const fetchJobs = () => {
+      if(roleName === "MANAGER"){
+        dispatch(GetAllJobsAction({pageNumber: pagination.currentPage - 1, pageSize: pagination.pageSize,}));
+      }else if(roleName === "QA"){
+        dispatch(GetAllJobsByQualifiedAssigneeAction({pageNumber: pagination.currentPage - 1, pageSize: pagination.pageSize, email: email || ""}));
+      }else if(roleName === "EMPLOYEE" || roleName === "SPECIAL"){
+        dispatch(GetAllJobsByAssigneeAction({pageNumber: pagination.currentPage - 1, pageSize: pagination.pageSize, email: email || ""}));
+      }
+    };
+
+    // Initial fetch
+    fetchJobs();
     
-    // Skip if we just fetched with same parameters
-    if (lastFetchRef.current === fetchKey) {
-      return;
-    }
+    // Set up interval to fetch every 5 minutes
+    const intervalId = setInterval(() => {
+      fetchJobs();
+    }, 300000);
     
-    lastFetchRef.current = fetchKey;
-    
-    if(roleName === "MANAGER"){
-      dispatch(GetAllJobsAction({pageNumber: pagination.currentPage - 1, pageSize: pagination.pageSize,}));
-    }else if(roleName === "QA"){
-      dispatch(GetAllJobsByQualifiedAssigneeAction({pageNumber: pagination.currentPage - 1, pageSize: pagination.pageSize, email: email || ""}));
-    }else if(roleName === "EMPLOYEE" || roleName === "SPECIAL"){
-      dispatch(GetAllJobsByAssigneeAction({pageNumber: pagination.currentPage - 1, pageSize: pagination.pageSize, email: email || ""}));
-    }
+    // Cleanup interval on unmount or when dependencies change
+    return () => clearInterval(intervalId);
   }, [pagination.currentPage, pagination.pageSize, roleName, email, dispatch]);
 
   // Load related data (employees, work requests, customers) only for Manager on mount

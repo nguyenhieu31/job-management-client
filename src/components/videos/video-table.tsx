@@ -499,7 +499,7 @@ export function VideoTable({
             </div>
           );
         }
-        return <div className="min-w-[200px]">{currentCaseName || "—"}</div>;
+        return <div className="min-w-[200px]" onClick={() => handlePreviewClick(video)}>{currentCaseName || "—"}</div>;
 
       case "workRequest":
         return (
@@ -746,7 +746,7 @@ export function VideoTable({
             </div>
           );
         }
-        return <div className="max-w-[400px] truncate">{currentNote || "—"}</div>;
+        return <div className="max-w-[400px] truncate" onClick={() => handlePreviewClick(video)}>{currentNote || "—"}</div>;
 
       case "assignedEmployee":
         if (employees && employees.length > 0 && userRole === "manager") {

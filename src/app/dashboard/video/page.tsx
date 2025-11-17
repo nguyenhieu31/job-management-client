@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, ArrowDown } from "lucide-react";
 import { VideoForm } from "@/components/videos/video-form";
@@ -38,7 +38,6 @@ export default function VideosPage() {
   const dispatch = useAppDispatch();
   const [formOpen, setFormOpen] = useState(false);
   const [editingVideo, setEditingJob] = useState<VideoResponse | null>(null);
-  const lastFetchRef = useRef<string | null>(null);
 
   // Pagination state
   const [pagination, setPagination] = useState<PaginationType>({
@@ -199,40 +198,43 @@ export default function VideosPage() {
   useEffect(() => {
     if (roleName === undefined) return;
 
-    // Create a unique key for this fetch request
-    const fetchKey = `${roleName}-${pagination.currentPage}-${pagination.pageSize}`;
+    const fetchVideos = () => {
+      if (roleName === "MANAGER") {
+        dispatch(
+          GetAllVideosAction({
+            pageNumber: pagination.currentPage - 1,
+            pageSize: pagination.pageSize,
+          })
+        );
+      } else if (roleName === "QA") {
+        dispatch(
+          GetAllVideosByAssigneeAction({
+            pageNumber: pagination.currentPage - 1,
+            pageSize: pagination.pageSize,
+            email: email || "",
+          })
+        );
+      } else if (roleName === "EMPLOYEE") {
+        dispatch(
+          GetAllVideosByAssigneeAction({
+            pageNumber: pagination.currentPage - 1,
+            pageSize: pagination.pageSize,
+            email: email || "",
+          })
+        );
+      }
+    };
 
-    // Skip if we just fetched with same parameters
-    if (lastFetchRef.current === fetchKey) {
-      return;
-    }
+    // Initial fetch
+    fetchVideos();
 
-    lastFetchRef.current = fetchKey;
+    // Set up interval to fetch every 5 minutes
+    const intervalId = setInterval(() => {
+      fetchVideos();
+    }, 300000);
 
-    if (roleName === "MANAGER") {
-      dispatch(
-        GetAllVideosAction({
-          pageNumber: pagination.currentPage - 1,
-          pageSize: pagination.pageSize,
-        })
-      );
-    } else if (roleName === "QA") {
-      dispatch(
-        GetAllVideosByAssigneeAction({
-          pageNumber: pagination.currentPage - 1,
-          pageSize: pagination.pageSize,
-          email: email || "",
-        })
-      );
-    } else if (roleName === "EMPLOYEE") {
-      dispatch(
-        GetAllVideosByAssigneeAction({
-          pageNumber: pagination.currentPage - 1,
-          pageSize: pagination.pageSize,
-          email: email || "",
-        })
-      );
-    }
+    // Cleanup interval on unmount or when dependencies change
+    return () => clearInterval(intervalId);
   }, [pagination.currentPage, pagination.pageSize, roleName, email, dispatch]);
 
   // Load related data (employees, work requests, customers) only for Manager on mount
