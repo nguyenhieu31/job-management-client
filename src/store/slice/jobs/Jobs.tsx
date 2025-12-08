@@ -16,7 +16,7 @@ import {
   updatePaymentEmployeeMultipleJobs,
   updatePaymentMultipleJobs,
 } from "@/services/JobApi";
-import { JobRequest, JobResponse, JobViewResponse } from "@/types/jobs";
+import { EmployeePaymentStatus, JobRequest, JobResponse, JobViewResponse } from "@/types/jobs";
 import {
   createSlice,
   createAsyncThunk,
@@ -35,8 +35,8 @@ interface InitialValuesStyle {
 
 export const GetAllJobsAction = createAsyncThunk<
   PageResponse<JobResponse[]>,
-  PageRequest
->("GetAllJobsAction", async (data: PageRequest) => {
+  PageRequest & {fromDate: string | null;}
+>("GetAllJobsAction", async (data: PageRequest & {fromDate: string | null}) => {
   try {
     const response = await getAllJobs(data);
     return response.data as PageResponse<JobResponse[]>;
@@ -47,10 +47,10 @@ export const GetAllJobsAction = createAsyncThunk<
 
 export const GetAllJobsByAssigneeAction = createAsyncThunk<
   PageResponse<JobResponse[]>,
-  PageRequest & { email: string }
+  PageRequest & { email: string; fromDate?: string | null }
 >(
   "GetAllJobsByAssigneeAction",
-  async (data: PageRequest & { email: string }) => {
+  async (data: PageRequest & { email: string; fromDate?: string | null }) => {
     try {
       const response = await getAllJobsByAssignee(data);
       return response.data as PageResponse<JobResponse[]>;
@@ -62,10 +62,10 @@ export const GetAllJobsByAssigneeAction = createAsyncThunk<
 
 export const GetAllJobsByQualifiedAssigneeAction = createAsyncThunk<
   PageResponse<JobResponse[]>,
-  PageRequest & { email: string }
+  PageRequest & { email: string; fromDate?: string | null }
 >(
   "GetAllJobsByQualifiedAssigneeAction",
-  async (data: PageRequest & { email: string }) => {
+  async (data: PageRequest & { email: string; fromDate?: string | null }) => {
     try {
       const response = await getAllJobsByQualifiedAssignee(data);
       return response.data as PageResponse<JobResponse[]>;
@@ -291,8 +291,63 @@ const JobSlice = createSlice({
   reducers: {
     updateJob: (state, action: PayloadAction<JobResponse>) => {
       if (state.jobs && state.jobs.data) {
+        const job = state.jobs.data.find((job) => job.id === action.payload.id);
+        if (!job) {
+          state.jobs.data.unshift(action.payload);
+          state.jobs.totalElements += 1;
+          if (state.jobs.data.length > state.jobs.pageSize) {
+            state.jobs.data.pop();
+          }
+          return;
+        }
         state.jobs.data = state.jobs.data.map((job) =>
           job.id === action.payload.id ? action.payload : job
+        );
+      }else{
+        state.jobs = {
+          data: [action.payload],
+          pageNumber: 1,
+          pageSize: 10,
+          totalElements: 1,
+          totalPages: 1,
+        };
+      }
+    },
+    createJobRealTime: (state, action: PayloadAction<JobResponse>) => {
+      if (state.jobs && state.jobs.data) {
+        state.jobs.data.unshift(action.payload);
+        state.jobs.totalElements += 1;
+        if (state.jobs.data.length > state.jobs.pageSize) {
+          state.jobs.data.pop();
+        }
+      }else{
+        state.jobs = {
+          data: [action.payload],
+          pageNumber: 1,
+          pageSize: 10,
+          totalElements: 1,
+          totalPages: 1,
+        };
+      }
+    },
+    deleteJobByIdRealTime: (state, action: PayloadAction<number>) => {
+      if (state.jobs && state.jobs.data) {
+        state.jobs.data = state.jobs.data.filter((job) => job.id !== action.payload);
+        state.jobs.totalElements -= 1;
+      }
+    },
+    deleteMultipleJobsRealTime: (state, action: PayloadAction<number[]>) => {
+      if (state.jobs && state.jobs.data) {
+        state.jobs.data = state.jobs.data.filter((job) => !action.payload.includes(job.id));
+        state.jobs.totalElements -= action.payload.length;
+      }
+    },
+    updatePaymentEmployeeMultipleJobsRealTime: (state, action) => {
+      const jobIds = action.payload.jobIds as number[];
+      const status = action.payload.status as EmployeePaymentStatus;
+      if (state.jobs && state.jobs.data) {
+        state.jobs.data = state.jobs.data.map((job) =>
+          jobIds.includes(job.id) ? { ...job, paymentEmployee: status } : job
         );
       }
     },
@@ -561,5 +616,5 @@ const JobSlice = createSlice({
   },
 });
 
-export const { updateJob } = JobSlice.actions;
+export const { updateJob, createJobRealTime, deleteJobByIdRealTime, deleteMultipleJobsRealTime, updatePaymentEmployeeMultipleJobsRealTime } = JobSlice.actions;
 export default JobSlice.reducer;

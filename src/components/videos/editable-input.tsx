@@ -11,7 +11,7 @@ interface EditableInputProps {
 }
 
 export function EditableInput({ value, onChange, className, readOnly = false }: EditableInputProps) {
-  const [currentValue, setCurrentValue] = useState(value ? value.toString() : "—")
+  const [currentValue, setCurrentValue] = useState(value ? value.toString() : "")
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value
     // Only allow numbers

@@ -1,5 +1,6 @@
 "use client";
 
+import { Fragment } from "react";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +24,35 @@ import {
   Link as LinkIcon,
   CheckCircle,
 } from "lucide-react";
+
+// Helper function to render text with clickable links
+const renderTextWithLinks = (text: string) => {
+  if (!text) return null;
+  
+  // Regex to match URLs
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = text.split(urlRegex);
+  
+  return parts.map((part, index) => {
+    if (urlRegex.test(part)) {
+      // Reset regex lastIndex
+      urlRegex.lastIndex = 0;
+      return (
+        <a
+          key={index}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 hover:underline break-all"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {part}
+        </a>
+      );
+    }
+    return <Fragment key={index}>{part}</Fragment>;
+  });
+};
 
 interface VideoDetailDialogProps {
   open: boolean;
@@ -280,9 +310,9 @@ export function VideoDetailDialog({
                   {video.note && (
                     <div className="space-y-2 min-w-0">
                       <h3 className="font-semibold text-lg">Ghi Chú</h3>
-                      <p className="text-sm whitespace-pre-wrap bg-muted/50 p-4 rounded-lg break-words overflow-wrap-break-word max-w-full">
-                        {video.note}
-                      </p>
+                      <div className="text-sm whitespace-pre-wrap bg-muted/50 p-4 rounded-lg break-words overflow-wrap-break-word max-w-full">
+                        {renderTextWithLinks(video.note)}
+                      </div>
                     </div>
                   )}
                 </div>

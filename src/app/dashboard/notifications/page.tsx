@@ -98,7 +98,6 @@ export default function NotificationsPage() {
   };
 
   const formatTime = (date: Date | string) => {
-    console.log("formatTime called with date:", date);
     const now = new Date();
     const parsedDate = typeof date === "string" ? new Date(date) : date;
     const diffInSeconds = Math.floor((now.getTime() - parsedDate.getTime()) / 1000);

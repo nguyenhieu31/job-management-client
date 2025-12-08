@@ -3,12 +3,13 @@ import { PageRequest, PageResponse } from "@/components/types/Page";
 import { axiosInstance } from "@/lib/utils/axios-instance";
 import { VideoRequest, VideoResponse, VideoViewResponse } from "@/types/videos";
 
-export const getAllVideos = async (data: PageRequest) => {
+export const getAllVideos = async (data: PageRequest & { fromDate?: string | null }) => {
   try {
     const res = await axiosInstance.get(`/admin/videos`, {
       params: {
         pageNumber: data.pageNumber,
         pageSize: data.pageSize,
+        fromDate: data.fromDate,
       },
     });
     return res as unknown as ApiResponse<PageResponse<VideoResponse[]>>;
@@ -18,7 +19,7 @@ export const getAllVideos = async (data: PageRequest) => {
 };
 
 export const getAllVideosByAssignee = async (
-  data: PageRequest & { email: string }
+  data: PageRequest & { email: string; fromDate?: string | null }
 ) => {
   try {
     const res = await axiosInstance.get(`/admin/videos/assignee`, {
@@ -26,6 +27,7 @@ export const getAllVideosByAssignee = async (
         pageNumber: data.pageNumber,
         pageSize: data.pageSize,
         email: data.email,
+        fromDate: data.fromDate,
       },
     });
     return res as unknown as ApiResponse<PageResponse<VideoResponse[]>>;
@@ -66,6 +68,7 @@ export const searchVideoByConditions = async (
     keyword: string | null;
     videoStatus: string | null;
     paymentStatus: string | null;
+    paymentEmployee?: string | null;
     startDate: string | null;
     endDate: string | null;
     selectedEmployeeIds?: number[];
@@ -80,6 +83,7 @@ export const searchVideoByConditions = async (
         keyword: data.keyword,
         videoStatus: data.videoStatus,
         paymentStatus: data.paymentStatus,
+        paymentEmployee: data.paymentEmployee,
         startDate: data.startDate,
         endDate: data.endDate,
         selectedEmployeeIds: data.selectedEmployeeIds
@@ -111,6 +115,7 @@ export const updateGridViewVideo = async (data: {
   jobId: number;
   caseName?: string | null;
   note?: string | null;
+  employeeNote?: string | null;
   inputLink?: string | null;
   assigneeId: number | null;
   customerId: number | null;
@@ -120,6 +125,7 @@ export const updateGridViewVideo = async (data: {
   qaOutputNumber?: number | null;
   qualifiedAssigneeId?: number | null;
   paymentStatus?: string | null;
+  paymentEmployee?: string | null;
   doneLink?: string | null;
   payPerFile?: number | null;
   payPerFileQa?: number | null;
@@ -171,6 +177,30 @@ export const deleteMultipleVideos = async (videoIds: number[]) => {
     const res = await axiosInstance.post(
       `/admin/videos/delete/multiple-video`,
       { data: { ids: videoIds } }
+    );
+    return res as unknown as ApiResponse<void>;
+  } catch (err: any) {
+    throw new Error(err.message);
+  }
+};
+
+export const updatePaymentEmployeeMultipleVideos = async (videoIds: number[]) => {
+  try {
+    const res = await axiosInstance.post(
+      `/admin/videos/update/payment-employee-status/multiple-video`,
+      { ids: videoIds }
+    );
+    return res as unknown as ApiResponse<void>;
+  } catch (err: any) {
+    throw new Error(err.message);
+  }
+};
+
+export const updatePaymentMultipleVideos = async (videoIds: number[]) => {
+  try {
+    const res = await axiosInstance.post(
+      `/admin/videos/update/payment-status/multiple-video`,
+      { ids: videoIds }
     );
     return res as unknown as ApiResponse<void>;
   } catch (err: any) {

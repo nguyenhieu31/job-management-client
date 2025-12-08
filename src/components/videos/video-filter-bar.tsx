@@ -28,6 +28,7 @@ import { useState, useEffect, useRef } from "react";
 import MultiSelectDropdown from "../ui/multi-select-dropdown";
 import { EmployeeResponse } from "@/types/employees";
 import { useDebounce } from "@/hooks/use-debounce";
+import { getFirstDayOfMonth } from "@/lib/utils";
 
 interface FilterBarProps {
   pagination: PaginationType;
@@ -49,10 +50,11 @@ export function VideoFilterBar({
   const searchBoxRef = useRef<HTMLDivElement>(null);
 
   const [filters, setFilters] = useState<VideoFilters>({
-    fromDate: "",
+    fromDate: getFirstDayOfMonth(),
     toDate: "",
     videoStatus: "",
     paymentStatus: "",
+    paymentEmployee: "",
     keyword: "",
   });
   const [selectedEmployees, setSelectedEmployees] = useState<
@@ -120,6 +122,9 @@ export function VideoFilterBar({
       paymentStatus: !filters.paymentStatus
         ? null
         : (filters.paymentStatus as string),
+      paymentEmployee: !filters.paymentEmployee
+        ? null
+        : (filters.paymentEmployee as string),
       startDate: filters.fromDate || null,
       endDate: filters.toDate || null,
       selectedEmployeeIds: selectedEmployees ? selectedEmployees.map((e) => e.id) : undefined,
@@ -135,10 +140,11 @@ export function VideoFilterBar({
 
   const handleResetFilters = () => {
     const resetFilters: VideoFilters = {
-      fromDate: "",
+      fromDate: getFirstDayOfMonth(),
       toDate: "",
       videoStatus: "",
       paymentStatus: "",
+      paymentEmployee: "",
       keyword: "",
     };
     setFilters(resetFilters);
@@ -226,6 +232,29 @@ export function VideoFilterBar({
                 <SelectContent>
                   <SelectItem value="UNPAID">Chưa thanh toán</SelectItem>
                   <SelectItem value="INVOICE_SENT">Đã gửi hóa đơn</SelectItem>
+                  <SelectItem value="PAID">Đã thanh toán</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Payment Employee - Manager/Special */}
+          {(roleName === "MANAGER" || roleName === "SPECIAL") && (
+            <div className="space-y-2">
+              <Label htmlFor="paymentEmployee" className="text-sm font-medium">
+                Thanh Toán NV
+              </Label>
+              <Select
+                value={filters.paymentEmployee}
+                onValueChange={(value) =>
+                  handleChange("paymentEmployee", value)
+                }
+              >
+                <SelectTrigger id="paymentEmployee" className="w-[200px] min-w-[100px]">
+                  <SelectValue placeholder="Tất cả" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="UNPAID">Chưa thanh toán</SelectItem>
                   <SelectItem value="PAID">Đã thanh toán</SelectItem>
                 </SelectContent>
               </Select>

@@ -25,6 +25,7 @@ import { GetAllWorkRequestsAction } from "@/store/slice/work-request/WorkRequest
 import { GetAllCustomersAction } from "@/store/slice/customer/Customer";
 import { CustomerResponse } from "@/types/customers";
 import type { JobRequest } from "@/types/jobs";
+import { getFirstDayOfMonth } from "@/lib/utils";
 
 export default function JobsPage() {
   const dispatch = useAppDispatch();
@@ -208,11 +209,11 @@ export default function JobsPage() {
     
     const fetchJobs = () => {
       if(roleName === "MANAGER"){
-        dispatch(GetAllJobsAction({pageNumber: pagination.currentPage - 1, pageSize: pagination.pageSize,}));
+        dispatch(GetAllJobsAction({pageNumber: pagination.currentPage - 1, pageSize: pagination.pageSize, fromDate: getFirstDayOfMonth()}));
       }else if(roleName === "QA"){
-        dispatch(GetAllJobsByQualifiedAssigneeAction({pageNumber: pagination.currentPage - 1, pageSize: pagination.pageSize, email: email || ""}));
+        dispatch(GetAllJobsByQualifiedAssigneeAction({pageNumber: pagination.currentPage - 1, pageSize: pagination.pageSize, email: email || "", fromDate: getFirstDayOfMonth()}));
       }else if(roleName === "EMPLOYEE" || roleName === "SPECIAL"){
-        dispatch(GetAllJobsByAssigneeAction({pageNumber: pagination.currentPage - 1, pageSize: pagination.pageSize, email: email || ""}));
+        dispatch(GetAllJobsByAssigneeAction({pageNumber: pagination.currentPage - 1, pageSize: pagination.pageSize, email: email || "", fromDate: getFirstDayOfMonth()}));
       }
     };
 
@@ -220,12 +221,12 @@ export default function JobsPage() {
     fetchJobs();
     
     // Set up interval to fetch every 5 minutes
-    const intervalId = setInterval(() => {
-      fetchJobs();
-    }, 300000);
+    // const intervalId = setInterval(() => {
+    //   fetchJobs();
+    // }, 300000);
     
-    // Cleanup interval on unmount or when dependencies change
-    return () => clearInterval(intervalId);
+    // // Cleanup interval on unmount or when dependencies change
+    // return () => clearInterval(intervalId);
   }, [pagination.currentPage, pagination.pageSize, roleName, email, dispatch]);
 
   // Load related data (employees, work requests, customers) only for Manager on mount

@@ -29,6 +29,7 @@ import { useState, useEffect, useRef } from "react";
 import MultiSelectDropdown from "../ui/multi-select-dropdown";
 import { EmployeeResponse } from "@/types/employees";
 import { useDebounce } from "@/hooks/use-debounce";
+import { getFirstDayOfMonth } from "@/lib/utils";
 
 interface FilterBarProps {
   pagination: PaginationType;
@@ -48,7 +49,7 @@ export function FilterBar({
   const searchBoxRef = useRef<HTMLDivElement>(null);
 
   const [filters, setFilters] = useState<JobFilters>({
-    fromDate: "",
+    fromDate: getFirstDayOfMonth(),
     toDate: "",
     jobStatus: "",
     paymentStatus: "",
@@ -134,7 +135,7 @@ export function FilterBar({
 
   const handleResetFilters = () => {
     const resetFilters: JobFilters = {
-      fromDate: "",
+      fromDate: getFirstDayOfMonth(),
       toDate: "",
       jobStatus: "",
       paymentStatus: "",
@@ -231,7 +232,7 @@ export function FilterBar({
             </div>
           )}
 
-          {roleName === "SPECIAL" && (
+          {(roleName === "SPECIAL" || roleName === "MANAGER")  && (
             <div className="space-y-2">
               <Label htmlFor="paymentEmployee" className="text-sm font-medium">
                 Thanh Toán nhân viên
