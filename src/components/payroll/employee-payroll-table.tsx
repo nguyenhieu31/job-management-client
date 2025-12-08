@@ -104,12 +104,12 @@ export function EmployeePayrollTable({
                 <TableCell className="border-r text-center text-sm">
                   {payroll.approveDate
                     ? formatDate(payroll.approveDate.toString())
-                    : "—"}
+                    : ""}
                 </TableCell>
                 <TableCell className="border-r text-center text-sm">
                   {payroll.paidDate
                     ? formatDate(payroll.paidDate.toString())
-                    : "—"}
+                    : ""}
                 </TableCell>
                 <TableCell className="text-center">
                   <Button

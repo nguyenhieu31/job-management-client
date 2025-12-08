@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { CustomerJobSummary, InvoicePageRequest, InvoiceRequest, InvoiceResponse } from "@/types/invoices";
-import { cancelInvoice, createInvoice, getAllInvoice, getCustomerJobSummary, sendInvoice } from "@/services/InvoiceApi";
+import { cancelInvoice, createInvoice, getAllInvoice, getCustomerJobSummary, sendInvoice, searchInvoice } from "@/services/InvoiceApi";
 import { PageResponse } from "@/components/types/Page";
 import { toast } from "react-toastify";
 
@@ -40,6 +40,18 @@ export const GetAllInvoicesAction = createAsyncThunk<
 >("GetAllInvoicesAction", async (params) => {
   try {
     const response = await getAllInvoice(params);
+    return response.data as PageResponse<InvoiceResponse[]>;
+  } catch (err: any) {
+    throw new Error(err.message);
+  }
+});
+
+export const SearchInvoicesAction = createAsyncThunk<
+  PageResponse<InvoiceResponse[]>,
+  InvoicePageRequest & { keyword: string }
+>("SearchInvoicesAction", async (params) => {
+  try {
+    const response = await searchInvoice(params);
     return response.data as PageResponse<InvoiceResponse[]>;
   } catch (err: any) {
     throw new Error(err.message);
@@ -125,6 +137,19 @@ const invoicesSlice = createSlice({
         state.invoices = action.payload;
       })
       .addCase(GetAllInvoicesAction.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
+    builder
+      .addCase(SearchInvoicesAction.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(SearchInvoicesAction.fulfilled, (state, action) => {
+        state.loading = false;
+        state.invoices = action.payload;
+      })
+      .addCase(SearchInvoicesAction.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });

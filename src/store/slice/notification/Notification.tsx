@@ -80,6 +80,7 @@ const notificationSlice = createSlice({
   initialState,
   reducers: {
     addNotificationLocal: (state, action) => {
+      console.log("Adding notification locally:", action.payload);
       if (!state.notifications) {
         state.notifications = {
           data: [],
@@ -88,6 +89,12 @@ const notificationSlice = createSlice({
           totalElements: 0,
           totalPages: 0,
         };
+      }
+      if(state.notifications.data.length >= 10){
+        state.notifications.data.pop();
+      }
+      if(state.unreadCount >= 10){
+        state.unreadCount -=1;
       }
       state.notifications.data.unshift(action.payload);
       if (!action.payload.isRead) {

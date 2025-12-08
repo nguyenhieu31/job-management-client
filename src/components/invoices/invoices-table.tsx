@@ -10,7 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Eye, Send, X } from "lucide-react";
+import { Eye, Send, X, Search } from "lucide-react";
 import type { InvoiceResponse, InvoiceStatus } from "@/types/invoices";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,7 +34,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Input } from "@/components/ui/input";
 
 interface InvoicesTableProps {
   invoices: PageResponse<InvoiceResponse[]> | undefined;
@@ -45,6 +46,7 @@ interface InvoicesTableProps {
   onPageChange: (page: number) => void;
   onPageSizeChange: (size: number) => void;
   onStatusChange: (status: InvoiceStatus | "ALL") => void;
+  onSearch: (keyword: string) => void;
   status: InvoiceStatus | "ALL";
 }
 
@@ -70,11 +72,22 @@ export function InvoicesTable({
   onPageChange,
   onPageSizeChange,
   onStatusChange,
+  onSearch,
   status,
 }: InvoicesTableProps) {
   const [sendDialogOpen, setSendDialogOpen] = useState(false);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceResponse | null>(null);
+  const [searchKeyword, setSearchKeyword] = useState("");
+
+  // Debounce search
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      onSearch(searchKeyword);
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchKeyword, onSearch]);
 
   const handleSendClick = (invoice: InvoiceResponse) => {
     setSelectedInvoice(invoice);
@@ -180,24 +193,37 @@ export function InvoicesTable({
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Danh Sách Hoá Đơn</CardTitle>
-          {/* Status Filter */}
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Lọc theo trạng thái:</span>
-            <Select
-              value={status}
-              onValueChange={(value) => onStatusChange(value as InvoiceStatus | "ALL")}
-            >
-              <SelectTrigger className="w-[150px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">Tất cả</SelectItem>
-                <SelectItem value="DRAFT">Đã tạo hoá đơn</SelectItem>
-                <SelectItem value="PENDING">Chờ Thanh Toán</SelectItem>
-                <SelectItem value="PAID">Đã Thanh Toán</SelectItem>
-                <SelectItem value="CANCELLED">Bị Hủy</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="flex items-center gap-4">
+            {/* Search Input */}
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Tìm kiếm hoá đơn..."
+                value={searchKeyword}
+                onChange={(e) => setSearchKeyword(e.target.value)}
+                className="pl-8 w-[250px]"
+              />
+            </div>
+            {/* Status Filter */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Lọc theo trạng thái:</span>
+              <Select
+                value={status}
+                onValueChange={(value) => onStatusChange(value as InvoiceStatus | "ALL")}
+              >
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Tất cả</SelectItem>
+                  <SelectItem value="DRAFT">Đã tạo hoá đơn</SelectItem>
+                  <SelectItem value="PENDING">Chờ Thanh Toán</SelectItem>
+                  <SelectItem value="PAID">Đã Thanh Toán</SelectItem>
+                  <SelectItem value="CANCELLED">Bị Hủy</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
       </CardHeader>

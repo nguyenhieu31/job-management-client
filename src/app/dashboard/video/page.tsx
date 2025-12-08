@@ -33,6 +33,7 @@ import { GetAllWorkRequestsAction } from "@/store/slice/work-request/WorkRequest
 import { GetAllCustomersAction } from "@/store/slice/customer/Customer";
 import { CustomerResponse } from "@/types/customers";
 import type { VideoRequest } from "@/types/videos";
+import { getFirstDayOfMonth } from "@/lib/utils";
 
 export default function VideosPage() {
   const dispatch = useAppDispatch();
@@ -69,6 +70,7 @@ export default function VideosPage() {
     const role = roleName?.toLowerCase();
     if (role === "manager" || role === "admin") return "manager";
     if (role === "qa") return "qa";
+    if (role === "special") return "special";
     return "employee";
   };
 
@@ -176,7 +178,7 @@ export default function VideosPage() {
   // Memoize filtered employee lists to avoid recreating on every render
   const employeeList = useMemo(
     () =>
-      employees?.data.filter((e) => e.role.name.toLowerCase() === "employee") ||
+      employees?.data.filter((e) => e.role.name.toLowerCase() === "employee" || e.role.name.toLowerCase() === "special") ||
       [],
     [employees]
   );
@@ -204,6 +206,7 @@ export default function VideosPage() {
           GetAllVideosAction({
             pageNumber: pagination.currentPage - 1,
             pageSize: pagination.pageSize,
+            fromDate: getFirstDayOfMonth(),
           })
         );
       } else if (roleName === "QA") {
@@ -212,14 +215,16 @@ export default function VideosPage() {
             pageNumber: pagination.currentPage - 1,
             pageSize: pagination.pageSize,
             email: email || "",
+            fromDate: getFirstDayOfMonth(),
           })
         );
-      } else if (roleName === "EMPLOYEE") {
+      } else if (roleName === "EMPLOYEE" || roleName === "SPECIAL") {
         dispatch(
           GetAllVideosByAssigneeAction({
             pageNumber: pagination.currentPage - 1,
             pageSize: pagination.pageSize,
             email: email || "",
+            fromDate: getFirstDayOfMonth(),
           })
         );
       }
@@ -229,12 +234,12 @@ export default function VideosPage() {
     fetchVideos();
 
     // Set up interval to fetch every 5 minutes
-    const intervalId = setInterval(() => {
-      fetchVideos();
-    }, 300000);
+    // const intervalId = setInterval(() => {
+    //   fetchVideos();
+    // }, 300000);
 
-    // Cleanup interval on unmount or when dependencies change
-    return () => clearInterval(intervalId);
+    // // Cleanup interval on unmount or when dependencies change
+    // return () => clearInterval(intervalId);
   }, [pagination.currentPage, pagination.pageSize, roleName, email, dispatch]);
 
   // Load related data (employees, work requests, customers) only for Manager on mount

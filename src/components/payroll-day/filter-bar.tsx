@@ -19,6 +19,7 @@ import { Search, RotateCcw, Loader2 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import MultiSelectDropdown from "@/components/ui/multi-select-dropdown";
 import { useDebounce } from "@/hooks/use-debounce";
+import { getFirstDayOfMonth } from "@/lib/utils";
 
 interface FilterBarProps {
   pagination: PaginationType;
@@ -39,7 +40,7 @@ export function FilterBar({
   const searchBoxRef = useRef<HTMLDivElement>(null);
 
   const [filters, setFilters] = useState<JobFilters>({
-    fromDate: "",
+    fromDate: getFirstDayOfMonth(),
     toDate: "",
     jobStatus: "",
     paymentStatus: "",
@@ -134,7 +135,7 @@ export function FilterBar({
 
   const handleResetFilters = () => {
     const resetFilters: JobFilters = {
-      fromDate: "",
+      fromDate: getFirstDayOfMonth(),
       toDate: "",
       jobStatus: "",
       paymentStatus: "",

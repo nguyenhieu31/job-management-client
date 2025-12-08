@@ -236,7 +236,7 @@ export function PayrollDayTable({
         // }
         return (
           <span>
-            {job.customer && job.customer.name ? job.customer.name : "—"}
+            {job.customer && job.customer.name ? job.customer.name : ""}
           </span>
         );
 
@@ -247,7 +247,7 @@ export function PayrollDayTable({
         return (
           <div className="max-w-[200px]">
             <div className="font-medium truncate">
-              {job.workRequest?.categoryName || "—"}
+              {job.workRequest?.categoryName || ""}
             </div>
             {job.workRequest?.fileType && (
               <Badge variant="outline" className="mt-1 text-xs">
@@ -278,7 +278,7 @@ export function PayrollDayTable({
             rel="noopener noreferrer"
             className="text-blue-600 hover:underline max-w-[150px] truncate block"
           >
-            {job.inputLink || "—"}
+            {job.inputLink || ""}
           </a>
         );
 
@@ -306,7 +306,7 @@ export function PayrollDayTable({
             rel="noopener noreferrer"
             className="text-blue-600 hover:underline max-w-[150px] truncate block"
           >
-            {job.doneLink || "—"}
+            {job.doneLink || ""}
           </a>
         );
 
@@ -360,7 +360,7 @@ export function PayrollDayTable({
       case "note":
         return (
           <span className="max-w-[400px] truncate block" title={job.note}>
-            {job.note || "—"}
+            {job.note || ""}
           </span>
         );
 
@@ -370,7 +370,7 @@ export function PayrollDayTable({
             className="max-w-[400px] truncate block"
             title={job.qaNote ? job.qaNote : ""}
           >
-            {job.qaNote || "—"}
+            {job.qaNote || ""}
           </span>
         );
 

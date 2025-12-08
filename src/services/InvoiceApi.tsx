@@ -21,6 +21,15 @@ export const getAllInvoice = async (data: InvoicePageRequest) => {
     }
 }
 
+export const searchInvoice = async (data: InvoicePageRequest & { keyword: string }) => {
+    try {
+        const res = await axiosInstance.get(`/admin/paypal/invoices/search`, { params: data });
+        return res as unknown as ApiResponse<PageResponse<InvoiceResponse[]>>;
+    } catch (err: any) {
+        throw new Error(err.message);
+    }
+}
+
 export const createInvoice = async (data : InvoiceRequest) => {
     try {
         const res = await axiosInstance.post(`/admin/paypal/create-invoice`, data);

@@ -77,12 +77,12 @@ const ActionCellComponent = forwardRef<
         if (video.jobStatus === "DONE") {
           actions.push("complete-video");
         }
-      } else if (userRole === "employee") {
-        // Employee can take pending jobs
+      } else if (userRole === "employee" || userRole === "special") {
+        // Employee and special can take pending jobs
         if (video.jobStatus === "PENDING") {
           actions.push("take-video");
         }
-        // Employee can mark in-progress jobs as done
+        // Employee and special can mark in-progress jobs as done
         if (video.jobStatus === "IN_PROGRESS") {
           actions.push("done-video");
         }
@@ -100,8 +100,8 @@ const ActionCellComponent = forwardRef<
     return (
       <>
         <div className="flex justify-center gap-2 flex-nowrap">
-          {/* Show ONLY Save and Cancel buttons for Manager, Employee, or QA if there are pending changes */}
-          {(userRole === "manager" || userRole === "employee" || userRole === "qa") && hasPendingChanges ? (
+          {/* Show ONLY Save and Cancel buttons for Manager, Employee, Special if there are pending changes */}
+          {(userRole === "manager" || userRole === "employee" || userRole === "special") && hasPendingChanges ? (
             <>
               <Button
                 key="cancel"
@@ -146,7 +146,7 @@ const ActionCellComponent = forwardRef<
                     key="done-video"
                     variant="default"
                     size="sm"
-                    onClick={() => {
+                    onClick={async () => {
                       // Check if done link is filled
                       const currentDoneLink = getCurrentValue(
                         video,
@@ -158,9 +158,11 @@ const ActionCellComponent = forwardRef<
                         );
                         return;
                       }
-                      // If there are pending changes, save them first
-                      if (hasPendingChanges) {
-                        onSave(video.id);
+                      // If there are pending changes, save them first (for employee and special roles)
+                      if (hasPendingChanges && (userRole === "employee" || userRole === "special")) {
+                        await onSave(video.id);
+                        // Wait a bit for the save to complete
+                        await new Promise(resolve => setTimeout(resolve, 500));
                       }
                       onVideoAction?.(video.id, "done-video");
                     }}

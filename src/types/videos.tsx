@@ -36,10 +36,12 @@ export interface VideoResponse {
   inputNumber: number;
   outputNumber: number;
   paymentStatus: PaymentStatus;
+  paymentEmployee: EmployeePaymentStatus;
   jobStatus: VideoStatus;
   inputLink: string;
   doneLink: string;
   note: string;
+  employeeNote?: string | null;
   assignee: AssigneeInfo;
   customer: CustomerInfo;
   workRequest: WorkRequestResponse;
@@ -59,21 +61,19 @@ export interface VideoRequest {
   inputNumber: number;
   outputNumber?: number | null;
   paymentStatus: PaymentStatus;
+  paymentEmployee?: EmployeePaymentStatus;
   jobStatus: VideoStatus;
   inputLink: string;
   doneLink?: string | null;
   note: string | null;
+  employeeNote?: string | null;
   assigneeId: number | null;
   customerId: number | null;
   workRequestId: number | null;
   isDeleteAssignee?: boolean;
 }
 
-export type VideoStatus =
-  | "PENDING"
-  | "IN_PROGRESS"
-  | "DONE"
-  | "COMPLETED";
+export type VideoStatus = "PENDING" | "IN_PROGRESS" | "DONE" | "COMPLETED";
 
 export type PaymentStatus =
   | "UNPAID"
@@ -81,6 +81,7 @@ export type PaymentStatus =
   | "PAID"
   | "INVOICE_DRAFT"
   | "CANCELLED";
+export type EmployeePaymentStatus = "UNPAID" | "PAID";
 
 // Video action types for different roles
 export type VideoAction =
@@ -98,7 +99,7 @@ export interface VideoActionPayload {
   qaOutputNumber?: number | null;
 }
 
-export type UserRole = "manager" | "qa" | "employee";
+export type UserRole = "manager" | "qa" | "employee" | "special";
 
 // Filter interface
 export interface VideoFilters {
@@ -106,6 +107,7 @@ export interface VideoFilters {
   toDate: string;
   videoStatus: VideoStatus | "";
   paymentStatus: PaymentStatus | "";
+  paymentEmployee?: string;
   keyword: string;
   selectedEmployeeIds?: number[];
 }
@@ -131,12 +133,13 @@ export const ROLE_COLUMNS = {
     "filePrice",
     "totalPrice",
     "jobStatus",
-    "paymentStatus",
     "linkDone",
     "payPerFile",
     "totalPayPerFile",
+    // "employeeNote",
     "assignedEmployee",
     "note",
+    "paymentStatus",
     "actions",
   ],
   employee: [
@@ -152,6 +155,23 @@ export const ROLE_COLUMNS = {
     "payPerFile",
     "totalPayPerFile",
     "note",
+    "actions",
+  ],
+  special: [
+    "code",
+    "date",
+    "caseName",
+    "workRequest",
+    "linkInput",
+    "linkDone",
+    "inputCount",
+    "outputCount",
+    "jobStatus",
+    "payPerFile",
+    "totalPayPerFile",
+    "note",
+    "employeeNote",
+    "paymentEmployee",
     "actions",
   ],
 } as const;

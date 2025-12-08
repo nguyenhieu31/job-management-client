@@ -17,6 +17,7 @@ import { CustomerResponse } from "@/types/customers";
 import { PayrollDayTable } from "@/components/payroll-day/payroll-day-table";
 import { FilterBar } from "@/components/payroll-day/filter-bar";
 import { Pagination } from "@/components/payroll-day/pagination";
+import { getFirstDayOfMonth } from "@/lib/utils";
 
 export default function JobsPage() {
   const dispatch = useAppDispatch();
@@ -117,6 +118,7 @@ export default function JobsPage() {
           GetAllJobsAction({
             pageNumber: pagination.currentPage - 1,
             pageSize: pagination.pageSize,
+            fromDate: getFirstDayOfMonth(),
           })
         );
       }

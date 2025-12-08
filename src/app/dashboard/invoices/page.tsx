@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/store";
 import {
   clearPreviewInvoice,
   GetCustomerJobSummaryAction,
   GetAllInvoicesAction,
+  SearchInvoicesAction,
   CreateInvoiceAction,
   updateCustomerCreatedInvoice,
   SendInvoiceAction,
@@ -18,7 +19,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { toast } from "react-toastify";
-import { CustomerJobSummary, InvoiceResponse, InvoiceStatus } from "@/types/invoices";
+import {
+  CustomerJobSummary,
+  InvoiceResponse,
+  InvoiceStatus,
+} from "@/types/invoices";
 import { formatCurrency } from "@/lib/utils";
 import { CustomerInfo, JobResponse } from "@/types/jobs";
 import { LoadingModal } from "@/components/ui/loading-modal";
@@ -26,22 +31,29 @@ import { PageResponse } from "@/components/types/Page";
 
 export default function InvoicesPage() {
   const dispatch = useAppDispatch();
-  const { customerJobSummary, previewInvoice, loading, error, invoices } : {
+  const {
+    customerJobSummary,
+    previewInvoice,
+    loading,
+    error,
+    invoices,
+  }: {
     customerJobSummary: CustomerJobSummary[];
     invoices: PageResponse<InvoiceResponse[]> | undefined;
     loading: boolean;
     error: string | null;
     previewInvoice: InvoiceResponse | null;
-  } = useAppSelector(
-    (state) => state.invoices
-  );
+  } = useAppSelector((state) => state.invoices);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [selectedStatus, setSelectedStatus] = useState<InvoiceStatus | "ALL">("ALL");
+  const [selectedStatus, setSelectedStatus] = useState<InvoiceStatus | "ALL">(
+    "ALL"
+  );
+  const [keyword, setKeyword] = useState("");
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-  }
+  };
 
   const handlePageSizeChange = (size: number) => {
     setPageSize(size);
@@ -51,21 +63,37 @@ export default function InvoicesPage() {
   const handleStatusChange = (status: InvoiceStatus | "ALL") => {
     setSelectedStatus(status);
     setCurrentPage(1);
-  }
+  };
 
-  const fetchInvoices = useCallback(() => {
-    if (currentPage && pageSize) {
-      dispatch(GetAllInvoicesAction({ pageNumber: currentPage -1, pageSize, invoiceStatus: selectedStatus }));
-    }
-  }, [currentPage, pageSize, dispatch, selectedStatus]);
+  const handleSearch = (searchKeyword: string) => {
+    setKeyword(searchKeyword);
+    setCurrentPage(1);
+  };
 
   useEffect(() => {
     dispatch(GetCustomerJobSummaryAction());
   }, [dispatch]);
 
   useEffect(() => {
-    fetchInvoices();
-  }, [fetchInvoices]);
+    if (keyword) {
+      dispatch(
+        SearchInvoicesAction({
+          pageNumber: currentPage - 1,
+          pageSize,
+          invoiceStatus: selectedStatus,
+          keyword: keyword.trim(),
+        })
+      );
+    } else {
+      dispatch(
+        GetAllInvoicesAction({
+          pageNumber: currentPage - 1,
+          pageSize,
+          invoiceStatus: selectedStatus,
+        })
+      );
+    }
+  }, [currentPage, pageSize, selectedStatus, keyword, dispatch]);
 
   const handleCreateInvoice = async (
     customer: CustomerInfo,
@@ -77,16 +105,22 @@ export default function InvoicesPage() {
       console.log("Selected jobs:", selectedJobs);
       const payload = {
         customerInfo: customer,
-        jobs: selectedJobs
-      }
+        jobs: selectedJobs,
+      };
       console.log("Create invoice payload:", payload);
       const res = await dispatch(CreateInvoiceAction(payload));
-      if(res.meta.requestStatus === "fulfilled") {
+      if (res.meta.requestStatus === "fulfilled") {
         toast.success("Tạo hoá đơn thành công!");
         // Refresh data
         await Promise.all([
-          dispatch(GetAllInvoicesAction({ pageNumber: currentPage -1, pageSize, invoiceStatus: selectedStatus })),
-          dispatch(updateCustomerCreatedInvoice(customer))
+          dispatch(
+            GetAllInvoicesAction({
+              pageNumber: currentPage - 1,
+              pageSize,
+              invoiceStatus: selectedStatus,
+            })
+          ),
+          dispatch(updateCustomerCreatedInvoice(customer)),
         ]);
       } else {
         toast.error("Tạo hoá đơn thất bại!");
@@ -100,7 +134,13 @@ export default function InvoicesPage() {
     console.log("Send invoice:", invoice);
     await Promise.all([
       dispatch(SendInvoiceAction(invoice.invoiceId)),
-      dispatch(GetAllInvoicesAction({ pageNumber: currentPage -1, pageSize, invoiceStatus: selectedStatus }))
+      dispatch(
+        GetAllInvoicesAction({
+          pageNumber: currentPage - 1,
+          pageSize,
+          invoiceStatus: selectedStatus,
+        })
+      ),
     ]);
   };
 
@@ -109,7 +149,13 @@ export default function InvoicesPage() {
     await Promise.all([
       dispatch(CancelInvoiceAction(invoice.invoiceId)),
       dispatch(GetCustomerJobSummaryAction()),
-      dispatch(GetAllInvoicesAction({ pageNumber: currentPage -1, pageSize, invoiceStatus: selectedStatus }))
+      dispatch(
+        GetAllInvoicesAction({
+          pageNumber: currentPage - 1,
+          pageSize,
+          invoiceStatus: selectedStatus,
+        })
+      ),
     ]);
   };
 
@@ -155,7 +201,9 @@ export default function InvoicesPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{customerJobSummary.length}</div>
+              <div className="text-2xl font-bold">
+                {customerJobSummary.length}
+              </div>
             </CardContent>
           </Card>
 
@@ -167,7 +215,10 @@ export default function InvoicesPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {customerJobSummary.reduce((sum: number, c: any) => sum + c.jobs.length, 0)}
+                {customerJobSummary.reduce(
+                  (sum: number, c: any) => sum + c.jobs.length,
+                  0
+                )}
               </div>
             </CardContent>
           </Card>
@@ -180,7 +231,12 @@ export default function InvoicesPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-primary">
-                {formatCurrency(customerJobSummary.reduce((sum: number, c: any) => sum + c.totalAmount, 0))}
+                {formatCurrency(
+                  customerJobSummary.reduce(
+                    (sum: number, c: any) => sum + c.totalAmount,
+                    0
+                  )
+                )}
               </div>
             </CardContent>
           </Card>
@@ -203,6 +259,7 @@ export default function InvoicesPage() {
         onPageChange={handlePageChange}
         onPageSizeChange={handlePageSizeChange}
         onStatusChange={handleStatusChange}
+        onSearch={handleSearch}
         status={selectedStatus}
       />
 

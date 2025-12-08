@@ -1,9 +1,11 @@
 import { PageResponse } from "@/components/types/Page";
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { VideoRequest, VideoResponse, VideoViewResponse } from "@/types/videos";
 import * as VideoApi from "@/services/VideoApi";
 import { getVideoFromDropbox } from "@/services/DropboxApi";
 import { toast } from "react-toastify";
+import { updatePaymentEmployeeMultipleVideos, updatePaymentMultipleVideos } from "@/services/VideoApi";
+import { EmployeePaymentStatus } from "@/types/jobs";
 
 interface VideoState {
   videos: PageResponse<VideoResponse[]> | undefined;
@@ -25,7 +27,7 @@ const initialState: VideoState = {
 
 export const GetAllVideosAction = createAsyncThunk(
   "video/getAllVideos",
-  async (data: { pageNumber: number; pageSize: number }) => {
+  async (data: { pageNumber: number; pageSize: number; } & { fromDate?: string | null }) => {
     const res = await VideoApi.getAllVideos(data);
     return res.data;
   }
@@ -33,7 +35,7 @@ export const GetAllVideosAction = createAsyncThunk(
 
 export const GetAllVideosByAssigneeAction = createAsyncThunk(
   "video/getAllVideosByAssignee",
-  async (data: { pageNumber: number; pageSize: number; email: string }) => {
+  async (data: { pageNumber: number; pageSize: number; email: string } & { fromDate?: string | null }) => {
     const res = await VideoApi.getAllVideosByAssignee(data);
     return res.data;
   }
@@ -80,6 +82,7 @@ export const SearchVideoByConditionsAction = createAsyncThunk(
     keyword: string | null;
     videoStatus: string | null;
     paymentStatus: string | null;
+    paymentEmployee?: string | null;
     startDate: string | null;
     endDate: string | null;
     selectedEmployeeIds?: number[];
@@ -104,6 +107,7 @@ export const UpdateGridViewVideoAction = createAsyncThunk(
     jobId: number;
     caseName?: string | null;
     note?: string | null;
+    employeeNote?: string | null;
     assigneeId: number | null;
     customerId: number | null;
     filePrice: number | null;
@@ -112,6 +116,7 @@ export const UpdateGridViewVideoAction = createAsyncThunk(
     qaOutputNumber?: number | null;
     qualifiedAssigneeId?: number | null;
     paymentStatus?: string | null;
+    paymentEmployee?: string | null;
     inputLink?: string | null;
     doneLink?: string | null;
     payPerFile?: number | null;
@@ -155,14 +160,91 @@ export const DeleteMultipleVideosAction = createAsyncThunk(
   }
 );
 
+export const UpdatePaymentEmployeeMultipleVideosAction = createAsyncThunk<void, { ids: number[] }>(
+  "UpdatePaymentEmployeeMultipleVideosAction",
+  async (data: { ids: number[] }) => {
+    try {
+      await updatePaymentEmployeeMultipleVideos(data.ids);
+    } catch (err: any) {
+      throw new Error(err.message);
+    }
+  }
+);
+
+export const UpdatePaymentMultipleVideosAction = createAsyncThunk<void, { ids: number[] }>(
+  "UpdatePaymentMultipleVideosAction",
+  async (data: { ids: number[] }) => {
+    try {
+      await updatePaymentMultipleVideos(data.ids);
+    } catch (err: any) {
+      throw new Error(err.message);
+    }
+  }
+);
+
 const videoSlice = createSlice({
   name: "video",
   initialState,
   reducers: {
     updateVideo: (state, action) => {
       if (state.videos && state.videos.data) {
+        const video = state.videos.data.find((video) => video.id === action.payload.id);
+        if (!video) {
+          state.videos.data.unshift(action.payload);
+          state.videos.totalElements += 1;
+          if (state.videos.data.length > state.videos.pageSize) {
+            state.videos.data.pop();
+          }
+          return;
+        }
         state.videos.data = state.videos.data.map((video) =>
           video.id === action.payload.id ? action.payload : video
+        );
+      }else{
+        state.videos = {
+          data: [action.payload],
+          pageNumber: 1,
+          pageSize: 10,
+          totalElements: 1,
+          totalPages: 1,
+        };
+      }
+    },
+    createVideoRealTime: (state, action) => {
+      if (state.videos && state.videos.data) {
+        state.videos.data.unshift(action.payload);
+        state.videos.totalElements += 1;
+        if (state.videos.data.length > state.videos.pageSize) {
+          state.videos.data.pop();
+        }
+      }else{
+        state.videos = {
+          data: [action.payload],
+          pageNumber: 1,
+          pageSize: 10,
+          totalElements: 1,
+          totalPages: 1,
+        };
+      }
+    },
+    deleteVideoByIdRealTime: (state, action: PayloadAction<number>) => {
+      if (state.videos && state.videos.data) {
+        state.videos.data = state.videos.data.filter((video) => video.id !== action.payload);
+        state.videos.totalElements -= 1;
+      }
+    },
+    deleteMultipleVideosRealTime: (state, action: PayloadAction<number[]>) => {
+      if (state.videos && state.videos.data) {
+        state.videos.data = state.videos.data.filter((video) => !action.payload.includes(video.id));
+        state.videos.totalElements -= action.payload.length;
+      }
+    },
+    updatePaymentEmployeeMultipleVideosRealTime: (state, action) => {
+      const videoIds = action.payload.videoIds as number[];
+      const status = action.payload.status as EmployeePaymentStatus;
+      if (state.videos && state.videos.data) {
+        state.videos.data = state.videos.data.map((video) =>
+          videoIds.includes(video.id) ? { ...video, paymentEmployee: status } : video
         );
       }
     },
@@ -368,6 +450,36 @@ const videoSlice = createSlice({
       state.error = action.error.message || "Failed to delete multiple videos";
     });
 
+    // Update Payment Employee Multiple Videos
+    builder.addCase(UpdatePaymentEmployeeMultipleVideosAction.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(UpdatePaymentEmployeeMultipleVideosAction.fulfilled, (state) => {
+      state.loading = false;
+      toast.success("Cập nhật trạng thái thanh toán thành công");
+    });
+    builder.addCase(UpdatePaymentEmployeeMultipleVideosAction.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.error.message || "Failed to update payment employee status";
+      toast.error("Lỗi khi cập nhật trạng thái thanh toán");
+    });
+
+    // Update Payment Multiple Videos
+    builder.addCase(UpdatePaymentMultipleVideosAction.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(UpdatePaymentMultipleVideosAction.fulfilled, (state) => {
+      state.loading = false;
+      toast.success("Cập nhật trạng thái thanh toán khách hàng thành công");
+    });
+    builder.addCase(UpdatePaymentMultipleVideosAction.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.error.message || "Failed to update payment status";
+      toast.error("Lỗi khi cập nhật trạng thái thanh toán khách hàng");
+    });
+
     // Get video from Dropbox
     builder.addCase(GetVideoFromDropboxAction.pending, (state) => {
       state.loading = true;
@@ -403,5 +515,5 @@ const videoSlice = createSlice({
   },
 });
 
-export const { updateVideo } = videoSlice.actions;
+export const { updateVideo, createVideoRealTime, deleteVideoByIdRealTime, deleteMultipleVideosRealTime, updatePaymentEmployeeMultipleVideosRealTime } = videoSlice.actions;
 export default videoSlice.reducer;

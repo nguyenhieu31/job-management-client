@@ -23,6 +23,7 @@ import {
   Link as LinkIcon,
   CheckCircle,
 } from "lucide-react";
+import { Fragment } from "react";
 
 interface JobDetailDialogProps {
   open: boolean;
@@ -83,6 +84,34 @@ export function JobDetailDialog({
     if (role === "manager" || role === "admin") return "manager";
     if (role === "qa") return "qa";
     return "employee";
+  };
+
+  const renderTextWithLinks = (text: string) => {
+    if (!text) return null;
+    
+    // Regex to match URLs
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const parts = text.split(urlRegex);
+    
+    return parts.map((part, index) => {
+      if (urlRegex.test(part)) {
+        // Reset regex lastIndex
+        urlRegex.lastIndex = 0;
+        return (
+          <a
+            key={index}
+            href={part}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:underline break-all"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {part}
+          </a>
+        );
+      }
+      return <Fragment key={index}>{part}</Fragment>;
+    });
   };
 
   const userRole = getUserRole();
@@ -281,7 +310,7 @@ export function JobDetailDialog({
                     <div className="space-y-2 min-w-0">
                       <h3 className="font-semibold text-lg">Ghi Chú</h3>
                       <p className="text-sm whitespace-pre-wrap bg-muted/50 p-4 rounded-lg break-words overflow-wrap-break-word max-w-full">
-                        {job.note}
+                        {renderTextWithLinks(job.note)}
                       </p>
                     </div>
                   )}
@@ -290,7 +319,7 @@ export function JobDetailDialog({
                     <div className="space-y-2 min-w-0">
                       <h3 className="font-semibold text-lg">Ghi Chú QA</h3>
                       <p className="text-sm whitespace-pre-wrap bg-red-500/10 p-4 rounded-lg border border-red-500/20 break-words overflow-wrap-break-word max-w-full">
-                        {job.qaNote}
+                        {renderTextWithLinks(job.qaNote)}
                       </p>
                     </div>
                   )}

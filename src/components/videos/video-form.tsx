@@ -72,10 +72,12 @@ export function VideoForm({
     inputNumber: "",
     outputNumber: "",
     paymentStatus: "UNPAID" as PaymentStatus,
+    paymentEmployee: "UNPAID" as "UNPAID" | "PAID",
     jobStatus: "PENDING" as VideoStatus,
     inputLink: "",
     doneLink: "",
     note: "",
+    employeeNote: "",
     assignedEmployee: undefined as string | undefined,
     customerId: undefined as string | undefined,
     workRequestId: undefined as string | undefined,
@@ -108,9 +110,11 @@ export function VideoForm({
         outputNumber: String(editingVideo.outputNumber || ""),
         doneLink: editingVideo.doneLink || "",
         paymentStatus: editingVideo.paymentStatus,
+        paymentEmployee: editingVideo.paymentEmployee || "UNPAID",
         jobStatus: editingVideo.jobStatus,
         inputLink: editingVideo.inputLink,
         note: editingVideo.note || "",
+        employeeNote: editingVideo.employeeNote || "",
         assignedEmployee: editingVideo.assignee?.id
           ? editingVideo.assignee.id.toString()
           : undefined,
@@ -136,9 +140,11 @@ export function VideoForm({
         outputNumber: "",
         doneLink: "",
         paymentStatus: "UNPAID",
+        paymentEmployee: "UNPAID",
         jobStatus: "PENDING",
         inputLink: "",
         note: "",
+        employeeNote: "",
         assignedEmployee: undefined,
         customerId: undefined,
         workRequestId: undefined,
@@ -163,10 +169,12 @@ export function VideoForm({
       fileCount,
       outputNumber,
       paymentStatus,
+      paymentEmployee,
       jobStatus,
       inputLink,
       doneLink,
       note,
+      employeeNote,
       workRequestId,
     } = formRef.current;
 
@@ -195,10 +203,12 @@ export function VideoForm({
         payPerFile: payPerFileNum,
         fileCount: fileCountNum,
         paymentStatus,
+        paymentEmployee,
         jobStatus,
         inputLink: inputLink,
         doneLink: doneLink,
         note: note,
+        employeeNote: employeeNote,
         assigneeId: assigneeId_,
         customerId: customerId_,
         workRequestId: workReqId_,
@@ -213,9 +223,11 @@ export function VideoForm({
         payPerFile: payPerFileNum,
         fileCount: fileCountNum,
         paymentStatus,
+        paymentEmployee,
         jobStatus,
         inputLink: inputLink,
         note: note || null,
+        employeeNote: employeeNote || null,
         assigneeId: assigneeId_,
         customerId: customerId_,
         workRequestId: workReqId_,
@@ -231,9 +243,11 @@ export function VideoForm({
       outputNumber: "",
       doneLink: "",
       paymentStatus: "UNPAID",
+      paymentEmployee: "UNPAID",
       jobStatus: "PENDING",
       inputLink: "",
       note: "",
+      employeeNote: "",
       assignedEmployee: undefined,
       customerId: undefined,
       workRequestId: undefined,
@@ -531,6 +545,26 @@ export function VideoForm({
                     </SelectContent>
                   </Select>
                 </div>
+
+                {/* Payment Employee */}
+                <div className="grid gap-2">
+                  <Label htmlFor="paymentEmployee">Thanh toán NV</Label>
+                  <Select
+                    value={formRef.current.paymentEmployee}
+                    onValueChange={(value) => {
+                      formRef.current.paymentEmployee = value as "UNPAID" | "PAID";
+                      forceUpdate();
+                    }}
+                  >
+                    <SelectTrigger id="paymentEmployee" className="w-full">
+                      <SelectValue placeholder="Chọn trạng thái thanh toán" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="UNPAID">Chưa thanh toán</SelectItem>
+                      <SelectItem value="PAID">Đã thanh toán</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               {/* Input Link */}
@@ -572,6 +606,18 @@ export function VideoForm({
                   rows={3}
                 />
               </div>
+
+              {/* Employee Note */}
+              {/* <div className="grid gap-2">
+                <Label htmlFor="employeeNote">Thuê ngoài</Label>
+                <Textarea
+                  id="employeeNote"
+                  defaultValue={formRef.current.employeeNote}
+                  onChange={(e) => (formRef.current.employeeNote = e.target.value)}
+                  placeholder="Nhập thông tin thuê ngoài"
+                  rows={3}
+                />
+              </div> */}
             </div>
             <DialogFooter>
               <Button

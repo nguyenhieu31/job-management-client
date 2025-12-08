@@ -20,8 +20,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Eye, Trash2, Save, X, PlayCircle, CheckCircle } from "lucide-react";
-import { useState, useMemo, useCallback, useRef } from "react";
+import {
+  Eye,
+  Trash2,
+  Save,
+  X,
+  PlayCircle,
+  CheckCircle,
+  Check,
+  ExternalLink,
+} from "lucide-react";
+import { useState, useMemo, useCallback, useRef, Fragment } from "react";
 import type {
   UserRole,
   VideoAction,
@@ -31,7 +40,7 @@ import type {
 import { ROLE_COLUMNS } from "@/types/videos";
 import { EditableSelect } from "./editable-select";
 import { EditableInput } from "./editable-input";
-import { formatCurrency, formatCurrencyVND, formatDate } from "@/lib/utils";
+import { formatCurrency, formatCurrencyVND, formatDate, getFirstDayOfMonth } from "@/lib/utils";
 import { EmployeeResponse } from "@/types/employees";
 import { VideoDetailDialog } from "./video-detail-dialog";
 import SearchableDropdown from "../ui/search-able-dropdown";
@@ -39,7 +48,10 @@ import { useAppDispatch, useAppSelector } from "@/store/store";
 import {
   DeleteVideoByIdAction,
   GetAllVideosAction,
+  GetAllVideosByAssigneeAction,
   UpdateGridViewVideoAction,
+  UpdatePaymentEmployeeMultipleVideosAction,
+  UpdatePaymentMultipleVideosAction,
 } from "@/store/slice/videos/Videos";
 import { toast } from "react-toastify";
 
@@ -68,12 +80,21 @@ const videoStatusLabels: Record<string, string> = {
   COMPLETED: "Đã hoàn thành",
 };
 
-
 const paymentStatusOptions = [
   { value: "UNPAID", label: "Chưa thanh toán" },
   { value: "INVOICE_SENT", label: "Đã gửi hóa đơn" },
   { value: "PAID", label: "Đã thanh toán" },
 ];
+
+const paymentEmployeeOptions = [
+  { value: "UNPAID", label: "Chưa thanh toán" },
+  { value: "PAID", label: "Đã thanh toán" },
+];
+
+const paymentEmployeeColors = {
+  UNPAID: "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20",
+  PAID: "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20",
+};
 
 const columnLabels: Record<string, string> = {
   code: "Mã Công Việc",
@@ -95,8 +116,10 @@ const columnLabels: Record<string, string> = {
   totalPayPerFileQa: "Tổng Trả QA",
   jobStatus: "Tình Trạng Công Việc",
   paymentStatus: "Tình Trạng Thanh Toán",
+  paymentEmployee: "Thanh Toán NV",
   note: "Ghi Chú",
   qaNote: "Ghi Chú QA",
+  employeeNote: "Thuê ngoài",
   assignedEmployee: "Người Được Giao",
   qa: "QA",
   actions: "Hành Động",
@@ -113,6 +136,35 @@ export const filePriceOptions = [
   { id: 8, name: 4 },
 ];
 
+// Helper function to render text with clickable links
+const renderTextWithLinks = (text: string) => {
+  if (!text) return null;
+  
+  // Regex to match URLs
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = text.split(urlRegex);
+  
+  return parts.map((part, index) => {
+    if (urlRegex.test(part)) {
+      // Reset regex lastIndex
+      urlRegex.lastIndex = 0;
+      return (
+        <a
+          key={index}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 hover:underline break-all"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {part}
+        </a>
+      );
+    }
+    return <Fragment key={index}>{part}</Fragment>;
+  });
+};
+
 export function VideoTable({
   videos,
   userRole,
@@ -123,24 +175,31 @@ export function VideoTable({
   const dispatch = useAppDispatch();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+  const [bulkMarkAsPaidDialogOpen, setBulkMarkAsPaidDialogOpen] =
+    useState(false);
   const [jobToDelete, setJobToDelete] = useState<number | null>(null);
   const [selectedJobIds, setSelectedJobIds] = useState<Set<number>>(new Set());
   const [totalSelectedPrice, setTotalSelectedPrice] = useState<number>(0);
-  const [totalSelectedPriceCustomer, setTotalSelectedPriceCustomer] = useState<number>(0);
+  const [totalSelectedPriceCustomer, setTotalSelectedPriceCustomer] =
+    useState<number>(0);
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
   const [previewJob, setPreviewJob] = useState<VideoResponse | null>(null);
-  const { roleName } = useAppSelector((state) => state.authenticate);
+  const { roleName, email } = useAppSelector((state) => state.authenticate);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [updateTrigger, setUpdateTrigger] = useState(0);
-  
+
   // Edit dialog states
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editField, setEditField] = useState<'caseName' | 'note' | null>(null);
+  const [editField, setEditField] = useState<
+    "caseName" | "note" | "employeeNote" | null
+  >(null);
   const [editVideoId, setEditVideoId] = useState<number | null>(null);
   const [editValue, setEditValue] = useState<string>("");
-  
+console.log("editValue: ", editValue)
   // Track formatted values for payPerFile inputs
-  const [payPerFileInputs, setPayPerFileInputs] = useState<Record<number, string>>({});
+  const [payPerFileInputs, setPayPerFileInputs] = useState<
+    Record<number, string>
+  >({});
 
   // Track pending changes for Manager role using useRef to avoid re-renders
   const pendingChangesRef = useRef<Record<number, Partial<VideoResponse>>>({});
@@ -163,6 +222,14 @@ export function VideoTable({
     ROLE_COLUMNS.employee;
 
   // All roles can edit fields inline (except STT, code, date)
+
+  // Check if user can edit employeeNote and paymentEmployee (manager and special)
+  const canEditSpecialFields = (video: VideoResponse) => {
+    return (
+      (userRole === "manager" || userRole === "special") &&
+      video.jobStatus !== "PENDING"
+    );
+  };
 
   // Handle field change (store in pending changes instead of immediate save)
   const handleFieldChange = useCallback(
@@ -215,11 +282,15 @@ export function VideoTable({
             : null,
           caseName: changes.caseName || null,
           note: changes.note || null,
+          employeeNote: changes.employeeNote || null,
           customerId: changes.customer?.id || null,
           filePrice: changes.filePrice || null,
-          inputNumber: changes.inputNumber !== undefined ? changes.inputNumber : null,
-          outputNumber: changes.outputNumber !== undefined ? changes.outputNumber : null,
+          inputNumber:
+            changes.inputNumber !== undefined ? changes.inputNumber : null,
+          outputNumber:
+            changes.outputNumber !== undefined ? changes.outputNumber : null,
           paymentStatus: changes.paymentStatus || null,
+          paymentEmployee: changes.paymentEmployee || null,
           doneLink: changes.doneLink || "",
           inputLink: changes.inputLink || null,
           payPerFile: changes.payPerFile || null,
@@ -231,7 +302,7 @@ export function VideoTable({
           // Clear pending changes AFTER API succeeds
           delete pendingChangesRef.current[videoId];
           // Clear formatted input values
-          setPayPerFileInputs(prev => {
+          setPayPerFileInputs((prev) => {
             const newInputs = { ...prev };
             delete newInputs[videoId];
             return newInputs;
@@ -252,7 +323,7 @@ export function VideoTable({
   const handleCancelChanges = useCallback((videoId: number) => {
     delete pendingChangesRef.current[videoId];
     // Clear formatted input values
-    setPayPerFileInputs(prev => {
+    setPayPerFileInputs((prev) => {
       const newInputs = { ...prev };
       delete newInputs[videoId];
       return newInputs;
@@ -261,7 +332,11 @@ export function VideoTable({
   }, []);
 
   // Handle opening edit dialog
-  const handleOpenEditDialog = (videoId: number, field: 'caseName' | 'note', currentValue: string) => {
+  const handleOpenEditDialog = (
+    videoId: number,
+    field: "caseName" | "note",
+    currentValue: string
+  ) => {
     setEditVideoId(videoId);
     setEditField(field);
     setEditValue(currentValue || "");
@@ -351,6 +426,11 @@ export function VideoTable({
     }
   };
 
+  const handleBulkMarkAsPaidClick = () => {
+    if (selectedJobIds.size === 0) return;
+    setBulkMarkAsPaidDialogOpen(true);
+  };
+
   const handleConfirmBulkDelete = async () => {
     for (const videoId of selectedJobIds) {
       await dispatch(DeleteVideoByIdAction(videoId));
@@ -360,12 +440,45 @@ export function VideoTable({
         GetAllVideosAction({
           pageNumber: 0,
           pageSize: 10,
+          fromDate: getFirstDayOfMonth(),
         })
       );
     }
     setBulkDeleteDialogOpen(false);
     setSelectedJobIds(new Set());
     setTotalSelectedPrice(0);
+  };
+
+  const handleConfirmBulkMarkAsPaid = async () => {
+    const videoIdsArray = Array.from(selectedJobIds);
+
+    if (roleName === "SPECIAL") {
+      await dispatch(
+        UpdatePaymentEmployeeMultipleVideosAction({ ids: videoIdsArray })
+      );
+      await dispatch(
+        GetAllVideosByAssigneeAction({
+          pageNumber: 0,
+          pageSize: 10,
+          email: email || "",
+        })
+      );
+    } else if (roleName === "MANAGER") {
+      await dispatch(
+        UpdatePaymentMultipleVideosAction({ ids: videoIdsArray })
+      );
+      await dispatch(
+        GetAllVideosAction({
+          pageNumber: 0,
+          pageSize: 10,
+          fromDate: getFirstDayOfMonth(),
+        })
+      );
+    }
+    setBulkMarkAsPaidDialogOpen(false);
+    setSelectedJobIds(new Set());
+    setTotalSelectedPrice(0);
+    setTotalSelectedPriceCustomer(0);
   };
 
   const handleConfirmDelete = async () => {
@@ -377,6 +490,7 @@ export function VideoTable({
           GetAllVideosAction({
             pageNumber: 0,
             pageSize: 10,
+            fromDate: getFirstDayOfMonth(),
           })
         );
       }
@@ -387,7 +501,8 @@ export function VideoTable({
 
   const handlePreviewClick = (video: VideoResponse) => {
     if (
-      (userRole === "employee" && video.jobStatus === "PENDING") ||
+      ((userRole === "employee" || userRole === "special") &&
+        video.jobStatus === "PENDING") ||
       (userRole === "qa" && video.jobStatus === "DONE")
     ) {
       toast.info("Nhận video này để xem chi tiết");
@@ -482,7 +597,7 @@ export function VideoTable({
         }
         return (
           <span>
-            {video.customer && video.customer.name ? video.customer.name : "—"}
+            {video.customer && video.customer.name ? video.customer.name : ""}
           </span>
         );
 
@@ -490,22 +605,31 @@ export function VideoTable({
         const currentCaseName = getCurrentValue(video, "caseName") as string;
         if (userRole === "manager") {
           return (
-            <div 
+            <div
               className="min-w-[200px] cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1 rounded"
-              onClick={() => handleOpenEditDialog(video.id, 'caseName', currentCaseName)}
+              onClick={() =>
+                handleOpenEditDialog(video.id, "caseName", currentCaseName)
+              }
               title="Click để chỉnh sửa"
             >
               {currentCaseName || "Nhấp để nhập..."}
             </div>
           );
         }
-        return <div className="min-w-[200px]" onClick={() => handlePreviewClick(video)}>{currentCaseName || "—"}</div>;
+        return (
+          <div
+            className="min-w-[200px]"
+            onClick={() => handlePreviewClick(video)}
+          >
+            {currentCaseName || ""}
+          </div>
+        );
 
       case "workRequest":
         return (
           <div className="max-w-[200px]">
             <div className="font-medium truncate">
-              {video.workRequest?.categoryName || "—"}
+              {video.workRequest?.categoryName || ""}
             </div>
             {video.workRequest?.fileType && (
               <Badge variant="outline" className="mt-1 text-xs">
@@ -524,29 +648,45 @@ export function VideoTable({
 
       case "linkInput":
         // EMPLOYEE can only see link after taking job (IN_PROGRESS or later)
-        if (userRole === "employee" && video.jobStatus === "PENDING") {
+        if (
+          (userRole === "employee" || userRole === "special") &&
+          video.jobStatus === "PENDING"
+        ) {
           return (
             <div className="flex items-center justify-center text-muted-foreground">
               <Eye className="h-4 w-4" />
             </div>
           );
         }
-        
+
         const currentInputLink = getCurrentValue(video, "inputLink") as string;
         if (userRole === "manager") {
           return (
-            <input
-              type="text"
-              value={currentInputLink || ""}
-              onChange={(e) =>
-                handleFieldChange(video.id, "inputLink", e.target.value)
-              }
-              placeholder="Link input..."
-              className="w-[100px] max-w-[100px] px-2 py-1 text-sm border rounded-md focus:outline-none focus:ring-1"
-            />
+            <div className="flex items-center gap-1">
+              <input
+                type="text"
+                value={currentInputLink || ""}
+                onChange={(e) =>
+                  handleFieldChange(video.id, "inputLink", e.target.value)
+                }
+                placeholder="Link input..."
+                className="w-[180px] max-w-[180px] px-2 py-1 text-sm border rounded-md focus:outline-none focus:ring-1"
+              />
+              {currentInputLink && (
+                <a
+                  href={currentInputLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-blue-600"
+                  title="Mở link"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              )}
+            </div>
           );
         }
-        
+
         // Employee can see link after taking job
         return (
           <a
@@ -555,43 +695,72 @@ export function VideoTable({
             rel="noopener noreferrer"
             className="text-blue-600 hover:underline max-w-[100px] truncate block"
           >
-            {currentInputLink || "—"}
+            {currentInputLink || ""}
           </a>
         );
 
       case "linkDone":
         const currentDoneLink = getCurrentValue(video, "doneLink") as string;
-        
+
         // EMPLOYEE can edit Link Done when job is IN_PROGRESS
-        if (userRole === "employee" && video.jobStatus === "IN_PROGRESS") {
+        if (
+          (userRole === "employee" || userRole === "special") &&
+          video.jobStatus === "IN_PROGRESS"
+        ) {
           return (
-            <input
-              key={`doneLink-${video.id}`}
-              type="text"
-              value={currentDoneLink || ""}
-              onChange={(e) =>
-                handleFieldChange(video.id, "doneLink", e.target.value)
-              }
-              placeholder="Dán link hoàn thành..."
-              className="w-[100px] max-w-[100px] px-2 py-1 text-sm border rounded-md border-green-200 focus:border-green-400 focus:outline-none focus:ring-1 focus:ring-green-400"
-            />
+            <div className="flex items-center gap-1">
+              <input
+                key={`doneLink-${video.id}`}
+                type="text"
+                value={currentDoneLink || ""}
+                onChange={(e) =>
+                  handleFieldChange(video.id, "doneLink", e.target.value)
+                }
+                placeholder="Dán link hoàn thành..."
+                className="w-[180px] max-w-[180px] px-2 py-1 text-sm border rounded-md border-green-200 focus:border-green-400 focus:outline-none focus:ring-1 focus:ring-green-400"
+              />
+              {currentDoneLink && (
+                <a
+                  href={currentDoneLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-blue-600"
+                  title="Mở link"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              )}
+            </div>
           );
         }
-        
+
         if (userRole === "manager") {
           return (
-            <input
-              type="text"
-              value={currentDoneLink || ""}
-              onChange={(e) =>
-                handleFieldChange(video.id, "doneLink", e.target.value)
-              }
-              placeholder="Link hoàn thành..."
-              className="w-[100px] max-w-[100px] px-2 py-1 text-sm border rounded-md focus:outline-none focus:ring-1"
-            />
+            <div className="flex items-center gap-1">
+              <input
+                type="text"
+                value={currentDoneLink || ""}
+                onChange={(e) =>
+                  handleFieldChange(video.id, "doneLink", e.target.value)
+                }
+                placeholder="Link hoàn thành..."
+                className="w-[180px] max-w-[180px] px-2 py-1 text-sm border rounded-md focus:outline-none focus:ring-1"
+              />
+              {currentDoneLink && (
+                <a
+                  href={currentDoneLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-blue-600"
+                  title="Mở link"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              )}
+            </div>
           );
         }
-        
+
         return (
           <a
             href={currentDoneLink}
@@ -599,7 +768,7 @@ export function VideoTable({
             rel="noopener noreferrer"
             className="text-blue-600 hover:underline max-w-[300px] truncate block"
           >
-            {currentDoneLink || "—"}
+            {currentDoneLink || ""}
           </a>
         );
 
@@ -628,8 +797,11 @@ export function VideoTable({
             />
           );
         }
-        
-        if (userRole === "employee" && video.jobStatus === "IN_PROGRESS") {
+
+        if (
+          (userRole === "employee" || userRole === "special") &&
+          video.jobStatus === "IN_PROGRESS"
+        ) {
           return (
             <EditableInput
               value={getCurrentValue(video, "outputNumber") as number}
@@ -660,31 +832,38 @@ export function VideoTable({
         return <span>{video.fileCount}</span>;
 
       case "payPerFile":
-        const currentPayPerFile = getCurrentValue(video, "payPerFile") as number;
+        const currentPayPerFile = getCurrentValue(
+          video,
+          "payPerFile"
+        ) as number;
         if (userRole === "manager") {
-          const displayValue = payPerFileInputs[video.id] !== undefined 
-            ? payPerFileInputs[video.id] 
-            : formatVNDInput(currentPayPerFile?.toString() || "0");
-          
+          const displayValue =
+            payPerFileInputs[video.id] !== undefined
+              ? payPerFileInputs[video.id]
+              : formatVNDInput(currentPayPerFile?.toString() || "0");
+
           return (
             <input
               type="text"
               value={displayValue}
               onChange={(e) => {
                 const formatted = formatVNDInput(e.target.value);
-                setPayPerFileInputs(prev => ({
+                setPayPerFileInputs((prev) => ({
                   ...prev,
-                  [video.id]: formatted
+                  [video.id]: formatted,
                 }));
                 const numericValue = parseVNDInput(formatted);
                 handleFieldChange(video.id, "payPerFile", numericValue);
               }}
               onBlur={() => {
                 // Clean up the display when focus is lost
-                const currentValue = getCurrentValue(video, "payPerFile") as number;
-                setPayPerFileInputs(prev => ({
+                const currentValue = getCurrentValue(
+                  video,
+                  "payPerFile"
+                ) as number;
+                setPayPerFileInputs((prev) => ({
                   ...prev,
-                  [video.id]: formatVNDInput(currentValue?.toString() || "0")
+                  [video.id]: formatVNDInput(currentValue?.toString() || "0"),
                 }));
               }}
               placeholder="0"
@@ -692,7 +871,9 @@ export function VideoTable({
             />
           );
         }
-        return <span>{formatVNDInput(currentPayPerFile?.toString() || "0")}</span>;
+        return (
+          <span>{formatVNDInput(currentPayPerFile?.toString() || "0")}</span>
+        );
 
       case "totalPayPerFile":
         return (
@@ -730,23 +911,103 @@ export function VideoTable({
             />
           );
         }
-        const paymentLabel = paymentStatusOptions.find(opt => opt.value === currentPaymentStatus)?.label || currentPaymentStatus;
+        const paymentLabel =
+          paymentStatusOptions.find((opt) => opt.value === currentPaymentStatus)
+            ?.label || currentPaymentStatus;
         return <span>{paymentLabel}</span>;
 
       case "note":
         const currentNote = getCurrentValue(video, "note") as string;
         if (userRole === "manager") {
           return (
-            <div 
-              className="max-w-[400px] truncate cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1 rounded"
-              onClick={() => handleOpenEditDialog(video.id, 'note', currentNote)}
+            <div
+              className="max-w-[400px] cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1 rounded group relative"
+              onClick={() =>
+                handleOpenEditDialog(video.id, "note", currentNote)
+              }
               title="Click để chỉnh sửa"
             >
-              {currentNote || "Nhấp để nhập..."}
+              <div className="whitespace-pre-wrap break-words line-clamp-3">
+                {currentNote ? renderTextWithLinks(currentNote) : "Nhấp để nhập..."}
+              </div>
             </div>
           );
         }
-        return <div className="max-w-[400px] truncate" onClick={() => handlePreviewClick(video)}>{currentNote || "—"}</div>;
+        return (
+          <div
+            className="max-w-[400px] whitespace-pre-wrap break-words line-clamp-3"
+            onClick={() => handlePreviewClick(video)}
+          >
+            {currentNote ? renderTextWithLinks(currentNote) : ""}
+          </div>
+        );
+
+      case "paymentEmployee":
+        if (canEditSpecialFields(video)) {
+          const currentPaymentEmployee = getCurrentValue(
+            video,
+            "paymentEmployee"
+          ) as string;
+          // Get color class based on current value
+          const colorClass =
+            currentPaymentEmployee === "PAID"
+              ? "bg-green-50 dark:bg-green-950 border-green-300 dark:border-green-700"
+              : "bg-red-50 dark:bg-red-950 border-red-300 dark:border-red-700";
+          return (
+            <div className={`rounded-md ${colorClass} p-1`}>
+              <EditableSelect
+                value={currentPaymentEmployee}
+                options={paymentEmployeeOptions}
+                onSave={(value) =>
+                  handleFieldChange(video.id, "paymentEmployee", value)
+                }
+                className="w-[100%]"
+              />
+            </div>
+          );
+        }
+        return (
+          <Badge
+            variant="outline"
+            className={paymentEmployeeColors[video.paymentEmployee]}
+          >
+            {
+              paymentEmployeeOptions.find(
+                (o) => o.value === video.paymentEmployee
+              )?.label
+            }
+          </Badge>
+        );
+
+      case "employeeNote":
+        const currentEmployeeNote = getCurrentValue(
+          video,
+          "employeeNote"
+        ) as string;
+        if (canEditSpecialFields(video)) {
+          return (
+            <div
+              className="max-w-[400px] truncate cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1 rounded"
+              onClick={() => {
+                setEditVideoId(video.id);
+                setEditField("employeeNote");
+                setEditValue(currentEmployeeNote || "");
+                setEditDialogOpen(true);
+              }}
+              title="Click để chỉnh sửa"
+            >
+              {currentEmployeeNote || "Nhấp để nhập..."}
+            </div>
+          );
+        }
+        return (
+          <span
+            className="max-w-[400px] truncate block"
+            title={currentEmployeeNote || ""}
+          >
+            {currentEmployeeNote || ""}
+          </span>
+        );
 
       case "assignedEmployee":
         if (employees && employees.length > 0 && userRole === "manager") {
@@ -782,16 +1043,22 @@ export function VideoTable({
         return (
           <span>
             {employees?.find((e) => e.id === video.assignee?.id)?.fullName ||
-              video.assignee?.fullName || "—"}
+              video.assignee?.fullName ||
+              ""}
           </span>
         );
 
       case "actions":
         return (
           <div className="flex items-center justify-end gap-2">
-            {/* Save button - show for manager OR employee with pending changes */}
+            {/* Save button - show for manager OR employee/special with pending changes */}
             {((userRole === "manager" && pendingChangesRef.current[video.id]) ||
-              (userRole === "employee" && video.jobStatus === "IN_PROGRESS" && pendingChangesRef.current[video.id])) && (
+              ((userRole === "employee" || userRole === "special") &&
+                video.jobStatus === "IN_PROGRESS" &&
+                pendingChangesRef.current[video.id]) ||
+              (userRole === "special" &&
+                canEditSpecialFields(video) &&
+                pendingChangesRef.current[video.id])) && (
               <>
                 <Button
                   variant="default"
@@ -815,41 +1082,47 @@ export function VideoTable({
             )}
 
             {/* Action buttons based on status and role */}
-            {userRole === "employee" && video.jobStatus === "PENDING" && !pendingChangesRef.current[video.id] && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onVideoAction(video.id, "take-video")}
-                className="h-8 gap-1 border-blue-500 text-blue-600 hover:bg-blue-50"
-              >
-                <PlayCircle className="h-3 w-3" />
-                Nhận
-              </Button>
-            )}
+            {(userRole === "employee" || userRole === "special") &&
+              video.jobStatus === "PENDING" &&
+              !pendingChangesRef.current[video.id] && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onVideoAction(video.id, "take-video")}
+                  className="h-8 gap-1 border-blue-500 text-blue-600 hover:bg-blue-50"
+                >
+                  <PlayCircle className="h-3 w-3" />
+                  Nhận
+                </Button>
+              )}
 
-            {userRole === "employee" && video.jobStatus === "IN_PROGRESS" && !pendingChangesRef.current[video.id] && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onVideoAction(video.id, "done-video")}
-                className="h-8 gap-1 border-green-500 text-green-600 hover:bg-green-50"
-              >
-                <CheckCircle className="h-3 w-3" />
-                Hoàn Thành
-              </Button>
-            )}
+            {(userRole === "employee" || userRole === "special") &&
+              video.jobStatus === "IN_PROGRESS" &&
+              !pendingChangesRef.current[video.id] && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onVideoAction(video.id, "done-video")}
+                  className="h-8 gap-1 border-green-500 text-green-600 hover:bg-green-50"
+                >
+                  <CheckCircle className="h-3 w-3" />
+                  Hoàn Thành
+                </Button>
+              )}
 
-            {userRole === "manager" && video.jobStatus === "DONE" && !pendingChangesRef.current[video.id] && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onVideoAction(video.id, "complete-video")}
-                className="h-8 gap-1 border-emerald-500 text-emerald-600 hover:bg-emerald-50"
-              >
-                <CheckCircle className="h-3 w-3" />
-                Duyệt
-              </Button>
-            )}
+            {userRole === "manager" &&
+              video.jobStatus === "DONE" &&
+              !pendingChangesRef.current[video.id] && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onVideoAction(video.id, "complete-video")}
+                  className="h-8 gap-1 border-emerald-500 text-emerald-600 hover:bg-emerald-50"
+                >
+                  <CheckCircle className="h-3 w-3" />
+                  Duyệt
+                </Button>
+              )}
 
             {/* Delete button - only for manager */}
             {userRole === "manager" && !pendingChangesRef.current[video.id] && (
@@ -909,6 +1182,17 @@ export function VideoTable({
               Xóa được chọn
             </Button>
           )}
+          {(userRole === "special" || userRole === "manager") && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleBulkMarkAsPaidClick}
+              className="gap-2"
+            >
+              <Check className="h-4 w-4" />
+              Đánh dấu đã thanh toán
+            </Button>
+          )}
         </div>
       )}
 
@@ -917,22 +1201,22 @@ export function VideoTable({
           <TableHeader>
             <TableRow>
               <TableHead className="w-12 text-center border-r">
-                  <input
-                    type="checkbox"
-                    checked={
-                      selectedJobIds.size === videos.length && videos.length > 0
+                <input
+                  type="checkbox"
+                  checked={
+                    selectedJobIds.size === videos.length && videos.length > 0
+                  }
+                  onChange={handleSelectAll}
+                  className="w-4 h-4 cursor-pointer"
+                  ref={(el) => {
+                    if (el) {
+                      el.indeterminate =
+                        selectedJobIds.size > 0 &&
+                        selectedJobIds.size < videos.length;
                     }
-                    onChange={handleSelectAll}
-                    className="w-4 h-4 cursor-pointer"
-                    ref={(el) => {
-                      if (el) {
-                        el.indeterminate =
-                          selectedJobIds.size > 0 &&
-                          selectedJobIds.size < videos.length;
-                      }
-                    }}
-                  />
-                </TableHead>
+                  }}
+                />
+              </TableHead>
               <TableHead className="w-12 text-center border-r font-bold">
                 STT
               </TableHead>
@@ -960,13 +1244,13 @@ export function VideoTable({
                 }
               >
                 <TableCell className="w-12 text-center border-r">
-                    <input
-                      type="checkbox"
-                      checked={selectedJobIds.has(video.id)}
-                      onChange={() => handleToggleSelect(video.id)}
-                      className="w-4 h-4 cursor-pointer"
-                    />
-                  </TableCell>
+                  <input
+                    type="checkbox"
+                    checked={selectedJobIds.has(video.id)}
+                    onChange={() => handleToggleSelect(video.id)}
+                    className="w-4 h-4 cursor-pointer"
+                  />
+                </TableCell>
                 <TableCell className="w-12 text-center border-r font-medium">
                   {index + 1}
                 </TableCell>
@@ -1029,6 +1313,32 @@ export function VideoTable({
         </AlertDialogContent>
       </AlertDialog>
 
+      <AlertDialog
+        open={bulkMarkAsPaidDialogOpen}
+        onOpenChange={setBulkMarkAsPaidDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Xác Nhận Đánh Dấu Đã Thanh Toán Hàng Loạt
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn sắp đánh dấu {selectedJobIds.size} công việc là đã thanh toán.
+              Hành động này không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmBulkMarkAsPaid}
+              className="bg-green-600 text-white hover:bg-green-700"
+            >
+              Đánh Dấu Đã Thanh Toán
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Job Detail Preview Dialog */}
       <VideoDetailDialog
         open={previewDialogOpen}
@@ -1038,19 +1348,25 @@ export function VideoTable({
 
       {/* Edit Dialog for CaseName and Note */}
       <AlertDialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <AlertDialogContent className="max-w-2xl">
+        <AlertDialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {editField === 'caseName' ? 'Chỉnh Sửa Tên Công Việc' : 'Chỉnh Sửa Ghi Chú'}
+              {editField === "caseName"
+                ? "Chỉnh Sửa Tên Công Việc"
+                : editField === "employeeNote"
+                ? "Chỉnh Sửa Thuê Ngoài"
+                : "Chỉnh Sửa Ghi Chú"}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {editField === 'caseName' 
-                ? 'Nhập tên công việc chi tiết của bạn' 
-                : 'Nhập ghi chú chi tiết cho công việc này'}
+              {editField === "caseName"
+                ? "Nhập tên công việc chi tiết của bạn"
+                : editField === "employeeNote"
+                ? "Nhập thông tin thuê ngoài cho công việc này"
+                : "Nhập ghi chú chi tiết cho công việc này"}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="py-4">
-            {editField === 'caseName' ? (
+          <div className="py-4 flex-1 overflow-hidden flex flex-col gap-4">
+            {editField === "caseName" ? (
               <input
                 type="text"
                 value={editValue}
@@ -1060,14 +1376,37 @@ export function VideoTable({
                 autoFocus
               />
             ) : (
-              <textarea
-                value={editValue}
-                onChange={(e) => setEditValue(e.target.value)}
-                placeholder="Nhập ghi chú..."
-                rows={8}
-                className="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                autoFocus
-              />
+              <>
+                {/* Preview section with clickable links */}
+                {editValue && (
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Xem trước (click vào link để mở):
+                    </label>
+                    <div className="p-3 bg-gray-50 dark:bg-gray-900 border rounded-md max-h-[200px] overflow-y-auto whitespace-pre-wrap break-words text-sm">
+                      {renderTextWithLinks(editValue)}
+                    </div>
+                  </div>
+                )}
+                {/* Edit textarea */}
+                <div className="flex flex-col gap-2 flex-1">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Nội dung:
+                  </label>
+                  <textarea
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    placeholder={
+                      editField === "employeeNote"
+                        ? "Nhập thông tin thuê ngoài..."
+                        : "Nhập ghi chú..."
+                    }
+                    rows={8}
+                    className="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                    autoFocus
+                  />
+                </div>
+              </>
             )}
           </div>
           <AlertDialogFooter>

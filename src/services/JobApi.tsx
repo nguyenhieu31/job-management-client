@@ -3,11 +3,12 @@ import { PageRequest, PageResponse } from "@/components/types/Page";
 import { axiosInstance } from "@/lib/utils/axios-instance";
 import { JobRequest, JobResponse, JobViewResponse } from "@/types/jobs";
 
-export const getAllJobs = async (data: PageRequest) => {
+export const getAllJobs = async (data: PageRequest & {fromDate: string | null}) => {
     try {
         const res = await axiosInstance.get(`/admin/jobs`, { params: {
             pageNumber: data.pageNumber,
-            pageSize: data.pageSize
+            pageSize: data.pageSize,
+            fromDate: data.fromDate
         } });
         return res as unknown as ApiResponse<PageResponse<JobResponse[]>>;
     } catch (err: any) {
@@ -15,12 +16,13 @@ export const getAllJobs = async (data: PageRequest) => {
     }
 }
 
-export const getAllJobsByAssignee = async (data: PageRequest & { email: string }) => {
+export const getAllJobsByAssignee = async (data: PageRequest & { email: string; fromDate?: string | null }) => {
     try {
         const res = await axiosInstance.get(`/admin/jobs/assignee`, { params: {
             pageNumber: data.pageNumber,
             pageSize: data.pageSize,
-            email: data.email
+            email: data.email,
+            fromDate: data.fromDate
         } });
         return res as unknown as ApiResponse<PageResponse<JobResponse[]>>;
     } catch (err: any) {
@@ -28,12 +30,13 @@ export const getAllJobsByAssignee = async (data: PageRequest & { email: string }
     }
 }
 
-export const getAllJobsByQualifiedAssignee = async (data: PageRequest & { email: string }) => {
+export const getAllJobsByQualifiedAssignee = async (data: PageRequest & { email: string; fromDate?: string | null }) => {
     try {
         const res = await axiosInstance.get(`/admin/jobs/qualified-assignee`, { params: {
             pageNumber: data.pageNumber,
             pageSize: data.pageSize,
-            email: data.email
+            email: data.email,
+            fromDate: data.fromDate
         } });
         return res as unknown as ApiResponse<PageResponse<JobResponse[]>>;
     } catch (err: any) {
