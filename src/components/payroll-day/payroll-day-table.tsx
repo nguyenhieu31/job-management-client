@@ -259,7 +259,7 @@ export function PayrollDayTable({
 
       case "totalPrice":
         return (
-          <span className="font-medium">{formatCurrency(job.totalPrice)}</span>
+          <span className="font-medium">{formatCurrency(job.filePrice * job.outputNumber)}</span>
         );
 
       case "linkInput":

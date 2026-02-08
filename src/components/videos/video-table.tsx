@@ -29,6 +29,11 @@ import {
   CheckCircle,
   Check,
   ExternalLink,
+  Upload,
+  ImageIcon,
+  Film,
+  Minus,
+  Plus,
 } from "lucide-react";
 import { useState, useMemo, useCallback, useRef, Fragment } from "react";
 import type {
@@ -38,6 +43,7 @@ import type {
   CustomerInfo,
 } from "@/types/videos";
 import { ROLE_COLUMNS } from "@/types/videos";
+import type { FileStorage } from "@/types/jobs";
 import { EditableSelect } from "./editable-select";
 import { EditableInput } from "./editable-input";
 import { formatCurrency, formatCurrencyVND, formatDate, getFirstDayOfMonth } from "@/lib/utils";
@@ -54,6 +60,7 @@ import {
   UpdatePaymentMultipleVideosAction,
 } from "@/store/slice/videos/Videos";
 import { toast } from "react-toastify";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface VideoTableProps {
   videos: VideoResponse[];
@@ -122,6 +129,8 @@ const columnLabels: Record<string, string> = {
   employeeNote: "Thuê ngoài",
   assignedEmployee: "Người Được Giao",
   qa: "QA",
+  editedNumber: "Số Lần Chỉnh Sửa",
+  media: "Ảnh/Video",
   actions: "Hành Động",
 };
 
@@ -202,7 +211,14 @@ console.log("editValue: ", editValue)
   >({});
 
   // Track pending changes for Manager role using useRef to avoid re-renders
-  const pendingChangesRef = useRef<Record<number, Partial<VideoResponse>>>({});
+  const pendingChangesRef = useRef<Record<number, Partial<VideoResponse>>>({}); 
+
+  // Track uploaded files per video row
+  const uploadedFilesRef = useRef<Record<number, { images: File[]; videos: File[] }>>({}); 
+  // Track files to remove per video row
+  const removedFileStoragesRef = useRef<Record<number, FileStorage[]>>({});
+  // Ref for file input per video
+  const fileInputRefs = useRef<Record<number, HTMLInputElement | null>>({});
 
   // Helper functions for VND formatting
   const formatVNDInput = (value: string): string => {
@@ -264,47 +280,58 @@ console.log("editValue: ", editValue)
   const handleSaveChanges = useCallback(
     async (videoId: number) => {
       const changes = pendingChangesRef.current[videoId];
-      if (changes) {
+      const uploadedFiles = uploadedFilesRef.current[videoId];
+      const removedFiles = removedFileStoragesRef.current[videoId];
+      if (changes || uploadedFiles || removedFiles) {
         const job = videos.find((j) => j.id === videoId);
-        const assigneeId = changes.assignee?.id;
+        const assigneeId = changes?.assignee?.id;
 
         // Check if user cleared assignee or QA fields
         const isDeleteAssignee = !!(
           job?.assignee?.id &&
-          "assignee" in changes &&
+          changes && "assignee" in changes &&
           !assigneeId
         );
 
         const payload = {
-          jobId: videoId,
-          assigneeId: assigneeId
-            ? Number.parseInt(assigneeId.toString())
-            : null,
-          caseName: changes.caseName || null,
-          note: changes.note || null,
-          employeeNote: changes.employeeNote || null,
-          customerId: changes.customer?.id || null,
-          filePrice: changes.filePrice || null,
-          inputNumber:
-            changes.inputNumber !== undefined ? changes.inputNumber : null,
-          outputNumber:
-            changes.outputNumber !== undefined ? changes.outputNumber : null,
-          paymentStatus: changes.paymentStatus || null,
-          paymentEmployee: changes.paymentEmployee || null,
-          doneLink: changes.doneLink || "",
-          inputLink: changes.inputLink || null,
-          payPerFile: changes.payPerFile || null,
-          isDeleteAssignee: isDeleteAssignee || undefined,
+          data: {
+            jobId: videoId,
+            assigneeId: assigneeId
+              ? Number.parseInt(assigneeId.toString())
+              : null,
+            caseName: changes?.caseName || null,
+            note: changes?.note || null,
+            employeeNote: changes?.employeeNote || null,
+            customerId: changes?.customer?.id || null,
+            filePrice: changes?.filePrice || null,
+            inputNumber:
+              changes?.inputNumber !== undefined ? changes.inputNumber : null,
+            outputNumber:
+              changes?.outputNumber !== undefined ? changes.outputNumber : null,
+            paymentStatus: changes?.paymentStatus || null,
+            paymentEmployee: changes?.paymentEmployee || null,
+            doneLink: changes?.doneLink || "",
+            inputLink: changes?.inputLink || null,
+            payPerFile: changes?.payPerFile || null,
+            editedNumber:
+              changes?.editedNumber !== undefined ? changes.editedNumber : null,
+            isDeleteAssignee: isDeleteAssignee || undefined,
+            fileStoragesNeedRemove: removedFiles && removedFiles.length > 0 ? removedFiles : undefined,
+          },
+          images: uploadedFiles?.images,
+          videos: uploadedFiles?.videos,
         };
         // Dispatch API call
         const res = await dispatch(UpdateGridViewVideoAction(payload));
         if (res.meta.requestStatus === "fulfilled") {
           // Clear pending changes AFTER API succeeds
           delete pendingChangesRef.current[videoId];
+          delete uploadedFilesRef.current[videoId];
+          delete removedFileStoragesRef.current[videoId];
           // Clear formatted input values
           setPayPerFileInputs((prev) => {
             const newInputs = { ...prev };
-            delete newInputs[videoId];
+            delete newInputs    [videoId];
             return newInputs;
           });
           // Trigger re-render to show updated values from API
@@ -322,6 +349,8 @@ console.log("editValue: ", editValue)
   // Cancel pending changes
   const handleCancelChanges = useCallback((videoId: number) => {
     delete pendingChangesRef.current[videoId];
+    delete uploadedFilesRef.current[videoId];
+    delete removedFileStoragesRef.current[videoId];
     // Clear formatted input values
     setPayPerFileInputs((prev) => {
       const newInputs = { ...prev };
@@ -585,20 +614,25 @@ console.log("editValue: ", editValue)
       case "customerName":
         if (customers.length > 0 && userRole === "manager") {
           return (
-            <SearchableDropdown
-              options={customerOptions}
-              placeholder="Tìm kiếm khách hàng..."
-              onChange={createCustomerChangeHandler(video.id)}
-              defaultValue={video.customer}
-              className="w-55"
-              type="text"
-            />
+            <div className="max-w-[250px]">
+              <SearchableDropdown
+                options={customerOptions}
+                placeholder="Tìm kiếm khách hàng..."
+                onChange={createCustomerChangeHandler(video.id)}
+                defaultValue={video.customer}
+                className="w-full"
+                type="text"
+              />
+            </div>
           );
         }
         return (
-          <span>
-            {video.customer && video.customer.name ? video.customer.name : ""}
-          </span>
+          <div 
+            className="max-w-[250px] text-ellipsis whitespace-nowrap" 
+            title={video.customer?.name || ""}
+          >
+            {video.customer && video.customer.name ? video.customer.name : "N/A"}
+          </div>
         );
 
       case "caseName":
@@ -882,6 +916,41 @@ console.log("editValue: ", editValue)
           </span>
         );
 
+      case "editedNumber":
+        const currentEditedNumber = (getCurrentValue(video, "editedNumber") as number) || 0;
+        if (userRole === "employee" || userRole === "special") {
+          return (
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 w-7 p-0"
+                onClick={() => {
+                  if (currentEditedNumber > 0) {
+                    handleFieldChange(video.id, "editedNumber", currentEditedNumber - 1);
+                  }
+                }}
+                disabled={currentEditedNumber <= 0}
+              >
+                <Minus className="h-3 w-3" />
+              </Button>
+              <span className="w-8 text-center font-medium">{currentEditedNumber}</span>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 w-7 p-0"
+                onClick={() => {
+                  handleFieldChange(video.id, "editedNumber", currentEditedNumber + 1);
+                }}
+              >
+                <Plus className="h-3 w-3" />
+              </Button>
+            </div>
+          );
+        }
+        // Manager: read-only
+        return <span className="font-medium">{currentEditedNumber}</span>;
+
       case "jobStatus":
         // All roles (including Manager) see status as read-only badge
         // Status can only be changed through action buttons
@@ -1048,11 +1117,188 @@ console.log("editValue: ", editValue)
           </span>
         );
 
+      case "media":
+        if (userRole === "manager") {
+          const currentUploads = uploadedFilesRef.current[video.id];
+          const removedFiles = removedFileStoragesRef.current[video.id] || [];
+          const existingFiles = (video.fileStorages || []).filter(
+            (fs) => !removedFiles.some((r) => r.id === fs.id)
+          );
+          const newCount = (currentUploads?.images?.length || 0) + (currentUploads?.videos?.length || 0);
+          const totalCount = existingFiles.length + newCount;
+
+          return (
+            <div className="flex items-center gap-2">
+              <input
+                type="file"
+                ref={(el) => { fileInputRefs.current[video.id] = el; }}
+                className="hidden"
+                multiple
+                accept="image/*,video/*"
+                onChange={(e) => {
+                  const files = Array.from(e.target.files || []);
+                  if (files.length === 0) return;
+
+                  const imageFiles = files.filter(f => f.type.startsWith('image/'));
+                  const videoFiles = files.filter(f => f.type.startsWith('video/'));
+
+                  const existing = uploadedFilesRef.current[video.id] || { images: [], videos: [] };
+                  uploadedFilesRef.current[video.id] = {
+                    images: [...existing.images, ...imageFiles],
+                    videos: [...existing.videos, ...videoFiles],
+                  };
+                  setUpdateTrigger(prev => prev + 1);
+                  e.target.value = '';
+                }}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRefs.current[video.id]?.click()}
+                className="h-8 gap-1"
+                title="Upload ảnh/video"
+              >
+                <Upload className="h-3 w-3" />
+                {totalCount > 0 && (
+                  <span className="text-xs">{totalCount}</span>
+                )}
+              </Button>
+              {totalCount > 0 && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 gap-1 text-xs text-muted-foreground hover:text-foreground"
+                      title="Xem danh sách file"
+                    >
+                      <ImageIcon className="h-3 w-3" />
+                      <span>{totalCount}</span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80 max-h-60 overflow-y-auto p-3" align="start">
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-sm">Danh sách file ({totalCount})</h4>
+                      {/* Existing files from server */}
+                      {existingFiles.length > 0 && (
+                        <div className="space-y-1">
+                          <p className="text-xs text-muted-foreground font-medium">Đã upload</p>
+                          {existingFiles.map((fs) => (
+                            <div key={fs.id} className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-md bg-muted/50 hover:bg-muted">
+                              <div className="flex items-center gap-2 min-w-0">
+                                {fs.isImage ? (
+                                  <ImageIcon className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                                ) : (
+                                  <Film className="h-3.5 w-3.5 text-purple-500 shrink-0" />
+                                )}
+                                <span className="text-xs truncate">
+                                  {fs.folderPath?.split('/').pop() || `File #${fs.id}`}
+                                </span>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0 text-destructive hover:bg-destructive/10 shrink-0"
+                                onClick={() => {
+                                  const current = removedFileStoragesRef.current[video.id] || [];
+                                  removedFileStoragesRef.current[video.id] = [...current, fs];
+                                  setUpdateTrigger(prev => prev + 1);
+                                }}
+                                title="Xóa file"
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {/* Newly uploaded images */}
+                      {currentUploads?.images && currentUploads.images.length > 0 && (
+                        <div className="space-y-1">
+                          <p className="text-xs text-muted-foreground font-medium">Ảnh mới</p>
+                          {currentUploads.images.map((file, idx) => (
+                            <div key={`img-${idx}`} className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-md bg-blue-50 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-950/50">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <ImageIcon className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                                <span className="text-xs truncate">{file.name}</span>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0 text-destructive hover:bg-destructive/10 shrink-0"
+                                onClick={() => {
+                                  const current = uploadedFilesRef.current[video.id];
+                                  if (current) {
+                                    current.images = current.images.filter((_, i) => i !== idx);
+                                    if (current.images.length === 0 && current.videos.length === 0) {
+                                      delete uploadedFilesRef.current[video.id];
+                                    }
+                                  }
+                                  setUpdateTrigger(prev => prev + 1);
+                                }}
+                                title="Xóa file"
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {/* Newly uploaded videos */}
+                      {currentUploads?.videos && currentUploads.videos.length > 0 && (
+                        <div className="space-y-1">
+                          <p className="text-xs text-muted-foreground font-medium">Video mới</p>
+                          {currentUploads.videos.map((file, idx) => (
+                            <div key={`vid-${idx}`} className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-md bg-purple-50 dark:bg-purple-950/30 hover:bg-purple-100 dark:hover:bg-purple-950/50">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <Film className="h-3.5 w-3.5 text-purple-500 shrink-0" />
+                                <span className="text-xs truncate">{file.name}</span>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0 text-destructive hover:bg-destructive/10 shrink-0"
+                                onClick={() => {
+                                  const current = uploadedFilesRef.current[video.id];
+                                  if (current) {
+                                    current.videos = current.videos.filter((_, i) => i !== idx);
+                                    if (current.images.length === 0 && current.videos.length === 0) {
+                                      delete uploadedFilesRef.current[video.id];
+                                    }
+                                  }
+                                  setUpdateTrigger(prev => prev + 1);
+                                }}
+                                title="Xóa file"
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              )}
+            </div>
+          );
+        }
+        return (
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            {(video.fileStorages?.length || 0) > 0 && (
+              <>
+                <ImageIcon className="h-3 w-3" />
+                <span>{video.fileStorages?.length}</span>
+              </>
+            )}
+          </div>
+        );
+
       case "actions":
         return (
           <div className="flex items-center justify-end gap-2">
             {/* Save button - show for manager OR employee/special with pending changes */}
-            {((userRole === "manager" && pendingChangesRef.current[video.id]) ||
+            {((userRole === "manager" && (pendingChangesRef.current[video.id] || uploadedFilesRef.current[video.id] || removedFileStoragesRef.current[video.id])) ||
               ((userRole === "employee" || userRole === "special") &&
                 video.jobStatus === "IN_PROGRESS" &&
                 pendingChangesRef.current[video.id]) ||
@@ -1257,7 +1503,7 @@ console.log("editValue: ", editValue)
                 {visibleColumns.map((column: string) => (
                   <TableCell
                     key={`${video.id}-${column}`}
-                    className="border-r last:border-r-0"
+                    className={`border-r last:border-r-0 ${column === 'customerName' ? 'relative' : ''}`}
                   >
                     {renderCell(video, column)}
                   </TableCell>

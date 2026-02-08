@@ -48,6 +48,8 @@ export function EmployeeForm({
     phoneNumber: "",
     roleId: "",
     isActive: true,
+    isJobAccount: true,
+    isVideoAccount: true,
   });
   const [showNewPassword, setShowNewPassword] = useState(false);
 
@@ -65,6 +67,8 @@ export function EmployeeForm({
         phoneNumber: editingEmployee.phoneNumber,
         roleId: editingEmployee.role.id.toString(),
         isActive: editingEmployee.isActive,
+        isJobAccount: editingEmployee.isJobAccount,
+        isVideoAccount: editingEmployee.isVideoAccount,
       });
     } else {
       setFormData({
@@ -77,6 +81,8 @@ export function EmployeeForm({
         phoneNumber: "",
         roleId: "",
         isActive: true,
+        isJobAccount: true,
+        isVideoAccount: true,
       });
     }
   }, [editingEmployee, open]);
@@ -97,6 +103,8 @@ export function EmployeeForm({
       phoneNumber: formData.phoneNumber,
       role: selectedRole.name,
       isActive: formData.isActive,
+      isJobAccount: formData.isJobAccount,
+      isVideoAccount: formData.isVideoAccount,
     };
 
     onSubmit(employee);
@@ -283,6 +291,38 @@ export function EmployeeForm({
             />
             <Label htmlFor="isActive" className="cursor-pointer">
               Hoạt Động
+            </Label>
+          </div>
+
+          {/* Is Job Account */}
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="isJobAccount"
+              checked={formData.isJobAccount || false}
+              onChange={(e) =>
+                setFormData({ ...formData, isJobAccount: e.target.checked })
+              }
+              className="h-4 w-4 rounded border-gray-300"
+            />
+            <Label htmlFor="isJobAccount" className="cursor-pointer">
+              Tài Khoản Công Việc
+            </Label>
+          </div>
+
+          {/* Is Video Account */}
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="isVideoAccount"
+              checked={formData.isVideoAccount || false}
+              onChange={(e) =>
+                setFormData({ ...formData, isVideoAccount: e.target.checked })
+              }
+              className="h-4 w-4 rounded border-gray-300"
+            />
+            <Label htmlFor="isVideoAccount" className="cursor-pointer">
+              Tài Khoản Video
             </Label>
           </div>
 

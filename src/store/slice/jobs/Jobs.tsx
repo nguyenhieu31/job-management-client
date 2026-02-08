@@ -208,11 +208,11 @@ export const SearchJobViewAction = createAsyncThunk<
   }
 );
 
-export const CreateJobAction = createAsyncThunk<JobResponse, JobRequest>(
+export const CreateJobAction = createAsyncThunk<JobResponse, { data: JobRequest; images?: File[]; videos?: File[] }>(
   "CreateJobAction",
-  async (data: JobRequest) => {
+  async ({ data, images, videos }) => {
     try {
-      const response = await createJob(data);
+      const response = await createJob(data, images, videos);
       return response.data as JobResponse;
     } catch (err: any) {
       throw new Error(err.message);
@@ -220,11 +220,11 @@ export const CreateJobAction = createAsyncThunk<JobResponse, JobRequest>(
   }
 );
 
-export const UpdateJobAction = createAsyncThunk<JobResponse, JobRequest>(
+export const UpdateJobAction = createAsyncThunk<JobResponse, { data: JobRequest; images?: File[]; videos?: File[] }>(
   "UpdateJobAction",
-  async (data: JobRequest) => {
+  async ({ data, images, videos }) => {
     try {
-      const response = await updateJobFull(data);
+      const response = await updateJobFull(data, images, videos);
       return response.data as JobResponse;
     } catch (err: any) {
       throw new Error(err.message);

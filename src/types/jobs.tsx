@@ -45,6 +45,26 @@ export interface JobViewResponse {
   isDeleted: boolean;
 }
 
+export interface JobAttachment {
+  id: number;
+  jobId: number;
+  fileName: string;
+  fileUrl: string;
+  fileType: "image" | "video";
+  fileSize: number;
+  createdAt: Date;
+}
+
+export interface FileStorage {
+  id : number;
+  folderPath: string;
+  dropboxLink: string;
+  isImage: boolean;
+  isJobFile: boolean;
+  jobId: number | null;
+  videoId: number | null;
+}
+
 export interface JobResponse {
   id: number;
   code: string;
@@ -72,8 +92,11 @@ export interface JobResponse {
   payPerFileQa: number;
   totalPayPerFile: number;
   totalPayPerFileQa: number;
+  deadline: string | null;
+  attachments?: JobAttachment[];
   createdAt: Date;
   updatedAt: Date;
+  fileStorages?: FileStorage[];
 }
 
 export interface JobRequest {
@@ -99,8 +122,10 @@ export interface JobRequest {
   qualifiedAssigneeId: number | null;
   customerId: number | null;
   workRequestId: number | null;
+  deadline?: string | null;
   isDeleteAssignee?: boolean;
   isDeleteQualifiedAssignee?: boolean;
+  fileStoragesNeedRemove?: FileStorage[];
 }
 
 export type JobStatus =
@@ -164,6 +189,7 @@ export interface Pagination {
 export const ROLE_COLUMNS = {
   manager: [
     "code",
+    "deadline",
     "date",
     "customerName",
     "caseName",
@@ -188,6 +214,7 @@ export const ROLE_COLUMNS = {
   ],
   qa: [
     "code",
+    "deadline",
     "date",
     "caseName",
     "workRequest",
@@ -206,6 +233,7 @@ export const ROLE_COLUMNS = {
   ],
   employee: [
     "code",
+    "deadline",
     "date",
     "caseName",
     "workRequest",
@@ -222,6 +250,7 @@ export const ROLE_COLUMNS = {
   ],
   special: [
     "code",
+    "deadline",
     "date",
     "caseName",
     "workRequest",

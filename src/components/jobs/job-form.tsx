@@ -2,10 +2,11 @@
 
 import type React from "react";
 
-import { useEffect, useRef, useReducer, memo } from "react";
+import { useEffect, useRef, useReducer, memo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { FileUpload, type UploadedFile } from "@/components/ui/file-upload";
 import {
   Select,
   SelectContent,
@@ -22,19 +23,21 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { X } from "lucide-react";
 import type {
   JobRequest,
   JobResponse,
   JobStatus,
   PaymentStatus,
   EmployeePaymentStatus,
+  FileStorage,
 } from "@/types/jobs";
 import type { WorkRequestResponse } from "@/types/work-requests";
 import { EmployeeResponse } from "@/types/employees";
 import { CustomerResponse } from "@/types/customers";
 import { formatCurrency, formatCurrencyVND } from "@/lib/utils";
 import SearchableDropdown from "../ui/search-able-dropdown";
-import { filePriceOptions } from "./job-table";
+import { filePriceOptions, filePriceEmployeeOptions, filePriceQaOptions } from "./job-table";
 
 interface JobFormProps {
   open: boolean;
@@ -45,7 +48,9 @@ interface JobFormProps {
           JobRequest,
           "id" | "code" | "date" | "totalPrice" | "outputCount" | "linkDone"
         >
-      | JobRequest
+      | JobRequest,
+    images?: File[],
+    videos?: File[]
   ) => void;
   editingJob?: JobResponse | null;
   customers?: CustomerResponse[];
@@ -66,6 +71,13 @@ export function JobForm({
 }: JobFormProps) {
   // Use useReducer for re-render trigger
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
+
+  // State for file uploads
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  // State for existing fileStorages from server
+  const [existingFiles, setExistingFiles] = useState<FileStorage[]>([]);
+  // State for files that need to be removed
+  const [removedFileStorages, setRemovedFileStorages] = useState<FileStorage[]>([]);
 
   // Use refs instead of useState to avoid unnecessary re-renders
   const formRef = useRef({
@@ -89,21 +101,19 @@ export function JobForm({
     workRequestId: undefined as string | undefined,
     payPerFile: "",
     payPerFileQa: "",
+    deadline: "",
   });
 
   const isEditingRef = useRef(false);
 
-  // Helper function to format number with thousand separators
-  const formatVNDInput = (value: string): string => {
-    // Remove all non-digit characters
-    const numericValue = value.replace(/\D/g, "");
-    // Add thousand separators
+  // Helper function to format number with VND thousand separators (dots)
+  const formatVND = (value: string | number): string => {
+    const numericValue = value.toString().replace(/\D/g, "");
     return numericValue.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   };
 
-  // Helper function to parse formatted VND string to number
-  const parseVNDInput = (value: string): number => {
-    // Remove all dots (thousand separators)
+  // Helper function to parse VND formatted string to number
+  const parseVND = (value: string): number => {
     const numericValue = value.replace(/\./g, "");
     return parseInt(numericValue) || 0;
   };
@@ -137,15 +147,44 @@ export function JobForm({
           ? editingJob.workRequest.id.toString()
           : undefined,
         fileCount: String(editingJob.fileCount),
-        // Format pay per file with thousand separators
+        // Store pay per file with VND formatting (dots as thousand separators)
         payPerFile: editingJob.payPerFile
-          ? formatVNDInput(String(editingJob.payPerFile))
+          ? formatVND(String(editingJob.payPerFile))
           : "",
         payPerFileQa: editingJob.payPerFileQa
-          ? formatVNDInput(String(editingJob.payPerFileQa))
+          ? formatVND(String(editingJob.payPerFileQa))
+          : "",
+        deadline: editingJob.deadline
+          ? (() => {
+              // Check if deadline is already in HH:mm format
+              const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+              if (timeRegex.test(editingJob.deadline)) {
+                return editingJob.deadline;
+              }
+              // Try to parse as Date
+              const date = new Date(editingJob.deadline);
+              if (!isNaN(date.getTime())) {
+                return date.toTimeString().slice(0, 5);
+              }
+              // If contains time part in string (e.g., "2025-11-07 22:08:32")
+              const timeMatch = editingJob.deadline.match(/(\d{2}):(\d{2})/);
+              if (timeMatch) {
+                return `${timeMatch[1]}:${timeMatch[2]}`;
+              }
+              return "";
+            })()
           : "",
       };
       isEditingRef.current = true;
+
+      // Load existing fileStorages
+      if (editingJob.fileStorages && editingJob.fileStorages.length > 0) {
+        setExistingFiles(editingJob.fileStorages);
+      } else {
+        setExistingFiles([]);
+      }
+      setUploadedFiles([]);
+      setRemovedFileStorages([]);
     } else {
       formRef.current = {
         caseName: "",
@@ -168,8 +207,12 @@ export function JobForm({
         workRequestId: undefined,
         payPerFile: "",
         payPerFileQa: "",
+        deadline: "",
       };
       isEditingRef.current = false;
+      setUploadedFiles([]);
+      setExistingFiles([]);
+      setRemovedFileStorages([]);
     }
     // Trigger re-render to update UI
     forceUpdate();
@@ -199,13 +242,14 @@ export function JobForm({
       employeeNote,
       qualifiedAssignee,
       workRequestId,
+      deadline,
     } = formRef.current;
 
     const inputCount = parseInt(inputNumber) || 0;
     const price = parseFloat(filePrice) || 0;
-    // Parse VND formatted strings back to numbers
-    const payPerFileNum = parseVNDInput(payPerFile);
-    const payPerFileQaNum = parseVNDInput(payPerFileQa);
+    // Parse VND formatted strings back to numbers (remove dots)
+    const payPerFileNum = parseVND(payPerFile);
+    const payPerFileQaNum = parseVND(payPerFileQa);
     const fileCountNum = parseInt(fileCount) || 0;
     const outputNum = parseInt(outputNumber) || 0;
     const qaOutputNum = parseInt(qaOutputNumber) || 0;
@@ -213,6 +257,14 @@ export function JobForm({
     const assigneeId_ = assignedEmployee || null;
     const qaId_ = qualifiedAssignee || null;
     const workReqId_ = workRequestId || null;
+
+    // Separate uploaded files into images and videos (only new files with File object)
+    const imageFiles = uploadedFiles
+      .filter((f) => f.file && f.type === "image")
+      .map((f) => f.file as File);
+    const videoFiles = uploadedFiles
+      .filter((f) => f.file && f.type === "video")
+      .map((f) => f.file as File);
 
     if (isEditingRef.current && editingJob) {
       // Check if user cleared assignee or QA fields
@@ -244,9 +296,11 @@ export function JobForm({
         qualifiedAssigneeId: qaId_,
         customerId: customerId_,
         workRequestId: workReqId_,
+        deadline: deadline || null,
         isDeleteAssignee: isDeleteAssignee,
         isDeleteQualifiedAssignee: isDeleteQualifiedAssignee,
-      } as JobRequest);
+        fileStoragesNeedRemove: removedFileStorages.length > 0 ? removedFileStorages : undefined,
+      } as JobRequest, imageFiles, videoFiles);
     } else {
       // Create: send only required fields, skip id, code, outputNumber, doneLink
       onSubmit({
@@ -265,7 +319,8 @@ export function JobForm({
         qualifiedAssigneeId: qaId_,
         customerId: customerId_,
         workRequestId: workReqId_,
-      } as Omit<JobRequest, "id" | "code" | "outputNumber" | "doneLink">);
+        deadline: deadline || null,
+      } as Omit<JobRequest, "id" | "code" | "outputNumber" | "doneLink">, imageFiles, videoFiles);
     }
 
     // Reset form
@@ -290,9 +345,15 @@ export function JobForm({
       workRequestId: undefined,
       payPerFile: "",
       payPerFileQa: "",
+      deadline: "",
     };
+    setUploadedFiles([]);
+    setExistingFiles([]);
+    setRemovedFileStorages([]);
     onOpenChange(false);
   };
+
+  console.log("removedFileStorages: ", removedFileStorages)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -551,17 +612,17 @@ export function JobForm({
                   Giá trả nhân viên/file{" "}
                   <span className="text-red-500">(VNĐ)</span>
                 </Label>
-                <Input
-                  id="payPerFile"
-                  type="text"
-                  defaultValue={formRef.current.payPerFile}
-                  onChange={(e) => {
-                    const formatted = formatVNDInput(e.target.value);
-                    formRef.current.payPerFile = formatted;
-                    e.target.value = formatted;
-                    forceUpdate();
-                  }}
-                  placeholder="Nhập giá trả nhân viên cho mỗi file (VD: 1.000)"
+                <SearchableDropdown
+                  options={filePriceEmployeeOptions.map(option => ({
+                    id: option.id,
+                    name: formatVND(option.name.toString())
+                  }))}
+                  placeholder="Nhập giá trả nhân viên cho mỗi file"
+                  onChange={(e) =>
+                    (formRef.current.payPerFile = e?.name.toString() || "")
+                  }
+                  defaultValue={{ id: 0, name: formRef.current.payPerFile }}
+                  type="vnd"
                 />
               </div>
 
@@ -571,17 +632,17 @@ export function JobForm({
                   Giá trả nhân viên/file QA{" "}
                   <span className="text-red-500">(VNĐ)</span>
                 </Label>
-                <Input
-                  id="payPerFileQa"
-                  type="text"
-                  defaultValue={formRef.current.payPerFileQa}
-                  onChange={(e) => {
-                    const formatted = formatVNDInput(e.target.value);
-                    formRef.current.payPerFileQa = formatted;
-                    e.target.value = formatted;
-                    forceUpdate();
-                  }}
-                  placeholder="Nhập giá trả nhân viên cho mỗi file QA (VD: 1.000)"
+                <SearchableDropdown
+                  options={filePriceQaOptions.map(option => ({
+                    id: option.id,
+                    name: formatVND(option.name.toString())
+                  }))}
+                  placeholder="Nhập giá trả nhân viên cho mỗi file QA"
+                  onChange={(e) =>
+                    (formRef.current.payPerFileQa = e?.name.toString() || "")
+                  }
+                  defaultValue={{ id: 0, name: formRef.current.payPerFileQa }}
+                  type="vnd"
                 />
               </div>
 
@@ -591,7 +652,7 @@ export function JobForm({
                   <Label>Tổng tiền trả nhân viên (VNĐ) (Tính toán)</Label>
                   <div className="text-lg font-semibold text-green-600">
                     {formatCurrencyVND(
-                      parseVNDInput(formRef.current.payPerFile) *
+                      parseVND(formRef.current.payPerFile) *
                         parseFloat(formRef.current.outputNumber)
                     )}
                   </div>
@@ -605,7 +666,7 @@ export function JobForm({
                     <Label>Tổng tiền trả nhân viên QA (VNĐ) (Tính toán)</Label>
                     <div className="text-lg font-semibold text-green-600">
                       {formatCurrencyVND(
-                        parseVNDInput(formRef.current.payPerFileQa) *
+                        parseVND(formRef.current.payPerFileQa) *
                           parseFloat(formRef.current.qaOutputNumber)
                       )}
                     </div>
@@ -727,6 +788,17 @@ export function JobForm({
                 />
               </div>
 
+              {/* Deadline - Giờ hoàn thành */}
+              <div className="grid gap-2">
+                <Label htmlFor="deadline">Giờ hoàn thành</Label>
+                <Input
+                  id="deadline"
+                  type="time"
+                  defaultValue={formRef.current.deadline}
+                  onChange={(e) => (formRef.current.deadline = e.target.value)}
+                />
+              </div>
+
               {/* Done Link - Only show when editing */}
               {editingJob && (
                 <div className="grid gap-2">
@@ -742,6 +814,59 @@ export function JobForm({
                   />
                 </div>
               )}
+
+              {/* Existing Files Display - Only show when editing and has existing files */}
+              {editingJob && existingFiles.length > 0 && (
+                <div className="grid gap-2">
+                  <Label>Ảnh & Video đã tải lên</Label>
+                  <div className="grid grid-cols-4 gap-4">
+                    {existingFiles.map((file) => (
+                      <div key={file.id} className="relative group">
+                        <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
+                          {file.isImage ? (
+                            <img
+                              src={file.dropboxLink}
+                              alt="Uploaded"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                              <video
+                                src={file.dropboxLink}
+                                className="w-full h-full object-cover"
+                              />
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-white text-xs px-2">
+                                VIDEO
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRemovedFileStorages([...removedFileStorages, file]);
+                            setExistingFiles(existingFiles.filter(f => f.id !== file.id));
+                          }}
+                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* File Upload - Images & Videos */}
+              <div className="grid gap-2">
+                <Label>Thêm ảnh & video mới</Label>
+                <FileUpload
+                  value={uploadedFiles}
+                  onChange={(files) => setUploadedFiles(files)}
+                  maxFiles={20}
+                  maxSizeMB={50}
+                />
+              </div>
 
               {/* Note */}
               <div className="grid gap-2">

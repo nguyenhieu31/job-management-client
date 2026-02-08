@@ -9,6 +9,8 @@ export interface EmployeeResponse {
     isActive: boolean;
     role: RoleDto;
     createdAt: Date;
+    isJobAccount: boolean;
+    isVideoAccount: boolean;
 }
 
 export interface EmployeeRequest {
@@ -22,6 +24,8 @@ export interface EmployeeRequest {
     dateOfBirth: Date;
     isActive: boolean;
     role: string;
+    isJobAccount: boolean;
+    isVideoAccount: boolean;
 }
 
 export interface RoleDto {

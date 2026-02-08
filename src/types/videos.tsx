@@ -1,4 +1,5 @@
 import { WorkRequestResponse } from "./work-requests";
+import { FileStorage } from "./jobs";
 
 export interface AssigneeInfo {
   id: number;
@@ -47,8 +48,10 @@ export interface VideoResponse {
   workRequest: WorkRequestResponse;
   payPerFile: number;
   totalPayPerFile: number;
+  editedNumber: number;
   createdAt: Date;
   updatedAt: Date;
+  fileStorages?: FileStorage[];
 }
 
 export interface VideoRequest {
@@ -60,6 +63,7 @@ export interface VideoRequest {
   payPerFile: number;
   inputNumber: number;
   outputNumber?: number | null;
+  editedNumber?: number | null;
   paymentStatus: PaymentStatus;
   paymentEmployee?: EmployeePaymentStatus;
   jobStatus: VideoStatus;
@@ -71,6 +75,7 @@ export interface VideoRequest {
   customerId: number | null;
   workRequestId: number | null;
   isDeleteAssignee?: boolean;
+  fileStoragesNeedRemove?: FileStorage[];
 }
 
 export type VideoStatus = "PENDING" | "IN_PROGRESS" | "DONE" | "COMPLETED";
@@ -134,11 +139,13 @@ export const ROLE_COLUMNS = {
     "totalPrice",
     "jobStatus",
     "linkDone",
+    "editedNumber",
     "payPerFile",
     "totalPayPerFile",
     // "employeeNote",
     "assignedEmployee",
     "note",
+    "media",
     "paymentStatus",
     "actions",
   ],
@@ -151,6 +158,7 @@ export const ROLE_COLUMNS = {
     "linkDone",
     "inputCount",
     "outputCount",
+    "editedNumber",
     "jobStatus",
     "payPerFile",
     "totalPayPerFile",
@@ -166,6 +174,7 @@ export const ROLE_COLUMNS = {
     "linkDone",
     "inputCount",
     "outputCount",
+    "editedNumber",
     "jobStatus",
     "payPerFile",
     "totalPayPerFile",

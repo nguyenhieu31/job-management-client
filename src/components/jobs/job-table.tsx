@@ -133,19 +133,34 @@ const columnLabels: Record<string, string> = {
   employeeNote: "Thuê ngoài",
   assignedEmployee: "Người Được Giao",
   qa: "QA",
+  deadline: "Deadline",
   actions: "Hành Động",
 };
 
 export const filePriceOptions = [
   { id: 1, name: 0.7 },
-  { id: 2, name: 0.76 },
-  { id: 3, name: 0.6 },
-  { id: 4, name: 0.5 },
-  { id: 5, name: 1 },
-  { id: 6, name: 13 },
-  { id: 7, name: 5 },
-  { id: 8, name: 4 },
+  { id: 2, name: 0.75 },
+  { id: 3, name: 0.76 },
+  { id: 4, name: 0.6 },
+  { id: 5, name: 0.5 },
+  { id: 6, name: 1 },
+  { id: 7, name: 13 },
+  { id: 8, name: 5 },
+  { id: 9, name: 4 },
 ];
+
+export const filePriceEmployeeOptions = [
+  { id: 1, name: 8000 },
+  { id: 2, name: 10000 },
+  { id: 3, name: 6000 },
+  { id: 4, name: 50000 },
+  { id: 5, name: 100000 },
+  { id: 6, name: 120000 },
+]
+
+export const filePriceQaOptions = [
+  { id: 1, name: 2000 },
+]
 
 export function JobTable({
   jobs,
@@ -606,20 +621,25 @@ export function JobTable({
       case "customerName":
         if (canEditField() && customers.length > 0 && userRole === "manager") {
           return (
-            <SearchableDropdown
-              options={customerOptions}
-              placeholder="Tìm kiếm khách hàng..."
-              onChange={createCustomerChangeHandler(job.id)}
-              defaultValue={job.customer}
-              className="w-55"
-              type="text"
-            />
+            <div className="max-w-[250px]">
+              <SearchableDropdown
+                options={customerOptions}
+                placeholder="Tìm kiếm khách hàng..."
+                onChange={createCustomerChangeHandler(job.id)}
+                defaultValue={job.customer}
+                className="w-full"
+                type="text"
+              />
+            </div>
           );
         }
         return (
-          <span>
-            {job.customer && job.customer.name ? job.customer.name : ""}
-          </span>
+          <div 
+            className="max-w-[250px] text-ellipsis whitespace-nowrap" 
+            title={job.customer?.name || ""}
+          >
+            {job.customer && job.customer.name ? job.customer.name : "N/A"}
+          </div>
         );
 
       case "caseName":
@@ -980,6 +1000,32 @@ export function JobTable({
           </span>
         );
 
+      case "deadline":
+        if (!job.deadline) {
+          return <span className="text-muted-foreground"></span>;
+        }
+        // deadline is stored as time string like "09:08" or full datetime
+        const deadlineTime = job.deadline.includes(":")
+          ? job.deadline.substring(job.deadline.indexOf(" ") + 1, job.deadline.indexOf(" ") + 6) || job.deadline.substring(0, 5)
+          : job.deadline;
+        
+        // Format time display (HH:mm)
+        const formattedTime = deadlineTime.length >= 5 ? deadlineTime.substring(0, 5) : deadlineTime;
+        
+        // Determine color based on job status
+        const deadlineColorClass = 
+          job.jobStatus === "PENDING" || job.jobStatus === "IN_PROGRESS"
+            ? "text-red-600 dark:text-red-400"
+            : job.jobStatus === "DONE" || job.jobStatus === "IN_REVIEW" || job.jobStatus === "REVIEWED"
+            ? "text-green-600 dark:text-green-400"
+            : "text-foreground";
+        
+        return (
+          <span className={`text-sm font-medium ${deadlineColorClass}`}>
+            {formattedTime}
+          </span>
+        );
+
       case "actions":
         return (
           <ActionCell
@@ -1118,7 +1164,7 @@ export function JobTable({
                 {visibleColumns.map((column) => (
                   <TableCell
                     key={`${job.id}-${column}`}
-                    className="border-r last:border-r-0"
+                    className={`border-r last:border-r-0 ${column === 'customerName' ? 'relative' : ''}`}
                   >
                     {renderCell(job, column)}
                   </TableCell>

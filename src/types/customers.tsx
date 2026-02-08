@@ -4,6 +4,8 @@ export interface CustomerResponse {
     email: string;
     phone: string;
     company: string;
+    isJobAccount: boolean;
+    isVideoAccount: boolean;
 }
 
 export interface CustomerRequest {
@@ -12,6 +14,8 @@ export interface CustomerRequest {
     email: string;
     phone: string;
     company: string;
+    isJobAccount: boolean;
+    isVideoAccount: boolean;
 }
 
 export interface CustomerFilters {

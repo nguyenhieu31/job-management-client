@@ -247,9 +247,9 @@ export default function VideosPage() {
     if (roleName === undefined) return;
     if (roleName === "MANAGER") {
       Promise.all([
-        dispatch(GetAllEmployeesAction({ pageNumber: 0, pageSize: 100 })),
-        dispatch(GetAllWorkRequestsAction({ pageNumber: 0, pageSize: 100 })),
-        dispatch(GetAllCustomersAction({ pageNumber: 0, pageSize: 100 })),
+        dispatch(GetAllEmployeesAction({ pageNumber: 0, pageSize: 1000 })),
+        dispatch(GetAllWorkRequestsAction({ pageNumber: 0, pageSize: 1000 })),
+        dispatch(GetAllCustomersAction({ pageNumber: 0, pageSize: 1000 })),
       ]);
     }
   }, [dispatch, roleName]);
@@ -293,8 +293,8 @@ export default function VideosPage() {
       <VideoFilterBar
         pagination={pagination}
         onPageChange={handlePageChange}
-        employees={employeeList}
-        customers={customerList}
+        employees={employeeList.filter((e) => e.isVideoAccount === true)}
+        customers={customerList.filter((c) => c.isVideoAccount === true)}
       />
 
       {/* Table */}
@@ -307,8 +307,8 @@ export default function VideosPage() {
           <VideoTable
             videos={videos ? videos.data : []}
             userRole={userRole}
-            employees={employeeList}
-            customers={customerList}
+            employees={employeeList.filter((e) => e.isVideoAccount === true)}
+            customers={customerList.filter((c) => c.isVideoAccount === true)}
             onVideoAction={handleVideoAction}
           />
 
@@ -335,8 +335,8 @@ export default function VideosPage() {
           }
         }}
         editingVideo={editingVideo}
-        customers={customerList}
-        employees={employeeList}
+        customers={customerList.filter((c) => c.isVideoAccount === true)}
+        employees={employeeList.filter((e) => e.isVideoAccount === true)}
         qaList={qaList}
         workRequests={workRequestList}
       />

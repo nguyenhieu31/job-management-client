@@ -91,7 +91,9 @@ export default function CustomersPage() {
         name: customer.name || "",
         email: customer.email || "",
         phone: customer.phone || "",
-        company: customer.company || ""
+        company: customer.company || "",
+        isJobAccount: customer.isJobAccount ?? true,
+        isVideoAccount: customer.isVideoAccount ?? true,
       }
       await dispatch(UpdateCustomerAction(payload as CustomerRequest));
       setEditingCustomer(null);
@@ -100,7 +102,9 @@ export default function CustomersPage() {
         name: customer.name || "",
         email: customer.email || "",
         phone: customer.phone || "",
-        company: customer.company || ""
+        company: customer.company || "",
+        isJobAccount: customer.isJobAccount ?? true,
+        isVideoAccount: customer.isVideoAccount ?? true,
       }
       await dispatch(CreateCustomerAction(payload as CustomerRequest));
     }

@@ -31,6 +31,8 @@ export function CustomerForm({
     email: "",
     phone: "",
     company: "",
+    isJobAccount: true,
+    isVideoAccount: true,
   });
 
   useEffect(() => {
@@ -40,6 +42,8 @@ export function CustomerForm({
         email: editingCustomer.email,
         phone: editingCustomer.phone,
         company: editingCustomer.company,
+        isJobAccount: editingCustomer.isJobAccount,
+        isVideoAccount: editingCustomer.isVideoAccount,
       });
     } else {
       setFormData({
@@ -47,6 +51,8 @@ export function CustomerForm({
         email: "",
         phone: "",
         company: "",
+        isJobAccount: true,
+        isVideoAccount: true,
       });
     }
   }, [editingCustomer, open]);
@@ -60,6 +66,8 @@ export function CustomerForm({
       email: formData.email,
       phone: formData.phone,
       company: formData.company,
+      isJobAccount: formData.isJobAccount,
+      isVideoAccount: formData.isVideoAccount,
     };
 
     onSubmit(customer);
@@ -137,6 +145,38 @@ export function CustomerForm({
               placeholder="Công ty ABC"
               required
             />
+          </div>
+
+          {/* Is Job Account */}
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="isJobAccount"
+              checked={formData.isJobAccount}
+              onChange={(e) =>
+                setFormData({ ...formData, isJobAccount: e.target.checked })
+              }
+              className="h-4 w-4 rounded border-gray-300"
+            />
+            <Label htmlFor="isJobAccount" className="cursor-pointer">
+              Khách Hàng Công Việc
+            </Label>
+          </div>
+
+          {/* Is Video Account */}
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="isVideoAccount"
+              checked={formData.isVideoAccount}
+              onChange={(e) =>
+                setFormData({ ...formData, isVideoAccount: e.target.checked })
+              }
+              className="h-4 w-4 rounded border-gray-300"
+            />
+            <Label htmlFor="isVideoAccount" className="cursor-pointer">
+              Khách Hàng Video
+            </Label>
           </div>
 
           {/* Actions */}
