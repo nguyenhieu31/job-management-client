@@ -103,7 +103,7 @@ export const SearchVideoViewAction = createAsyncThunk(
 
 export const UpdateGridViewVideoAction = createAsyncThunk(
   "video/updateGridViewVideo",
-  async ({ data, images, videos }: {
+  async ({ data, images, videos, imageTempUrls, videoTempUrls }: {
     data: {
       jobId: number;
       caseName?: string | null;
@@ -128,8 +128,10 @@ export const UpdateGridViewVideoAction = createAsyncThunk(
     };
     images?: File[];
     videos?: File[];
+    imageTempUrls?: string[];
+    videoTempUrls?: string[];
   }) => {
-    const res = await VideoApi.updateGridViewVideo(data, images, videos);
+    const res = await VideoApi.updateGridViewVideo(data, images, videos, imageTempUrls, videoTempUrls);
     return res.data;
   }
 );

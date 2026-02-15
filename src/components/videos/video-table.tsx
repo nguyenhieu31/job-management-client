@@ -29,9 +29,6 @@ import {
   CheckCircle,
   Check,
   ExternalLink,
-  Upload,
-  ImageIcon,
-  Film,
   Minus,
   Plus,
 } from "lucide-react";
@@ -60,7 +57,8 @@ import {
   UpdatePaymentMultipleVideosAction,
 } from "@/store/slice/videos/Videos";
 import { toast } from "react-toastify";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 
 interface VideoTableProps {
   videos: VideoResponse[];
@@ -130,7 +128,7 @@ const columnLabels: Record<string, string> = {
   assignedEmployee: "Người Được Giao",
   qa: "QA",
   editedNumber: "Số Lần Chỉnh Sửa",
-  media: "Ảnh/Video",
+  editedFee: "Phí Chỉnh Sửa",
   actions: "Hành Động",
 };
 
@@ -217,8 +215,9 @@ console.log("editValue: ", editValue)
   const uploadedFilesRef = useRef<Record<number, { images: File[]; videos: File[] }>>({}); 
   // Track files to remove per video row
   const removedFileStoragesRef = useRef<Record<number, FileStorage[]>>({});
-  // Ref for file input per video
-  const fileInputRefs = useRef<Record<number, HTMLInputElement | null>>({});
+
+  // Track media temp URLs from RichTextEditor per video row
+  const mediaTempUrlsRef = useRef<Record<number, { imageTempUrls: string[]; videoTempUrls: string[] }>>({});
 
   // Helper functions for VND formatting
   const formatVNDInput = (value: string): string => {
@@ -293,6 +292,28 @@ console.log("editValue: ", editValue)
           !assigneeId
         );
 
+        const tempUrls = mediaTempUrlsRef.current[videoId];
+
+        // Filter out media files removed from editor by checking if tempUrl is still in note HTML
+        const noteHtml = changes?.note || "";
+        let filteredImages = uploadedFiles?.images;
+        let filteredVideos = uploadedFiles?.videos;
+        let filteredImageTempUrls = tempUrls?.imageTempUrls;
+        let filteredVideoTempUrls = tempUrls?.videoTempUrls;
+
+        if (noteHtml && tempUrls) {
+          if (tempUrls.imageTempUrls && uploadedFiles?.images) {
+            const keepIndexes = tempUrls.imageTempUrls.map((url) => noteHtml.includes(url));
+            filteredImageTempUrls = tempUrls.imageTempUrls.filter((_, i) => keepIndexes[i]);
+            filteredImages = uploadedFiles.images.filter((_, i) => keepIndexes[i]);
+          }
+          if (tempUrls.videoTempUrls && uploadedFiles?.videos) {
+            const keepIndexes = tempUrls.videoTempUrls.map((url) => noteHtml.includes(url));
+            filteredVideoTempUrls = tempUrls.videoTempUrls.filter((_, i) => keepIndexes[i]);
+            filteredVideos = uploadedFiles.videos.filter((_, i) => keepIndexes[i]);
+          }
+        }
+
         const payload = {
           data: {
             jobId: videoId,
@@ -318,9 +339,13 @@ console.log("editValue: ", editValue)
             isDeleteAssignee: isDeleteAssignee || undefined,
             fileStoragesNeedRemove: removedFiles && removedFiles.length > 0 ? removedFiles : undefined,
           },
-          images: uploadedFiles?.images,
-          videos: uploadedFiles?.videos,
+          images: filteredImages,
+          videos: filteredVideos,
+          imageTempUrls: filteredImageTempUrls,
+          videoTempUrls: filteredVideoTempUrls,
         };
+
+        console.log("payload", payload);
         // Dispatch API call
         const res = await dispatch(UpdateGridViewVideoAction(payload));
         if (res.meta.requestStatus === "fulfilled") {
@@ -328,6 +353,7 @@ console.log("editValue: ", editValue)
           delete pendingChangesRef.current[videoId];
           delete uploadedFilesRef.current[videoId];
           delete removedFileStoragesRef.current[videoId];
+          delete mediaTempUrlsRef.current[videoId];
           // Clear formatted input values
           setPayPerFileInputs((prev) => {
             const newInputs = { ...prev };
@@ -351,6 +377,7 @@ console.log("editValue: ", editValue)
     delete pendingChangesRef.current[videoId];
     delete uploadedFilesRef.current[videoId];
     delete removedFileStoragesRef.current[videoId];
+    delete mediaTempUrlsRef.current[videoId];
     // Clear formatted input values
     setPayPerFileInputs((prev) => {
       const newInputs = { ...prev };
@@ -359,6 +386,66 @@ console.log("editValue: ", editValue)
     });
     setUpdateTrigger((prev) => prev + 1);
   }, []);
+
+  // Helper function to extract all media URLs from HTML content
+  const extractMediaUrlsFromHtml = useCallback((html: string): string[] => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+    const urls: string[] = [];
+
+    doc.querySelectorAll("img").forEach((img) => {
+      const src = img.getAttribute("src");
+      if (src && !src.startsWith("blob:") && !src.startsWith("data:")) {
+        urls.push(src);
+      }
+    });
+
+    doc.querySelectorAll("video").forEach((video) => {
+      const src = video.getAttribute("src");
+      if (src && !src.startsWith("blob:") && !src.startsWith("data:")) {
+        urls.push(src);
+      }
+    });
+
+    doc.querySelectorAll("video source").forEach((source) => {
+      const src = source.getAttribute("src");
+      if (src && !src.startsWith("blob:") && !src.startsWith("data:")) {
+        urls.push(src);
+      }
+    });
+
+    return urls;
+  }, []);
+
+  // Handler for media upload from RichTextEditor in note edit dialog
+  const handleNoteMediaUpload = useCallback(
+    async (file: File, type: "image" | "video"): Promise<string> => {
+      if (editVideoId === null) return "";
+
+      const tempUrl = URL.createObjectURL(file);
+
+      // Store file in uploadedFilesRef
+      const existing = uploadedFilesRef.current[editVideoId] || { images: [], videos: [] };
+      if (type === "image") {
+        existing.images = [...existing.images, file];
+      } else {
+        existing.videos = [...existing.videos, file];
+      }
+      uploadedFilesRef.current[editVideoId] = existing;
+
+      // Store tempUrl in mediaTempUrlsRef
+      const existingTempUrls = mediaTempUrlsRef.current[editVideoId] || { imageTempUrls: [], videoTempUrls: [] };
+      if (type === "image") {
+        existingTempUrls.imageTempUrls = [...existingTempUrls.imageTempUrls, tempUrl];
+      } else {
+        existingTempUrls.videoTempUrls = [...existingTempUrls.videoTempUrls, tempUrl];
+      }
+      mediaTempUrlsRef.current[editVideoId] = existingTempUrls;
+
+      return tempUrl;
+    },
+    [editVideoId],
+  );
 
   // Handle opening edit dialog
   const handleOpenEditDialog = (
@@ -375,6 +462,30 @@ console.log("editValue: ", editValue)
   // Handle saving from edit dialog
   const handleSaveEditDialog = () => {
     if (editVideoId !== null && editField !== null) {
+      // If editing note, detect removed media from HTML
+      if (editField === "note" && editVideoId !== null) {
+        const video = videos.find((v) => v.id === editVideoId);
+        if (video && video.fileStorages && video.fileStorages.length > 0) {
+          const currentUrls = extractMediaUrlsFromHtml(editValue);
+          const existingRemoved = removedFileStoragesRef.current[editVideoId] || [];
+          const removedFromHtml = video.fileStorages.filter((file) => {
+            // Skip files already in removedFileStoragesRef
+            if (existingRemoved.some((r) => r.id === file.id)) return false;
+            const fileUrl = file.dropboxLink;
+            const isStillInHtml = currentUrls.some(
+              (url) => url.includes(fileUrl) || fileUrl.includes(url)
+            );
+            return !isStillInHtml;
+          });
+          if (removedFromHtml.length > 0) {
+            removedFileStoragesRef.current[editVideoId] = [
+              ...existingRemoved,
+              ...removedFromHtml,
+            ];
+          }
+        }
+      }
+
       handleFieldChange(editVideoId, editField, editValue);
       setEditDialogOpen(false);
       setEditVideoId(null);
@@ -800,7 +911,7 @@ console.log("editValue: ", editValue)
             href={currentDoneLink}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-blue-600 hover:underline max-w-[300px] truncate block"
+            className="text-blue-600 hover:underline max-w-[180px] truncate block"
           >
             {currentDoneLink || ""}
           </a>
@@ -910,15 +1021,18 @@ console.log("editValue: ", editValue)
         );
 
       case "totalPayPerFile":
+        const totalPayPerFile = video.totalPayPerFile || 0;
+        const editedNumber = (getCurrentValue(video, "editedNumber") as number) || 0;
+        const feeEdited = editedNumber > 3 ? (editedNumber - 3) * 20000 : 0;
         return (
           <span className="font-medium">
-            {formatCurrencyVND(video.totalPayPerFile)}
+            {formatCurrencyVND(totalPayPerFile + feeEdited)}
           </span>
         );
 
       case "editedNumber":
         const currentEditedNumber = (getCurrentValue(video, "editedNumber") as number) || 0;
-        if (userRole === "employee" || userRole === "special") {
+        if (userRole === "employee" || userRole === "special" || userRole === "manager") {
           return (
             <div className="flex items-center gap-1">
               <Button
@@ -950,6 +1064,11 @@ console.log("editValue: ", editValue)
         }
         // Manager: read-only
         return <span className="font-medium">{currentEditedNumber}</span>;
+
+      case "editedFee":
+        const editedNum = (getCurrentValue(video, "editedNumber") as number) || 0;
+        const fee = editedNum > 3 ? (editedNum - 3) * 20000 : 0;
+        return <span className="font-medium">{formatCurrencyVND(fee)}</span>;
 
       case "jobStatus":
         // All roles (including Manager) see status as read-only badge
@@ -990,25 +1109,25 @@ console.log("editValue: ", editValue)
         if (userRole === "manager") {
           return (
             <div
-              className="max-w-[400px] cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1 rounded group relative"
+              className="max-w-[250px] overflow-hidden cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1 rounded group relative h-[max-content] min-h-[40px]"
               onClick={() =>
                 handleOpenEditDialog(video.id, "note", currentNote)
               }
               title="Click để chỉnh sửa"
             >
-              <div className="whitespace-pre-wrap break-words line-clamp-3">
-                {currentNote ? renderTextWithLinks(currentNote) : "Nhấp để nhập..."}
-              </div>
+              <div
+                className="break-words line-clamp-3 prose prose-sm h-[20px]"
+                dangerouslySetInnerHTML={{ __html: currentNote || "Nhấp để nhập..." }}
+              />
             </div>
           );
         }
         return (
           <div
-            className="max-w-[400px] whitespace-pre-wrap break-words line-clamp-3"
+            className="max-w-[250px] overflow-hidden break-words line-clamp-3 prose prose-sm h-[40px]"
             onClick={() => handlePreviewClick(video)}
-          >
-            {currentNote ? renderTextWithLinks(currentNote) : ""}
-          </div>
+            dangerouslySetInnerHTML={{ __html: currentNote || "" }}
+          />
         );
 
       case "paymentEmployee":
@@ -1115,183 +1234,6 @@ console.log("editValue: ", editValue)
               video.assignee?.fullName ||
               ""}
           </span>
-        );
-
-      case "media":
-        if (userRole === "manager") {
-          const currentUploads = uploadedFilesRef.current[video.id];
-          const removedFiles = removedFileStoragesRef.current[video.id] || [];
-          const existingFiles = (video.fileStorages || []).filter(
-            (fs) => !removedFiles.some((r) => r.id === fs.id)
-          );
-          const newCount = (currentUploads?.images?.length || 0) + (currentUploads?.videos?.length || 0);
-          const totalCount = existingFiles.length + newCount;
-
-          return (
-            <div className="flex items-center gap-2">
-              <input
-                type="file"
-                ref={(el) => { fileInputRefs.current[video.id] = el; }}
-                className="hidden"
-                multiple
-                accept="image/*,video/*"
-                onChange={(e) => {
-                  const files = Array.from(e.target.files || []);
-                  if (files.length === 0) return;
-
-                  const imageFiles = files.filter(f => f.type.startsWith('image/'));
-                  const videoFiles = files.filter(f => f.type.startsWith('video/'));
-
-                  const existing = uploadedFilesRef.current[video.id] || { images: [], videos: [] };
-                  uploadedFilesRef.current[video.id] = {
-                    images: [...existing.images, ...imageFiles],
-                    videos: [...existing.videos, ...videoFiles],
-                  };
-                  setUpdateTrigger(prev => prev + 1);
-                  e.target.value = '';
-                }}
-              />
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => fileInputRefs.current[video.id]?.click()}
-                className="h-8 gap-1"
-                title="Upload ảnh/video"
-              >
-                <Upload className="h-3 w-3" />
-                {totalCount > 0 && (
-                  <span className="text-xs">{totalCount}</span>
-                )}
-              </Button>
-              {totalCount > 0 && (
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 gap-1 text-xs text-muted-foreground hover:text-foreground"
-                      title="Xem danh sách file"
-                    >
-                      <ImageIcon className="h-3 w-3" />
-                      <span>{totalCount}</span>
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-80 max-h-60 overflow-y-auto p-3" align="start">
-                    <div className="space-y-2">
-                      <h4 className="font-medium text-sm">Danh sách file ({totalCount})</h4>
-                      {/* Existing files from server */}
-                      {existingFiles.length > 0 && (
-                        <div className="space-y-1">
-                          <p className="text-xs text-muted-foreground font-medium">Đã upload</p>
-                          {existingFiles.map((fs) => (
-                            <div key={fs.id} className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-md bg-muted/50 hover:bg-muted">
-                              <div className="flex items-center gap-2 min-w-0">
-                                {fs.isImage ? (
-                                  <ImageIcon className="h-3.5 w-3.5 text-blue-500 shrink-0" />
-                                ) : (
-                                  <Film className="h-3.5 w-3.5 text-purple-500 shrink-0" />
-                                )}
-                                <span className="text-xs truncate">
-                                  {fs.folderPath?.split('/').pop() || `File #${fs.id}`}
-                                </span>
-                              </div>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-6 w-6 p-0 text-destructive hover:bg-destructive/10 shrink-0"
-                                onClick={() => {
-                                  const current = removedFileStoragesRef.current[video.id] || [];
-                                  removedFileStoragesRef.current[video.id] = [...current, fs];
-                                  setUpdateTrigger(prev => prev + 1);
-                                }}
-                                title="Xóa file"
-                              >
-                                <X className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      {/* Newly uploaded images */}
-                      {currentUploads?.images && currentUploads.images.length > 0 && (
-                        <div className="space-y-1">
-                          <p className="text-xs text-muted-foreground font-medium">Ảnh mới</p>
-                          {currentUploads.images.map((file, idx) => (
-                            <div key={`img-${idx}`} className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-md bg-blue-50 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-950/50">
-                              <div className="flex items-center gap-2 min-w-0">
-                                <ImageIcon className="h-3.5 w-3.5 text-blue-500 shrink-0" />
-                                <span className="text-xs truncate">{file.name}</span>
-                              </div>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-6 w-6 p-0 text-destructive hover:bg-destructive/10 shrink-0"
-                                onClick={() => {
-                                  const current = uploadedFilesRef.current[video.id];
-                                  if (current) {
-                                    current.images = current.images.filter((_, i) => i !== idx);
-                                    if (current.images.length === 0 && current.videos.length === 0) {
-                                      delete uploadedFilesRef.current[video.id];
-                                    }
-                                  }
-                                  setUpdateTrigger(prev => prev + 1);
-                                }}
-                                title="Xóa file"
-                              >
-                                <X className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      {/* Newly uploaded videos */}
-                      {currentUploads?.videos && currentUploads.videos.length > 0 && (
-                        <div className="space-y-1">
-                          <p className="text-xs text-muted-foreground font-medium">Video mới</p>
-                          {currentUploads.videos.map((file, idx) => (
-                            <div key={`vid-${idx}`} className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-md bg-purple-50 dark:bg-purple-950/30 hover:bg-purple-100 dark:hover:bg-purple-950/50">
-                              <div className="flex items-center gap-2 min-w-0">
-                                <Film className="h-3.5 w-3.5 text-purple-500 shrink-0" />
-                                <span className="text-xs truncate">{file.name}</span>
-                              </div>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-6 w-6 p-0 text-destructive hover:bg-destructive/10 shrink-0"
-                                onClick={() => {
-                                  const current = uploadedFilesRef.current[video.id];
-                                  if (current) {
-                                    current.videos = current.videos.filter((_, i) => i !== idx);
-                                    if (current.images.length === 0 && current.videos.length === 0) {
-                                      delete uploadedFilesRef.current[video.id];
-                                    }
-                                  }
-                                  setUpdateTrigger(prev => prev + 1);
-                                }}
-                                title="Xóa file"
-                              >
-                                <X className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              )}
-            </div>
-          );
-        }
-        return (
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            {(video.fileStorages?.length || 0) > 0 && (
-              <>
-                <ImageIcon className="h-3 w-3" />
-                <span>{video.fileStorages?.length}</span>
-              </>
-            )}
-          </div>
         );
 
       case "actions":
@@ -1621,6 +1563,21 @@ console.log("editValue: ", editValue)
                 className="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 autoFocus
               />
+            ) : editField === "note" ? (
+              <div className="flex flex-col gap-2 flex-1 overflow-hidden">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Nội dung:
+                </label>
+                <div className="flex-1 overflow-y-auto">
+                  <RichTextEditor
+                    value={editValue}
+                    onChange={(html) => setEditValue(html)}
+                    placeholder="Nhập ghi chú (hỗ trợ định dạng, hình ảnh, video...)"
+                    minHeight="200px"
+                    onMediaUpload={handleNoteMediaUpload}
+                  />
+                </div>
+              </div>
             ) : (
               <>
                 {/* Preview section with clickable links */}

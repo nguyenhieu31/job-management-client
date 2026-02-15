@@ -71,6 +71,7 @@ export interface InvoiceResponse {
   numberJob: number;
   createdAt: string;
   createdBy: string;
+  company: string;
 }
 
 

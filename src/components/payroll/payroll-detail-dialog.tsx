@@ -39,6 +39,10 @@ export default function PayrollDetailDialog({
     }
   };
 
+  const calculateEditedFee = (editedNumber: number) => {
+    return (editedNumber && editedNumber > 3) ? (editedNumber - 3) * 20000 : 0;
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto" style={{maxWidth: '60rem'}}>
@@ -81,6 +85,7 @@ export default function PayrollDetailDialog({
                       <th className="text-left py-2 px-2">Tên job</th>
                       <th className="text-left py-2 px-2">Số lượng output</th>
                       <th className="text-right py-2 px-2">Số Tiền</th>
+                      <th className="text-right py-2 px-2">Phí Chỉnh Sửa</th>
                       <th className="text-right py-2 px-2">Tổng Tiền</th>
                     </tr>
                   </thead>
@@ -93,6 +98,9 @@ export default function PayrollDetailDialog({
                         <td className="py-2 px-2">{item.outputNumber}</td>
                         <td className="py-2 px-2 text-right font-medium">
                           {formatCurrencyVND(item.payPerFile)}
+                        </td>
+                        <td className="py-2 px-2 text-right font-medium">
+                          {formatCurrencyVND(calculateEditedFee(item.editedNumber))}
                         </td>
                         <td className="py-2 px-2 text-right font-medium">
                           {formatCurrencyVND(item.amount)}

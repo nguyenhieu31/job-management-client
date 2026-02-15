@@ -263,6 +263,7 @@ export function InvoicesTable({
                       <div>
                         <p className="font-medium">{customerInfo.name}</p>
                         <p className="text-sm text-muted-foreground">{customerInfo.email}</p>
+                        <p className="text-sm text-muted-foreground">{invoice.company ? invoice.company : "Không có công ty"}</p>
                       </div>
                     </TableCell>
                     <TableCell className="text-center border-r font-medium">

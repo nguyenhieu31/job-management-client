@@ -9,6 +9,7 @@ export interface PayrollItem {
   outputNumber: number;
   payPerFile: number;
   amount: number;
+  editedNumber: number;
 }
 
 export interface EmployeePayroll {

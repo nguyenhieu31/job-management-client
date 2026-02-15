@@ -33,7 +33,7 @@ import {
 
 // Helper function to render text with clickable links
 const renderTextWithLinks = (text: string) => {
-  if (!text) return null;
+  if (!text) return "";
   
   // Regex to match URLs
   const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -59,6 +59,31 @@ const renderTextWithLinks = (text: string) => {
     return <Fragment key={index}>{part}</Fragment>;
   });
 };
+
+const renderHtmlWithLinks = (html: string): string => {
+    if (!html) return "";
+    
+    // Split by ALL HTML tags to avoid corrupting URLs inside tag attributes (src, href, etc.)
+    const htmlTagRegex = /(<[^>]+>)/g;
+    const segments = html.split(htmlTagRegex);
+    
+    let insideAnchor = false;
+    
+    return segments.map(segment => {
+      // If it's an HTML tag, keep as-is and track <a> open/close
+      if (/^<[^>]+>$/.test(segment)) {
+        if (/^<a\s/i.test(segment)) insideAnchor = true;
+        if (/^<\/a>/i.test(segment)) insideAnchor = false;
+        return segment;
+      }
+      // Only convert URLs in text content outside of <a> tags
+      if (insideAnchor) return segment;
+      return segment.replace(
+        /(https?:\/\/[^\s<]+)/g,
+        '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline break-all">$1</a>'
+      );
+    }).join('');
+  };
 
 interface VideoDetailDialogProps {
   open: boolean;
@@ -141,7 +166,7 @@ export function VideoDetailDialog({
     }}>
       <DialogContent
         className="max-w-4xl max-h-[90vh] overflow-y-auto"
-        style={{ maxWidth: "50%" }}
+        style={{ maxWidth: "60%" }}
       >
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">
@@ -328,9 +353,14 @@ export function VideoDetailDialog({
                   {video.note && (
                     <div className="space-y-2 min-w-0">
                       <h3 className="font-semibold text-lg">Ghi Chú</h3>
-                      <div className="text-sm whitespace-pre-wrap bg-muted/50 p-4 rounded-lg break-words overflow-wrap-break-word max-w-full">
+                      {/* <div className="text-sm whitespace-pre-wrap bg-muted/50 p-4 rounded-lg break-words overflow-wrap-break-word max-w-full">
                         {renderTextWithLinks(video.note)}
-                      </div>
+                      </div> */}
+
+                      <div
+                        className="rich-note-content text-sm bg-muted/50 p-4 rounded-lg break-words overflow-wrap-break-word max-w-full"
+                        dangerouslySetInnerHTML={{ __html: renderHtmlWithLinks(video.note) }}
+                      />
                     </div>
                   )}
 
@@ -427,34 +457,34 @@ export function VideoDetailDialog({
           {/* Preview Modal - rendered via portal to escape dialog constraints */}
           {previewMedia && mounted && createPortal(
             <div
-              className="fixed inset-0 bg-black/90 flex items-center justify-center p-4"
+              className="fixed inset-0 bg-black/95 flex items-center justify-center p-2"
               style={{ zIndex: 99999 }}
               onClick={() => setPreviewMedia(null)}
             >
               <div
-                className="relative max-w-5xl max-h-[90vh] w-full"
+                className="relative w-[96vw] h-[96vh] flex items-center justify-center"
                 onClick={(e) => e.stopPropagation()}
               >
                 <button
                   type="button"
                   onClick={() => setPreviewMedia(null)}
-                  className="absolute -top-12 right-0 p-2 text-white hover:text-gray-300 transition-colors bg-black/50 rounded-full"
+                  className="absolute top-2 right-2 z-10 p-2 text-white hover:text-gray-300 transition-colors bg-black/60 rounded-full"
                 >
-                  <X className="h-6 w-6" />
+                  <X className="h-7 w-7" />
                 </button>
                 {previewMedia.isImage ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={previewMedia.dropboxLink}
                     alt={previewMedia.folderPath}
-                    className="max-w-full max-h-[85vh] mx-auto rounded-lg object-contain"
+                    className="max-w-[96vw] max-h-[96vh] mx-auto rounded-lg object-contain"
                   />
                 ) : (
                   <video
                     src={previewMedia.dropboxLink}
                     controls
                     autoPlay
-                    className="max-w-full max-h-[85vh] mx-auto rounded-lg"
+                    className="max-w-[96vw] max-h-[96vh] mx-auto rounded-lg"
                   />
                 )}
               </div>

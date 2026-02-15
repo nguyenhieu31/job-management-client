@@ -874,13 +874,15 @@ export function JobTable({
         );
 
       case "note":
+        // Strip HTML tags for table preview, show full rich content in detail dialog
+        const noteText = job.note ? job.note.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim() : "";
         return (
           <span
             className="max-w-[400px] truncate block cursor-pointer"
-            title={job.note}
+            title={noteText}
             onClick={() => handlePreviewClick(job)}
           >
-            {job.note || ""}
+            {noteText || ""}
           </span>
         );
 

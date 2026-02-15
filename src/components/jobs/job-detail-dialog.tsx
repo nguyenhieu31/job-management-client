@@ -97,31 +97,75 @@ export function JobDetailDialog({
     return "employee";
   };
 
-  const renderTextWithLinks = (text: string) => {
-    if (!text) return null;
+  // For HTML content (used with dangerouslySetInnerHTML) - returns string
+  const renderHtmlWithLinks = (html: string): string => {
+    if (!html) return "";
     
-    // Regex to match URLs
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    const parts = text.split(urlRegex);
+    // Split by ALL HTML tags to avoid corrupting URLs inside tag attributes (src, href, etc.)
+    const htmlTagRegex = /(<[^>]+>)/g;
+    const segments = html.split(htmlTagRegex);
     
-    return parts.map((part, index) => {
-      if (urlRegex.test(part)) {
-        // Reset regex lastIndex
-        urlRegex.lastIndex = 0;
-        return (
-          <a
-            key={index}
-            href={part}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:underline break-all"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {part}
-          </a>
-        );
+    let insideAnchor = false;
+    
+    return segments.map(segment => {
+      // If it's an HTML tag, keep as-is and track <a> open/close
+      if (/^<[^>]+>$/.test(segment)) {
+        if (/^<a\s/i.test(segment)) insideAnchor = true;
+        if (/^<\/a>/i.test(segment)) insideAnchor = false;
+        return segment;
       }
-      return <Fragment key={index}>{part}</Fragment>;
+      // Only convert URLs in text content outside of <a> tags
+      if (insideAnchor) return segment;
+      return segment.replace(
+        /(https?:\/\/[^\s<]+)/g,
+        '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline break-all">$1</a>'
+      );
+    }).join('');
+  };
+
+  // For plain text / mixed content (returns JSX elements)
+  const renderTextWithLinks = (text: string) => {
+    if (!text) return "";
+    
+    // Split by ALL HTML tags to avoid corrupting URLs inside tag attributes (src, href, etc.)
+    const htmlTagRegex = /(<[^>]+>)/g;
+    const segments = text.split(htmlTagRegex);
+    
+    let insideAnchor = false;
+    
+    return segments.map((segment, segIndex) => {
+      // If it's an HTML tag, render as-is and track <a> open/close
+      if (/^<[^>]+>$/.test(segment)) {
+        if (/^<a\s/i.test(segment)) insideAnchor = true;
+        if (/^<\/a>/i.test(segment)) insideAnchor = false;
+        return <span key={segIndex} dangerouslySetInnerHTML={{ __html: segment }} />;
+      }
+      // Text inside <a> tags - render as-is without converting URLs
+      if (insideAnchor) {
+        return <Fragment key={segIndex}>{segment}</Fragment>;
+      }
+      
+      // Convert standalone URLs in text content
+      const urlRegex = /(https?:\/\/[^\s<]+)/g;
+      const parts = segment.split(urlRegex);
+      
+      return parts.map((part, partIndex) => {
+        if (/^https?:\/\//.test(part)) {
+          return (
+            <a
+              key={`${segIndex}-${partIndex}`}
+              href={part}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline break-all"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {part}
+            </a>
+          );
+        }
+        return <Fragment key={`${segIndex}-${partIndex}`}>{part}</Fragment>;
+      });
     });
   };
 
@@ -329,9 +373,10 @@ export function JobDetailDialog({
                   {job.note && (
                     <div className="space-y-2 min-w-0">
                       <h3 className="font-semibold text-lg">Ghi Chú</h3>
-                      <p className="text-sm whitespace-pre-wrap bg-muted/50 p-4 rounded-lg break-words overflow-wrap-break-word max-w-full">
-                        {renderTextWithLinks(job.note)}
-                      </p>
+                      <div
+                        className="rich-note-content text-sm bg-muted/50 p-4 rounded-lg break-words overflow-wrap-break-word max-w-full"
+                        dangerouslySetInnerHTML={{ __html: renderHtmlWithLinks(job.note) }}
+                      />
                     </div>
                   )}
 
@@ -437,34 +482,34 @@ export function JobDetailDialog({
           {/* Preview Modal - rendered via portal to escape dialog constraints */}
           {previewMedia && mounted && createPortal(
             <div
-              className="fixed inset-0 bg-black/90 flex items-center justify-center p-4"
+              className="fixed inset-0 bg-black/95 flex items-center justify-center p-2"
               style={{ zIndex: 99999 }}
               onClick={() => setPreviewMedia(null)}
             >
               <div
-                className="relative max-w-5xl max-h-[90vh] w-full"
+                className="relative w-[96vw] h-[96vh] flex items-center justify-center"
                 onClick={(e) => e.stopPropagation()}
               >
                 <button
                   type="button"
                   onClick={() => setPreviewMedia(null)}
-                  className="absolute -top-12 right-0 p-2 text-white hover:text-gray-300 transition-colors bg-black/50 rounded-full"
+                  className="absolute top-2 right-2 z-10 p-2 text-white hover:text-gray-300 transition-colors bg-black/60 rounded-full"
                 >
-                  <X className="h-6 w-6" />
+                  <X className="h-7 w-7" />
                 </button>
                 {previewMedia.isImage ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={previewMedia.dropboxLink}
                     alt={previewMedia.folderPath}
-                    className="max-w-full max-h-[85vh] mx-auto rounded-lg object-contain"
+                    className="max-w-[96vw] max-h-[96vh] mx-auto rounded-lg object-contain"
                   />
                 ) : (
                   <video
                     src={previewMedia.dropboxLink}
                     controls
                     autoPlay
-                    className="max-w-full max-h-[85vh] mx-auto rounded-lg"
+                    className="max-w-[96vw] max-h-[96vh] mx-auto rounded-lg"
                   />
                 )}
               </div>
@@ -646,12 +691,12 @@ export function JobDetailDialog({
                   <label className="text-sm text-muted-foreground block mb-2">
                     Người Được Giao
                   </label>
-                  <p className="font-medium">{job.assignee.fullName}</p>
+                  <p className="font-medium">{job.assignee && job.assignee.fullName}</p>
                   <p className="text-sm text-muted-foreground">
-                    {job.assignee.email}
+                    {job.assignee && job.assignee.email}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {job.assignee.phoneNumber}
+                    {job.assignee && job.assignee.phoneNumber}
                   </p>
                 </div>
               ) : null}
@@ -662,12 +707,12 @@ export function JobDetailDialog({
                   <label className="text-sm text-muted-foreground block mb-2">
                     QA
                   </label>
-                  <p className="font-medium">{job.qualifiedAssignee.fullName}</p>
+                  <p className="font-medium">{job.qualifiedAssignee && job.qualifiedAssignee.fullName}</p>
                   <p className="text-sm text-muted-foreground">
-                    {job.qualifiedAssignee.email}
+                    {job.qualifiedAssignee && job.qualifiedAssignee.email}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {job.qualifiedAssignee.phoneNumber}
+                    {job.qualifiedAssignee && job.qualifiedAssignee.phoneNumber}
                   </p>
                 </div>
               ) : null}

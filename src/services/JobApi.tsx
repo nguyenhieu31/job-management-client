@@ -128,7 +128,7 @@ export const updateGridViewJob = async (data: {
 
 
 // Helper to build FormData from JobRequest + files
-const buildJobFormData = (data: JobRequest, images?: File[], videos?: File[]): FormData => {
+const buildJobFormData = (data: JobRequest, images?: File[], videos?: File[], imageTempUrls?: string[], videoTempUrls?: string[]): FormData => {
     const formData = new FormData();
 
     // Append all job fields to FormData
@@ -177,12 +177,24 @@ const buildJobFormData = (data: JobRequest, images?: File[], videos?: File[]): F
         });
     }
 
+    // Append imageTempUrls as JSON string
+    if (imageTempUrls && imageTempUrls.length > 0) {
+        formData.append("imageTempUrls", JSON.stringify(imageTempUrls));
+    }
+
+    // Append videoTempUrls as JSON string
+    if (videoTempUrls && videoTempUrls.length > 0) {
+        formData.append("videoTempUrls", JSON.stringify(videoTempUrls));
+    }
+
+    console.log("Built FormData: ", formData);
+
     return formData;
 };
 
-export const createJob = async (data: JobRequest, images?: File[], videos?: File[]) => {
+export const createJob = async (data: JobRequest, images?: File[], videos?: File[], imageTempUrls?: string[], videoTempUrls?: string[]) => {
     try {
-        const formData = buildJobFormData(data, images, videos);
+        const formData = buildJobFormData(data, images, videos, imageTempUrls, videoTempUrls);
         const res = await axiosInstance.post(`/admin/jobs/create`, formData, {
             headers: {
                 "Content-Type": "multipart/form-data",
@@ -194,9 +206,9 @@ export const createJob = async (data: JobRequest, images?: File[], videos?: File
     }
 }
 
-export const updateJobFull = async (data: JobRequest, images?: File[], videos?: File[]) => {
+export const updateJobFull = async (data: JobRequest, images?: File[], videos?: File[], imageTempUrls?: string[], videoTempUrls?: string[]) => {
     try {
-        const formData = buildJobFormData(data, images, videos);
+        const formData = buildJobFormData(data, images, videos, imageTempUrls, videoTempUrls);
         const res = await axiosInstance.put(`/admin/jobs/update/${data.id}`, formData, {
             headers: {
                 "Content-Type": "multipart/form-data",

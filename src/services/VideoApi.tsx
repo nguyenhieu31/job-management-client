@@ -133,7 +133,7 @@ export const updateGridViewVideo = async (data: {
   payPerFileQa?: number | null;
   isDeleteAssignee?: boolean;
   fileStoragesNeedRemove?: FileStorage[];
-}, images?: File[], videos?: File[]) => {
+}, images?: File[], videos?: File[], imageTempUrls?: string[], videoTempUrls?: string[]) => {
   try {
     const formData = new FormData();
 
@@ -175,6 +175,16 @@ export const updateGridViewVideo = async (data: {
       videos.forEach((file) => {
         formData.append("videos", file);
       });
+    }
+
+    // Append imageTempUrls as JSON string
+    if (imageTempUrls && imageTempUrls.length > 0) {
+      formData.append("imageTempUrls", JSON.stringify(imageTempUrls));
+    }
+
+    // Append videoTempUrls as JSON string
+    if (videoTempUrls && videoTempUrls.length > 0) {
+      formData.append("videoTempUrls", JSON.stringify(videoTempUrls));
     }
 
     const res = await axiosInstance.post(

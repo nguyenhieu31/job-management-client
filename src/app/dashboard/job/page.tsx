@@ -71,9 +71,9 @@ export default function JobsPage() {
     }));
   };
 
-  const handleAddJob = useCallback(async (jobData: JobRequest, images?: File[], videos?: File[]) => {
+  const handleAddJob = useCallback(async (jobData: JobRequest, images?: File[], videos?: File[], imageTempUrls?: string[], videoTempUrls?: string[]) => {
     try {
-      await dispatch(CreateJobAction({ data: jobData, images, videos })).unwrap();
+      await dispatch(CreateJobAction({ data: jobData, images, videos, imageTempUrls, videoTempUrls })).unwrap();
       setFormOpen(false);
     } catch (error: any) {
       toast.error(error.message || "Lỗi khi tạo công việc");
@@ -81,9 +81,9 @@ export default function JobsPage() {
     }
   }, [dispatch]);
 
-  const handleUpdateJob = useCallback(async (jobData: JobRequest, images?: File[], videos?: File[]) => {
+  const handleUpdateJob = useCallback(async (jobData: JobRequest, images?: File[], videos?: File[], imageTempUrls?: string[], videoTempUrls?: string[]) => {
     try {
-      await dispatch(UpdateJobAction({ data: jobData, images, videos })).unwrap();
+      await dispatch(UpdateJobAction({ data: jobData, images, videos, imageTempUrls, videoTempUrls })).unwrap();
       setFormOpen(false);
       setEditingJob(null);
     } catch (error: any) {
@@ -316,11 +316,11 @@ export default function JobsPage() {
       <JobForm
         open={formOpen}
         onOpenChange={handleFormClose}
-        onSubmit={(jobData, images, videos) => {
+        onSubmit={(jobData, images, videos, imageTempUrls, videoTempUrls) => {
           if (editingJob) {
-            handleUpdateJob(jobData as JobRequest, images, videos);
+            handleUpdateJob(jobData as JobRequest, images, videos, imageTempUrls, videoTempUrls);
           } else {
-            handleAddJob(jobData as JobRequest, images, videos);
+            handleAddJob(jobData as JobRequest, images, videos, imageTempUrls, videoTempUrls);
           }
         }}
         editingJob={editingJob}
