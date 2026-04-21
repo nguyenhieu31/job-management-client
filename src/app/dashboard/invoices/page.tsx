@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/store";
 import {
   clearPreviewInvoice,
@@ -65,10 +65,10 @@ export default function InvoicesPage() {
     setCurrentPage(1);
   };
 
-  const handleSearch = (searchKeyword: string) => {
+  const handleSearch = useCallback((searchKeyword: string) => {
     setKeyword(searchKeyword);
     setCurrentPage(1);
-  };
+  }, []);
 
   useEffect(() => {
     dispatch(GetCustomerJobSummaryAction());
