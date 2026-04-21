@@ -104,7 +104,7 @@ export interface VideoActionPayload {
   qaOutputNumber?: number | null;
 }
 
-export type UserRole = "manager" | "qa" | "employee" | "special";
+export type UserRole = "manager" | "qa" | "employee" | "special" | "saler";
 
 // Filter interface
 export interface VideoFilters {
@@ -185,4 +185,21 @@ export const ROLE_COLUMNS = {
     "paymentEmployee",
     "actions",
   ],
+  saler: [
+    "code",
+    "date",
+    "customerName",
+    "caseName",
+    "linkInput",
+    "inputCount",
+    "outputCount",
+    "filePrice",
+    "totalPrice",
+    "jobStatus",
+    "linkDone",
+    "editedNumber",
+    "assignedEmployee",
+    "note",
+    "paymentStatus"
+  ]
 } as const;

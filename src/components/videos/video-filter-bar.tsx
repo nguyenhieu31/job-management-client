@@ -263,7 +263,7 @@ export function VideoFilterBar({
         </div>
 
         {/* Row 2: Multi-Select Filters & Search - Manager Only */}
-        {roleName === "MANAGER" && (
+        {(roleName === "MANAGER" || roleName === "SALER") && (
           <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
             {/* Customer Multi-Select */}
             <div className="space-y-2">
@@ -388,7 +388,7 @@ export function VideoFilterBar({
         )}
 
         {/* Row 2 Alternative: Search Only - Non-Manager */}
-        {roleName !== "MANAGER" && (
+        {(roleName !== "MANAGER" && roleName !== "SALER") && (
           <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-2" ref={searchBoxRef}>
               <Label htmlFor="search" className="text-sm font-medium">

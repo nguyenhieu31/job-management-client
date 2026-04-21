@@ -43,6 +43,13 @@ export function Sidebar() {
       )
     : roleName === 'MANAGER'
     ? navigation.filter(item => item.href !== '/dashboard/my-payroll')
+    : roleName === 'SALER'
+    ? navigation.filter(item => 
+        item.href === '/dashboard/job' || 
+        item.href === '/dashboard/video' ||
+        item.href === '/dashboard/customers' ||
+        item.href === '/dashboard/change-password'
+      )
     : navigation;
 
   const handleClickLogout = async () => {

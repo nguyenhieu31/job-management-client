@@ -71,6 +71,7 @@ export default function VideosPage() {
     if (role === "manager" || role === "admin") return "manager";
     if (role === "qa") return "qa";
     if (role === "special") return "special";
+    if (role === "saler") return "saler";
     return "employee";
   };
 
@@ -99,7 +100,7 @@ export default function VideosPage() {
         setFormOpen(true);
       }
     },
-    [dispatch]
+    [dispatch],
   );
 
   const handleUpdateJob = useCallback(
@@ -113,7 +114,7 @@ export default function VideosPage() {
         setFormOpen(true);
       }
     },
-    [dispatch]
+    [dispatch],
   );
 
   const handleVideoAction = async (videoId: number, action: VideoAction) => {
@@ -178,22 +179,25 @@ export default function VideosPage() {
   // Memoize filtered employee lists to avoid recreating on every render
   const employeeList = useMemo(
     () =>
-      employees?.data.filter((e) => e.role.name.toLowerCase() === "employee" || e.role.name.toLowerCase() === "special") ||
-      [],
-    [employees]
+      employees?.data.filter(
+        (e) =>
+          e.role.name.toLowerCase() === "employee" ||
+          e.role.name.toLowerCase() === "special",
+      ) || [],
+    [employees],
   );
 
   const qaList = useMemo(
     () =>
       employees?.data.filter((e) => e.role.name.toLowerCase() === "qa") || [],
-    [employees]
+    [employees],
   );
 
   const customerList = useMemo(() => customers?.data || [], [customers]);
 
   const workRequestList = useMemo(
     () => workRequests?.data || [],
-    [workRequests]
+    [workRequests],
   );
 
   // Fetch videos when pagination changes - this handles navigation back to page
@@ -201,13 +205,13 @@ export default function VideosPage() {
     if (roleName === undefined) return;
 
     const fetchVideos = () => {
-      if (roleName === "MANAGER") {
+      if (roleName === "MANAGER" || roleName === "SALER") {
         dispatch(
           GetAllVideosAction({
             pageNumber: pagination.currentPage - 1,
             pageSize: pagination.pageSize,
             fromDate: getFirstDayOfMonth(),
-          })
+          }),
         );
       } else if (roleName === "QA") {
         dispatch(
@@ -216,7 +220,7 @@ export default function VideosPage() {
             pageSize: pagination.pageSize,
             email: email || "",
             fromDate: getFirstDayOfMonth(),
-          })
+          }),
         );
       } else if (roleName === "EMPLOYEE" || roleName === "SPECIAL") {
         dispatch(
@@ -225,7 +229,7 @@ export default function VideosPage() {
             pageSize: pagination.pageSize,
             email: email || "",
             fromDate: getFirstDayOfMonth(),
-          })
+          }),
         );
       }
     };
@@ -245,7 +249,7 @@ export default function VideosPage() {
   // Load related data (employees, work requests, customers) only for Manager on mount
   useEffect(() => {
     if (roleName === undefined) return;
-    if (roleName === "MANAGER") {
+    if (roleName === "MANAGER" || roleName === "SALER") {
       Promise.all([
         dispatch(GetAllEmployeesAction({ pageNumber: 0, pageSize: 1000 })),
         dispatch(GetAllWorkRequestsAction({ pageNumber: 0, pageSize: 1000 })),
@@ -268,23 +272,23 @@ export default function VideosPage() {
         </div>
 
         <div>
+          {(userRole === "manager" || userRole === "saler") && (
+            <Button
+              onClick={() => setFormOpen(true)}
+              className="sm:w-auto mr-2 cursor-pointer"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Thêm Công Việc
+            </Button>
+          )}
           {userRole === "manager" && (
-            <>
-              <Button
-                onClick={() => setFormOpen(true)}
-                className="sm:w-auto mr-2 cursor-pointer"
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Thêm Công Việc
-              </Button>
-              <Button
-                onClick={handleClickGetVideo}
-                className="sm:w-auto bg-green-600 hover:bg-green-700 cursor-pointer"
-              >
-                <ArrowDown className="mr-2 h-4 w-4" />
-                Lấy Video Ngẫu Nhiên
-              </Button>
-            </>
+            <Button
+              onClick={handleClickGetVideo}
+              className="sm:w-auto bg-green-600 hover:bg-green-700 cursor-pointer"
+            >
+              <ArrowDown className="mr-2 h-4 w-4" />
+              Lấy Video Ngẫu Nhiên
+            </Button>
           )}
         </div>
       </div>

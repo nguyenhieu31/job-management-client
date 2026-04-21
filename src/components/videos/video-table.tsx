@@ -1388,23 +1388,26 @@ console.log("editValue: ", editValue)
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-12 text-center border-r">
-                <input
-                  type="checkbox"
-                  checked={
-                    selectedJobIds.size === videos.length && videos.length > 0
-                  }
-                  onChange={handleSelectAll}
-                  className="w-4 h-4 cursor-pointer"
-                  ref={(el) => {
-                    if (el) {
-                      el.indeterminate =
-                        selectedJobIds.size > 0 &&
-                        selectedJobIds.size < videos.length;
+              {userRole !== "saler" && (
+                <TableHead className="w-12 text-center border-r">
+                  <input
+                    type="checkbox"
+                    checked={
+                      selectedJobIds.size === videos.length && videos.length > 0
                     }
-                  }}
-                />
-              </TableHead>
+                    onChange={handleSelectAll}
+                    className="w-4 h-4 cursor-pointer"
+                    ref={(el) => {
+                      if (el) {
+                        el.indeterminate =
+                          selectedJobIds.size > 0 &&
+                          selectedJobIds.size < videos.length;
+                      }
+                    }}
+                  />
+                </TableHead>
+              )}
+              
               <TableHead className="w-12 text-center border-r font-bold">
                 STT
               </TableHead>
@@ -1431,14 +1434,16 @@ console.log("editValue: ", editValue)
                     : ""
                 }
               >
-                <TableCell className="w-12 text-center border-r">
-                  <input
-                    type="checkbox"
-                    checked={selectedJobIds.has(video.id)}
-                    onChange={() => handleToggleSelect(video.id)}
-                    className="w-4 h-4 cursor-pointer"
-                  />
-                </TableCell>
+                {userRole !== "saler" && (
+                  <TableCell className="w-12 text-center border-r">
+                    <input
+                      type="checkbox"
+                      checked={selectedJobIds.has(video.id)}
+                      onChange={() => handleToggleSelect(video.id)}
+                      className="w-4 h-4 cursor-pointer"
+                    />
+                  </TableCell>
+                )}
                 <TableCell className="w-12 text-center border-r font-medium">
                   {index + 1}
                 </TableCell>

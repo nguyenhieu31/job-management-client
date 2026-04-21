@@ -1145,23 +1145,26 @@ export function JobTable({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-12 text-center border-r">
-                <input
-                  type="checkbox"
-                  checked={
-                    selectedJobIds.size === jobs.length && jobs.length > 0
-                  }
-                  onChange={handleSelectAll}
-                  className="w-4 h-4 cursor-pointer"
-                  ref={(el) => {
-                    if (el) {
-                      el.indeterminate =
-                        selectedJobIds.size > 0 &&
-                        selectedJobIds.size < jobs.length;
+              {userRole !== "saler" && (
+                <TableHead className="w-12 text-center border-r">
+                  <input
+                    type="checkbox"
+                    checked={
+                      selectedJobIds.size === jobs.length && jobs.length > 0
                     }
-                  }}
-                />
-              </TableHead>
+                    onChange={handleSelectAll}
+                    className="w-4 h-4 cursor-pointer"
+                    ref={(el) => {
+                      if (el) {
+                        el.indeterminate =
+                          selectedJobIds.size > 0 &&
+                          selectedJobIds.size < jobs.length;
+                      }
+                    }}
+                  />
+                </TableHead>
+              )}
+              
               <TableHead className="w-12 text-center border-r font-bold">
                 STT
               </TableHead>
@@ -1188,14 +1191,16 @@ export function JobTable({
                     : ""
                 }
               >
-                <TableCell className="w-12 text-center border-r">
-                  <input
-                    type="checkbox"
-                    checked={selectedJobIds.has(job.id)}
-                    onChange={() => handleToggleSelect(job.id)}
-                    className="w-4 h-4 cursor-pointer"
-                  />
-                </TableCell>
+                {userRole !== "saler" && (
+                  <TableCell className="w-12 text-center border-r">
+                    <input
+                      type="checkbox"
+                      checked={selectedJobIds.has(job.id)}
+                      onChange={() => handleToggleSelect(job.id)}
+                      className="w-4 h-4 cursor-pointer"
+                    />
+                  </TableCell>
+                )}
                 <TableCell className="w-12 text-center border-r font-medium">
                   {index + 1}
                 </TableCell>
