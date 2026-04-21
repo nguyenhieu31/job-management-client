@@ -103,27 +103,35 @@ export const SearchVideoViewAction = createAsyncThunk(
 
 export const UpdateGridViewVideoAction = createAsyncThunk(
   "video/updateGridViewVideo",
-  async (data: {
-    jobId: number;
-    caseName?: string | null;
-    note?: string | null;
-    employeeNote?: string | null;
-    assigneeId: number | null;
-    customerId: number | null;
-    filePrice: number | null;
-    inputNumber: number | null;
-    outputNumber?: number | null;
-    qaOutputNumber?: number | null;
-    qualifiedAssigneeId?: number | null;
-    paymentStatus?: string | null;
-    paymentEmployee?: string | null;
-    inputLink?: string | null;
-    doneLink?: string | null;
-    payPerFile?: number | null;
-    payPerFileQa?: number | null;
-    isDeleteAssignee?: boolean;
+  async ({ data, images, videos, imageTempUrls, videoTempUrls }: {
+    data: {
+      jobId: number;
+      caseName?: string | null;
+      note?: string | null;
+      employeeNote?: string | null;
+      assigneeId: number | null;
+      customerId: number | null;
+      filePrice: number | null;
+      inputNumber: number | null;
+      outputNumber?: number | null;
+      editedNumber?: number | null;
+      qaOutputNumber?: number | null;
+      qualifiedAssigneeId?: number | null;
+      paymentStatus?: string | null;
+      paymentEmployee?: string | null;
+      inputLink?: string | null;
+      doneLink?: string | null;
+      payPerFile?: number | null;
+      payPerFileQa?: number | null;
+      isDeleteAssignee?: boolean;
+      fileStoragesNeedRemove?: import("@/types/jobs").FileStorage[];
+    };
+    images?: File[];
+    videos?: File[];
+    imageTempUrls?: string[];
+    videoTempUrls?: string[];
   }) => {
-    const res = await VideoApi.updateGridViewVideo(data);
+    const res = await VideoApi.updateGridViewVideo(data, images, videos, imageTempUrls, videoTempUrls);
     return res.data;
   }
 );
@@ -132,6 +140,9 @@ export const CreateVideoAction = createAsyncThunk(
   "video/createVideo",
   async (data: VideoRequest) => {
     const res = await VideoApi.createVideo(data);
+    if(res.code == 201){
+      toast.success("Tạo video thành công");
+    }
     return res.data;
   }
 );

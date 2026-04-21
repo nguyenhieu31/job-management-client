@@ -32,7 +32,12 @@ import { ROLE_COLUMNS } from "@/types/jobs";
 import { EditableSelect } from "./editable-select";
 import { EditableInput } from "./editable-input";
 import { ActionCell } from "./action-cell";
-import { formatCurrency, formatCurrencyVND, formatDate, getFirstDayOfMonth } from "@/lib/utils";
+import {
+  formatCurrency,
+  formatCurrencyVND,
+  formatDate,
+  getFirstDayOfMonth,
+} from "@/lib/utils";
 import { EmployeeResponse } from "@/types/employees";
 import { JobDetailDialog } from "./job-detail-dialog";
 import SearchableDropdown from "../ui/search-able-dropdown";
@@ -133,18 +138,36 @@ const columnLabels: Record<string, string> = {
   employeeNote: "Thuê ngoài",
   assignedEmployee: "Người Được Giao",
   qa: "QA",
+  deadline: "Deadline",
   actions: "Hành Động",
 };
 
 export const filePriceOptions = [
   { id: 1, name: 0.7 },
-  { id: 2, name: 0.76 },
-  { id: 3, name: 0.6 },
-  { id: 4, name: 0.5 },
-  { id: 5, name: 1 },
-  { id: 6, name: 13 },
-  { id: 7, name: 5 },
-  { id: 8, name: 4 },
+  { id: 2, name: 0.75 },
+  { id: 3, name: 0.76 },
+  { id: 4, name: 0.6 },
+  { id: 5, name: 0.5 },
+  { id: 6, name: 1 },
+  { id: 7, name: 13 },
+  { id: 8, name: 5 },
+  { id: 9, name: 4 },
+];
+
+export const filePriceEmployeeOptions = [
+  { id: 1, name: 8000 },
+  { id: 2, name: 10000 },
+  { id: 3, name: 6000 },
+  { id: 4, name: 50000 },
+  { id: 5, name: 100000 },
+  { id: 6, name: 120000 },
+];
+
+export const filePriceQaOptions = [
+  { id: 1, name: 2000 },
+  { id: 2, name: 3000 },
+  { id: 3, name: 4000 },
+  { id: 4, name: 5000 },
 ];
 
 export function JobTable({
@@ -166,6 +189,7 @@ export function JobTable({
   const [totalSelectedPrice, setTotalSelectedPrice] = useState<number>(0);
   const [totalSelectedPriceCustomer, setTotalSelectedPriceCustomer] =
     useState<number>(0);
+  const [totalOutputEmployees, setTotalOutputEmployees] = useState<number>(0);
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
   const [previewJob, setPreviewJob] = useState<JobResponse | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -229,7 +253,7 @@ export function JobTable({
         actionCellRefs.current[jobId].forceUpdate?.();
       }
     },
-    [customers]
+    [customers],
   );
 
   // Save pending changes
@@ -291,7 +315,7 @@ export function JobTable({
         }
       }
     },
-    [dispatch, jobs]
+    [dispatch, jobs],
   );
 
   // Cancel pending changes
@@ -314,7 +338,7 @@ export function JobTable({
       }
       return job[field];
     },
-    []
+    [],
   );
 
   const handleDeleteClick = (id: number) => {
@@ -352,6 +376,11 @@ export function JobTable({
       return sum + (job?.filePrice || 0) * (job?.outputNumber || 0);
     }, 0);
     setTotalSelectedPriceCustomer(totalCustomer);
+    const totalOutputEmp = Array.from(newSelected).reduce((sum, id) => {
+      const job = jobs.find((j) => j.id === id);
+      return sum + (job?.outputNumber || 0);
+    }, 0);
+    setTotalOutputEmployees(totalOutputEmp);
   };
 
   const handleSelectAll = () => {
@@ -359,6 +388,7 @@ export function JobTable({
       setSelectedJobIds(new Set());
       setTotalSelectedPrice(0);
       setTotalSelectedPriceCustomer(0);
+      setTotalOutputEmployees(0);
     } else {
       setSelectedJobIds(new Set(jobs.map((j) => j.id)));
       const total = jobs.reduce((sum, job) => {
@@ -380,6 +410,10 @@ export function JobTable({
         return sum + (job.filePrice || 0) * (job.outputNumber || 0);
       }, 0);
       setTotalSelectedPriceCustomer(totalCustomer);
+      const totalOutputEmp = jobs.reduce((sum, job) => {
+        return sum + (job.outputNumber || 0);
+      }, 0);
+      setTotalOutputEmployees(totalOutputEmp);
     }
   };
 
@@ -416,14 +450,14 @@ export function JobTable({
   const handleConfirmBulkDeleteMultiple = async () => {
     if (roleName === "MANAGER") {
       await dispatch(
-        DeleteMultipleJobsAction({ ids: Array.from(selectedJobIds) })
+        DeleteMultipleJobsAction({ ids: Array.from(selectedJobIds) }),
       );
       await dispatch(
         GetAllJobsAction({
           pageNumber: 0,
           pageSize: 10,
           fromDate: getFirstDayOfMonth(),
-        })
+        }),
       );
     }
     setBulkDeleteDialogOpen(false);
@@ -436,25 +470,25 @@ export function JobTable({
       await dispatch(
         UpdatePaymentEmployeeMultipleJobsAction({
           ids: Array.from(selectedJobIds),
-        })
+        }),
       );
       await dispatch(
         GetAllJobsByAssigneeAction({
           pageNumber: 0,
           pageSize: 10,
           email: email || "",
-        })
+        }),
       );
     } else if (roleName === "MANAGER") {
       await dispatch(
-        UpdatePaymentMultipleJobsAction({ ids: Array.from(selectedJobIds) })
+        UpdatePaymentMultipleJobsAction({ ids: Array.from(selectedJobIds) }),
       );
       await dispatch(
         GetAllJobsAction({
           pageNumber: 0,
           pageSize: 10,
           fromDate: getFirstDayOfMonth(),
-        })
+        }),
       );
     }
     setBulkMarkAsPaidDialogOpen(false);
@@ -473,7 +507,7 @@ export function JobTable({
             pageNumber: 0,
             pageSize: 10,
             fromDate: getFirstDayOfMonth(),
-          })
+          }),
         );
       }
       setDeleteDialogOpen(false);
@@ -497,7 +531,7 @@ export function JobTable({
   // Memoize customer options to avoid recreating array on every render
   const customerOptions = useMemo(
     () => customers.map((c) => ({ id: c.id, name: c.name })),
-    [customers]
+    [customers],
   );
 
   // Create memoized onChange handlers for each job to avoid inline function creation
@@ -505,35 +539,35 @@ export function JobTable({
     (jobId: number) => (value: number) => {
       handleFieldChange(jobId, "inputNumber", value);
     },
-    [handleFieldChange]
+    [handleFieldChange],
   );
 
   const createOutputNumberHandler = useCallback(
     (jobId: number) => (value: number) => {
       handleFieldChange(jobId, "outputNumber", value);
     },
-    [handleFieldChange]
+    [handleFieldChange],
   );
 
   const createQaOutputNumberHandler = useCallback(
     (jobId: number) => (value: number) => {
       handleFieldChange(jobId, "qaOutputNumber", value);
     },
-    [handleFieldChange]
+    [handleFieldChange],
   );
 
   const createCustomerChangeHandler = useCallback(
     (jobId: number) => (value: any) => {
       handleFieldChange(jobId, "customer", value);
     },
-    [handleFieldChange]
+    [handleFieldChange],
   );
 
   const createFilePriceChangeHandler = useCallback(
     (jobId: number) => (value: any) => {
       handleFieldChange(jobId, "filePrice", value);
     },
-    [handleFieldChange]
+    [handleFieldChange],
   );
 
   const createEmployeeChangeHandler = useCallback(
@@ -546,7 +580,7 @@ export function JobTable({
       const employee = employees?.find((e) => e.id === value.id);
       handleFieldChange(jobId, "assignee", employee);
     },
-    [handleFieldChange, employees]
+    [handleFieldChange, employees],
   );
 
   const createQaChangeHandler = useCallback(
@@ -559,7 +593,7 @@ export function JobTable({
       const qa = qaList?.find((q) => q.id === value.id);
       handleFieldChange(jobId, "qualifiedAssignee", qa);
     },
-    [handleFieldChange, qaList]
+    [handleFieldChange, qaList],
   );
 
   // Handle saving from edit dialog
@@ -606,20 +640,25 @@ export function JobTable({
       case "customerName":
         if (canEditField() && customers.length > 0 && userRole === "manager") {
           return (
-            <SearchableDropdown
-              options={customerOptions}
-              placeholder="Tìm kiếm khách hàng..."
-              onChange={createCustomerChangeHandler(job.id)}
-              defaultValue={job.customer}
-              className="w-55"
-              type="text"
-            />
+            <div className="max-w-[250px]">
+              <SearchableDropdown
+                options={customerOptions}
+                placeholder="Tìm kiếm khách hàng..."
+                onChange={createCustomerChangeHandler(job.id)}
+                defaultValue={job.customer}
+                className="w-full"
+                type="text"
+              />
+            </div>
           );
         }
         return (
-          <span>
-            {job.customer && job.customer.name ? job.customer.name : ""}
-          </span>
+          <div
+            className="max-w-[250px] text-ellipsis whitespace-nowrap"
+            title={job.customer?.name || ""}
+          >
+            {job.customer && job.customer.name ? job.customer.name : "N/A"}
+          </div>
         );
 
       case "caseName":
@@ -791,7 +830,7 @@ export function JobTable({
         if (canEditField()) {
           const currentPaymentStatus = getCurrentValue(
             job,
-            "paymentStatus"
+            "paymentStatus",
           ) as string;
           return (
             <EditableSelect
@@ -820,7 +859,7 @@ export function JobTable({
         if (canEditSpecialFields(job)) {
           const currentPaymentEmployee = getCurrentValue(
             job,
-            "paymentEmployee"
+            "paymentEmployee",
           ) as string;
           // Get color class based on current value
           const colorClass =
@@ -847,20 +886,27 @@ export function JobTable({
           >
             {
               paymentEmployeeOptions.find(
-                (o) => o.value === job.paymentEmployee
+                (o) => o.value === job.paymentEmployee,
               )?.label
             }
           </Badge>
         );
 
       case "note":
+        // Strip HTML tags for table preview, show full rich content in detail dialog
+        const noteText = job.note
+          ? job.note
+              .replace(/<[^>]*>/g, " ")
+              .replace(/\s+/g, " ")
+              .trim()
+          : "";
         return (
           <span
             className="max-w-[400px] truncate block cursor-pointer"
-            title={job.note}
+            title={noteText}
             onClick={() => handlePreviewClick(job)}
           >
-            {job.note || ""}
+            {noteText || ""}
           </span>
         );
 
@@ -878,7 +924,7 @@ export function JobTable({
       case "employeeNote":
         const currentEmployeeNote = getCurrentValue(
           job,
-          "employeeNote"
+          "employeeNote",
         ) as string;
         if (canEditSpecialFields(job)) {
           return (
@@ -924,11 +970,11 @@ export function JobTable({
                       name: currentAssignee.fullName,
                     }
                   : job.assignee
-                  ? {
-                      id: job.assignee.id,
-                      name: job.assignee.fullName,
-                    }
-                  : null
+                    ? {
+                        id: job.assignee.id,
+                        name: job.assignee.fullName,
+                      }
+                    : null
               }
               className="w-[150px]"
               type="text"
@@ -962,11 +1008,11 @@ export function JobTable({
                       name: currentQA.fullName,
                     }
                   : job.qualifiedAssignee
-                  ? {
-                      id: job.qualifiedAssignee.id,
-                      name: job.qualifiedAssignee.fullName,
-                    }
-                  : null
+                    ? {
+                        id: job.qualifiedAssignee.id,
+                        name: job.qualifiedAssignee.fullName,
+                      }
+                    : null
               }
               className="w-[150px]"
               type="text"
@@ -977,6 +1023,40 @@ export function JobTable({
           <span>
             {qaList?.find((q) => q.id === job.qualifiedAssignee?.id)
               ?.fullName || job.qualifiedAssignee?.fullName}
+          </span>
+        );
+
+      case "deadline":
+        if (!job.deadline) {
+          return <span className="text-muted-foreground"></span>;
+        }
+        // deadline is stored as time string like "09:08" or full datetime
+        const deadlineTime = job.deadline.includes(":")
+          ? job.deadline.substring(
+              job.deadline.indexOf(" ") + 1,
+              job.deadline.indexOf(" ") + 6,
+            ) || job.deadline.substring(0, 5)
+          : job.deadline;
+
+        // Format time display (HH:mm)
+        const formattedTime =
+          deadlineTime.length >= 5
+            ? deadlineTime.substring(0, 5)
+            : deadlineTime;
+
+        // Determine color based on job status
+        const deadlineColorClass =
+          job.jobStatus === "PENDING" || job.jobStatus === "IN_PROGRESS"
+            ? "text-red-600 dark:text-red-400"
+            : job.jobStatus === "DONE" ||
+                job.jobStatus === "IN_REVIEW" ||
+                job.jobStatus === "REVIEWED"
+              ? "text-green-600 dark:text-green-400"
+              : "text-foreground";
+
+        return (
+          <span className={`text-sm font-medium ${deadlineColorClass}`}>
+            {formattedTime}
           </span>
         );
 
@@ -1031,6 +1111,10 @@ export function JobTable({
 
           <span className="text-sm font-medium">
             Tổng tiền: {formatCurrencyVND(totalSelectedPrice)}
+          </span>
+
+          <span className="text-sm font-medium">
+            Tổng output nhân viên: {totalOutputEmployees}
           </span>
           {userRole === "manager" && (
             <Button
@@ -1118,7 +1202,7 @@ export function JobTable({
                 {visibleColumns.map((column) => (
                   <TableCell
                     key={`${job.id}-${column}`}
-                    className="border-r last:border-r-0"
+                    className={`border-r last:border-r-0 ${column === "customerName" ? "relative" : ""}`}
                   >
                     {renderCell(job, column)}
                   </TableCell>

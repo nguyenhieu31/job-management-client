@@ -95,7 +95,10 @@ export function PayrollDayTable({
 }: JobTableProps) {
   const [selectedJobIds, setSelectedJobIds] = useState<Set<number>>(new Set());
   const [totalSelectedPrice, setTotalSelectedPrice] = useState<number>(0);
+  const [totalSelectedPriceQa, setTotalSelectedPriceQa] = useState<number>(0);
   const [totalSelectedPriceCustomer, setTotalSelectedPriceCustomer] = useState<number>(0);
+  const [totalOutputEmployees, setTotalOutputEmployees] = useState<number>(0);
+  const [totalOutputQas, setTotalOutputQas] = useState<number>(0);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [updateTrigger, setUpdateTrigger] = useState(0);
 
@@ -174,28 +177,58 @@ export function PayrollDayTable({
       return sum + (job?.payPerFile || 0) * (job?.outputNumber || 0);
     }, 0);
     setTotalSelectedPrice(total);
+    const totalQa = Array.from(newSelected).reduce((sum, id) => {
+      const job = jobs.find((j) => j.id === id);
+      return sum + (job?.payPerFileQa || 0) * (job?.qaOutputNumber || 0);
+    }, 0);
+    setTotalSelectedPriceQa(totalQa);
     const totalCustomer = Array.from(newSelected).reduce((sum, id) => {
       const job = jobs.find((j) => j.id === id);
       return sum + (job?.filePrice || 0) * (job?.outputNumber || 0);
     }, 0);
     setTotalSelectedPriceCustomer(totalCustomer);
+    const totalOutput = Array.from(newSelected).reduce((sum, id) => {
+      const job = jobs.find((j) => j.id === id);
+      return sum + (job?.outputNumber || 0);
+    }, 0);
+    setTotalOutputEmployees(totalOutput);
+    const totalOutputQas = Array.from(newSelected).reduce((sum, id) => {
+      const job = jobs.find((j) => j.id === id);
+      return sum + (job?.qaOutputNumber || 0);
+    }, 0);
+    setTotalOutputQas(totalOutputQas);
   };
 
   const handleSelectAll = () => {
     if (selectedJobIds.size === jobs.length) {
       setSelectedJobIds(new Set());
       setTotalSelectedPrice(0);
+      setTotalSelectedPriceQa(0);
       setTotalSelectedPriceCustomer(0);
+      setTotalOutputEmployees(0);
+      setTotalOutputQas(0);
     } else {
       setSelectedJobIds(new Set(jobs.map((j) => j.id)));
       const total = jobs.reduce((sum, job) => {
         return sum + (job.payPerFile || 0) * (job.outputNumber || 0);
       }, 0);
       setTotalSelectedPrice(total);
+      const totalQa = jobs.reduce((sum, job) => {
+        return sum + (job.payPerFileQa || 0) * (job.qaOutputNumber || 0);
+      }, 0);
+      setTotalSelectedPriceQa(totalQa);
       const totalCustomer = jobs.reduce((sum, job) => {
         return sum + (job.filePrice || 0) * (job.outputNumber || 0);
       }, 0);
       setTotalSelectedPriceCustomer(totalCustomer);
+      const totalOutput = jobs.reduce((sum, job) => {
+        return sum + (job.outputNumber || 0);
+      }, 0);
+      setTotalOutputEmployees(totalOutput);
+      const totalOutputQas = jobs.reduce((sum, job) => {
+        return sum + (job.qaOutputNumber || 0);
+      }, 0);
+      setTotalOutputQas(totalOutputQas);
     }
   };
 
@@ -259,7 +292,7 @@ export function PayrollDayTable({
 
       case "totalPrice":
         return (
-          <span className="font-medium">{formatCurrency(job.totalPrice)}</span>
+          <span className="font-medium">{formatCurrency(job.filePrice * job.outputNumber)}</span>
         );
 
       case "linkInput":
@@ -449,6 +482,15 @@ export function PayrollDayTable({
           </span>
           <span className="text-sm font-medium">
             Tổng tiền nhân viên: {formatCurrencyVND(totalSelectedPrice)}
+          </span>
+          <span className="text-sm font-medium">
+            Tổng output nhân viên: {totalOutputEmployees}
+          </span>
+          <span className="text-sm font-medium">
+            Tổng output QA: {totalOutputQas}
+          </span>
+          <span className="text-sm font-medium">
+            Tổng tiền QA: {formatCurrencyVND(totalSelectedPriceQa)}
           </span>
         </div>
       )}

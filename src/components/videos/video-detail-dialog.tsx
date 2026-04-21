@@ -1,6 +1,7 @@
 "use client";
 
-import { Fragment } from "react";
+import { Fragment, useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   Dialog,
   DialogContent,
@@ -12,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { VideoResponse } from "@/types/videos";
 import type { UserRole } from "@/types/videos";
+import type { FileStorage } from "@/types/jobs";
 import { formatCurrency, formatCurrencyVND, formatDate } from "@/lib/utils";
 import { useAppSelector } from "@/store/store";
 import {
@@ -23,11 +25,15 @@ import {
   FileText,
   Link as LinkIcon,
   CheckCircle,
+  Eye,
+  X,
+  ImageIcon,
+  Film,
 } from "lucide-react";
 
 // Helper function to render text with clickable links
 const renderTextWithLinks = (text: string) => {
-  if (!text) return null;
+  if (!text) return "";
   
   // Regex to match URLs
   const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -53,6 +59,31 @@ const renderTextWithLinks = (text: string) => {
     return <Fragment key={index}>{part}</Fragment>;
   });
 };
+
+const renderHtmlWithLinks = (html: string): string => {
+    if (!html) return "";
+    
+    // Split by ALL HTML tags to avoid corrupting URLs inside tag attributes (src, href, etc.)
+    const htmlTagRegex = /(<[^>]+>)/g;
+    const segments = html.split(htmlTagRegex);
+    
+    let insideAnchor = false;
+    
+    return segments.map(segment => {
+      // If it's an HTML tag, keep as-is and track <a> open/close
+      if (/^<[^>]+>$/.test(segment)) {
+        if (/^<a\s/i.test(segment)) insideAnchor = true;
+        if (/^<\/a>/i.test(segment)) insideAnchor = false;
+        return segment;
+      }
+      // Only convert URLs in text content outside of <a> tags
+      if (insideAnchor) return segment;
+      return segment.replace(
+        /(https?:\/\/[^\s<]+)/g,
+        '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline break-all">$1</a>'
+      );
+    }).join('');
+  };
 
 interface VideoDetailDialogProps {
   open: boolean;
@@ -106,6 +137,12 @@ export function VideoDetailDialog({
   video,
 }: VideoDetailDialogProps) {
   const { roleName } = useAppSelector((state) => state.authenticate);
+  const [previewMedia, setPreviewMedia] = useState<FileStorage | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   
   // Map role to UserRole type
   const getUserRole = (): UserRole => {
@@ -120,10 +157,16 @@ export function VideoDetailDialog({
   if (!video) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(value) => {
+      if (!value && previewMedia) {
+        setPreviewMedia(null);
+        return;
+      }
+      onOpenChange(value);
+    }}>
       <DialogContent
         className="max-w-4xl max-h-[90vh] overflow-y-auto"
-        style={{ maxWidth: "50%" }}
+        style={{ maxWidth: "60%" }}
       >
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">
@@ -273,7 +316,7 @@ export function VideoDetailDialog({
                         Hướng Dẫn Chi Tiết
                       </label>
                       <p className="text-sm whitespace-pre-wrap">
-                        {video.workRequest.detailedNotes}
+                        {renderTextWithLinks(video.workRequest.detailedNotes)}
                       </p>
                     </div>
 
@@ -305,20 +348,148 @@ export function VideoDetailDialog({
                   </div>
                 </div>
 
-                {/* Right Column - Notes */}
+                {/* Right Column - Notes & Media */}
                 <div className="space-y-4 min-w-0">
                   {video.note && (
                     <div className="space-y-2 min-w-0">
                       <h3 className="font-semibold text-lg">Ghi Chú</h3>
-                      <div className="text-sm whitespace-pre-wrap bg-muted/50 p-4 rounded-lg break-words overflow-wrap-break-word max-w-full">
+                      {/* <div className="text-sm whitespace-pre-wrap bg-muted/50 p-4 rounded-lg break-words overflow-wrap-break-word max-w-full">
                         {renderTextWithLinks(video.note)}
+                      </div> */}
+
+                      <div
+                        className="rich-note-content text-sm bg-muted/50 p-4 rounded-lg break-words overflow-wrap-break-word max-w-full"
+                        dangerouslySetInnerHTML={{ __html: renderHtmlWithLinks(video.note) }}
+                      />
+                    </div>
+                  )}
+
+                  {/* Media Gallery - Images & Videos from fileStorages */}
+                  {video.fileStorages && video.fileStorages.length > 0 && (
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg flex items-center gap-2">
+                        <ImageIcon className="h-5 w-5" />
+                        Ảnh & Video đính kèm
+                      </h3>
+
+                      {/* Summary */}
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        {video.fileStorages.filter(f => f.isImage).length > 0 && (
+                          <span className="flex items-center gap-1">
+                            <ImageIcon className="h-4 w-4" />
+                            {video.fileStorages.filter(f => f.isImage).length} ảnh
+                          </span>
+                        )}
+                        {video.fileStorages.filter(f => !f.isImage).length > 0 && (
+                          <span className="flex items-center gap-1">
+                            <Film className="h-4 w-4" />
+                            {video.fileStorages.filter(f => !f.isImage).length} video
+                          </span>
+                        )}
                       </div>
+
+                      {/* Images Grid */}
+                      {video.fileStorages.filter(f => f.isImage).length > 0 && (
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-muted-foreground">Ảnh</label>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                            {video.fileStorages.filter(f => f.isImage).map((file) => (
+                              <div
+                                key={file.id}
+                                className="relative group rounded-lg overflow-hidden border bg-muted aspect-square cursor-pointer"
+                                onClick={() => setPreviewMedia(file)}
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={file.dropboxLink}
+                                  alt={file.folderPath}
+                                  className="w-full h-full object-cover"
+                                  loading="lazy"
+                                />
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                  <Eye className="h-6 w-6 text-white" />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Videos Grid */}
+                      {video.fileStorages.filter(f => !f.isImage).length > 0 && (
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-muted-foreground">Video</label>
+                          <div className="grid grid-cols-2 gap-3">
+                            {video.fileStorages.filter(f => !f.isImage).map((file) => (
+                              <div
+                                key={file.id}
+                                className="relative group rounded-lg overflow-hidden border bg-black aspect-video cursor-pointer"
+                                onClick={() => setPreviewMedia(file)}
+                              >
+                                <video
+                                  src={file.dropboxLink}
+                                  className="w-full h-full object-cover"
+                                  muted
+                                  preload="metadata"
+                                />
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                  <Eye className="h-6 w-6 text-white" />
+                                </div>
+                                <div className="absolute top-1 left-1">
+                                  <span className="bg-blue-500/80 text-white text-[10px] px-1.5 py-0.5 rounded">
+                                    VIDEO
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
               </div>
+
               <Separator />
             </>
+          )}
+
+          {/* Preview Modal - rendered via portal to escape dialog constraints */}
+          {previewMedia && mounted && createPortal(
+            <div
+              className="fixed inset-0 bg-black/95 flex items-center justify-center p-2"
+              style={{ zIndex: 99999 }}
+              onClick={() => setPreviewMedia(null)}
+            >
+              <div
+                className="relative w-[96vw] h-[96vh] flex items-center justify-center"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  type="button"
+                  onClick={() => setPreviewMedia(null)}
+                  className="absolute top-2 right-2 z-10 p-2 text-white hover:text-gray-300 transition-colors bg-black/60 rounded-full"
+                >
+                  <X className="h-7 w-7" />
+                </button>
+                {previewMedia.isImage ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={previewMedia.dropboxLink}
+                    alt={previewMedia.folderPath}
+                    className="max-w-[96vw] max-h-[96vh] mx-auto rounded-lg object-contain"
+                  />
+                ) : (
+                  <video
+                    src={previewMedia.dropboxLink}
+                    controls
+                    autoPlay
+                    className="max-w-[96vw] max-h-[96vh] mx-auto rounded-lg"
+                  />
+                )}
+              </div>
+            </div>,
+            document.body
           )}
 
           {/* File & Price Information - Hidden for Employee & QA */}
@@ -464,12 +635,12 @@ export function VideoDetailDialog({
                   <label className="text-sm text-muted-foreground block mb-2">
                     Người Được Giao
                   </label>
-                  <p className="font-medium">{video.assignee.fullName}</p>
+                  <p className="font-medium">{video.assignee && video.assignee.fullName}</p>
                   <p className="text-sm text-muted-foreground">
-                    {video.assignee.email}
+                    {video.assignee && video.assignee.email}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {video.assignee.phoneNumber}
+                    {video.assignee && video.assignee.phoneNumber}
                   </p>
                 </div>
               ) : null}

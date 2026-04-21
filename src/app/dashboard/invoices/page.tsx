@@ -103,6 +103,11 @@ export default function InvoicesPage() {
       // log the customer and selected jobs for debugging
       console.log("Creating invoice for customer:", customer);
       console.log("Selected jobs:", selectedJobs);
+      const existJobsNotHasTotalAmount = selectedJobs.find(job => job.filePrice === null || job.outputNumber === null || job.outputNumber === 0 || job.filePrice === 0);
+      if (existJobsNotHasTotalAmount) {
+        toast.error(`Công việc "${existJobsNotHasTotalAmount.caseName}" chưa có tổng tiền. Vui lòng cập nhật trước khi tạo hoá đơn.`);
+        return;
+      }
       const payload = {
         customerInfo: customer,
         jobs: selectedJobs,

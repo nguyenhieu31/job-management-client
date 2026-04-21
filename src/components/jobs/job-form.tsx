@@ -2,10 +2,18 @@
 
 import type React from "react";
 
-import { useEffect, useRef, useReducer, memo } from "react";
+import {
+  useEffect,
+  useRef,
+  useReducer,
+  memo,
+  useState,
+  useCallback,
+} from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+
 import {
   Select,
   SelectContent,
@@ -21,20 +29,26 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { X } from "lucide-react";
 import type {
   JobRequest,
   JobResponse,
   JobStatus,
   PaymentStatus,
   EmployeePaymentStatus,
+  FileStorage,
 } from "@/types/jobs";
 import type { WorkRequestResponse } from "@/types/work-requests";
 import { EmployeeResponse } from "@/types/employees";
 import { CustomerResponse } from "@/types/customers";
 import { formatCurrency, formatCurrencyVND } from "@/lib/utils";
 import SearchableDropdown from "../ui/search-able-dropdown";
-import { filePriceOptions } from "./job-table";
+import {
+  filePriceOptions,
+  filePriceEmployeeOptions,
+  filePriceQaOptions,
+} from "./job-table";
 
 interface JobFormProps {
   open: boolean;
@@ -45,7 +59,11 @@ interface JobFormProps {
           JobRequest,
           "id" | "code" | "date" | "totalPrice" | "outputCount" | "linkDone"
         >
-      | JobRequest
+      | JobRequest,
+    images?: File[],
+    videos?: File[],
+    imageTempUrls?: string[],
+    videoTempUrls?: string[],
   ) => void;
   editingJob?: JobResponse | null;
   customers?: CustomerResponse[];
@@ -66,6 +84,13 @@ export function JobForm({
 }: JobFormProps) {
   // Use useReducer for re-render trigger
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
+
+  // State for existing fileStorages from server
+  const [existingFiles, setExistingFiles] = useState<FileStorage[]>([]);
+  // State for files that need to be removed
+  const [removedFileStorages, setRemovedFileStorages] = useState<FileStorage[]>(
+    [],
+  );
 
   // Use refs instead of useState to avoid unnecessary re-renders
   const formRef = useRef({
@@ -89,21 +114,21 @@ export function JobForm({
     workRequestId: undefined as string | undefined,
     payPerFile: "",
     payPerFileQa: "",
+    deadline: "",
+    images: [] as Array<{ file: File; tempUrl: string }>,
+    videos: [] as Array<{ file: File; tempUrl: string }>,
   });
 
   const isEditingRef = useRef(false);
 
-  // Helper function to format number with thousand separators
-  const formatVNDInput = (value: string): string => {
-    // Remove all non-digit characters
-    const numericValue = value.replace(/\D/g, "");
-    // Add thousand separators
+  // Helper function to format number with VND thousand separators (dots)
+  const formatVND = (value: string | number): string => {
+    const numericValue = value.toString().replace(/\D/g, "");
     return numericValue.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   };
 
-  // Helper function to parse formatted VND string to number
-  const parseVNDInput = (value: string): number => {
-    // Remove all dots (thousand separators)
+  // Helper function to parse VND formatted string to number
+  const parseVND = (value: string): number => {
     const numericValue = value.replace(/\./g, "");
     return parseInt(numericValue) || 0;
   };
@@ -137,15 +162,47 @@ export function JobForm({
           ? editingJob.workRequest.id.toString()
           : undefined,
         fileCount: String(editingJob.fileCount),
-        // Format pay per file with thousand separators
+        // Store pay per file with VND formatting (dots as thousand separators)
         payPerFile: editingJob.payPerFile
-          ? formatVNDInput(String(editingJob.payPerFile))
+          ? formatVND(String(editingJob.payPerFile))
           : "",
         payPerFileQa: editingJob.payPerFileQa
-          ? formatVNDInput(String(editingJob.payPerFileQa))
+          ? formatVND(String(editingJob.payPerFileQa))
           : "",
+        deadline: editingJob.deadline
+          ? (() => {
+              // Check if deadline is already in HH:mm format
+              const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+              if (timeRegex.test(editingJob.deadline)) {
+                return editingJob.deadline;
+              }
+              // Try to parse as Date
+              const date = new Date(editingJob.deadline);
+              if (!isNaN(date.getTime())) {
+                return date.toTimeString().slice(0, 5);
+              }
+              // If contains time part in string (e.g., "2025-11-07 22:08:32")
+              const timeMatch = editingJob.deadline.match(/(\d{2}):(\d{2})/);
+              if (timeMatch) {
+                return `${timeMatch[1]}:${timeMatch[2]}`;
+              }
+              return "";
+            })()
+          : "",
+        images: [],
+        videos: [],
       };
       isEditingRef.current = true;
+
+      // Load existing fileStorages
+      if (editingJob.fileStorages && editingJob.fileStorages.length > 0) {
+        setExistingFiles(editingJob.fileStorages);
+      } else {
+        setExistingFiles([]);
+      }
+      formRef.current.images = [];
+      formRef.current.videos = [];
+      setRemovedFileStorages([]);
     } else {
       formRef.current = {
         caseName: "",
@@ -168,12 +225,71 @@ export function JobForm({
         workRequestId: undefined,
         payPerFile: "",
         payPerFileQa: "",
+        deadline: "",
+        images: [],
+        videos: [],
       };
       isEditingRef.current = false;
+      setExistingFiles([]);
+      setRemovedFileStorages([]);
     }
     // Trigger re-render to update UI
     forceUpdate();
   }, [editingJob, open]);
+
+  // Helper function to extract all media URLs from HTML content
+  const extractMediaUrlsFromHtml = useCallback((html: string): string[] => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+    const urls: string[] = [];
+
+    // Extract from img tags
+    const images = doc.querySelectorAll("img");
+    images.forEach((img) => {
+      const src = img.getAttribute("src");
+      if (src && !src.startsWith("blob:") && !src.startsWith("data:")) {
+        urls.push(src);
+      }
+    });
+
+    // Extract from video tags
+    const videos = doc.querySelectorAll("video");
+    videos.forEach((video) => {
+      const src = video.getAttribute("src");
+      if (src && !src.startsWith("blob:") && !src.startsWith("data:")) {
+        urls.push(src);
+      }
+    });
+
+    // Extract from source tags inside video
+    const sources = doc.querySelectorAll("video source");
+    sources.forEach((source) => {
+      const src = source.getAttribute("src");
+      if (src && !src.startsWith("blob:") && !src.startsWith("data:")) {
+        urls.push(src);
+      }
+    });
+
+    return urls;
+  }, []);
+
+  // Handler to capture media files from RichTextEditor into formRef
+  // Lưu cả file và tempUrl để sau này có thể map với cloud URL
+  const handleMediaUpload = useCallback(
+    async (file: File, type: "image" | "video"): Promise<string> => {
+      const tempUrl = URL.createObjectURL(file);
+
+      if (type === "image") {
+        formRef.current.images = [...formRef.current.images, { file, tempUrl }];
+      } else {
+        formRef.current.videos = [...formRef.current.videos, { file, tempUrl }];
+      }
+
+      // Return temporary object URL for preview in the editor
+      return tempUrl;
+    },
+    [],
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -199,73 +315,136 @@ export function JobForm({
       employeeNote,
       qualifiedAssignee,
       workRequestId,
+      deadline,
     } = formRef.current;
 
     const inputCount = parseInt(inputNumber) || 0;
     const price = parseFloat(filePrice) || 0;
-    // Parse VND formatted strings back to numbers
-    const payPerFileNum = parseVNDInput(payPerFile);
-    const payPerFileQaNum = parseVNDInput(payPerFileQa);
+    // Parse VND formatted strings back to numbers (remove dots)
+    const payPerFileNum = parseVND(payPerFile);
+    const payPerFileQaNum = parseVND(payPerFileQa);
     const fileCountNum = parseInt(fileCount) || 0;
     const outputNum = parseInt(outputNumber) || 0;
     const qaOutputNum = parseInt(qaOutputNumber) || 0;
-    const customerId_ = customerId || null;
-    const assigneeId_ = assignedEmployee || null;
-    const qaId_ = qualifiedAssignee || null;
-    const workReqId_ = workRequestId || null;
+    const customerId_ = customerId ? parseInt(customerId) : null;
+    const assigneeId_ = assignedEmployee ? parseInt(assignedEmployee) : null;
+    const qaId_ = qualifiedAssignee ? parseInt(qualifiedAssignee) : null;
+    const workReqId_ = workRequestId ? parseInt(workRequestId) : null;
+
+    // Filter out media files that were removed from the editor
+    // Only keep files whose tempUrl is still present in the note HTML
+    const activeImages = formRef.current.images.filter((img) =>
+      note.includes(img.tempUrl)
+    );
+    const activeVideos = formRef.current.videos.filter((vid) =>
+      note.includes(vid.tempUrl)
+    );
+
+    const imageFiles = activeImages.map((img) => img.file);
+    const videoFiles = activeVideos.map((vid) => vid.file);
+    const imageTempUrls = activeImages.map((img) => img.tempUrl);
+    const videoTempUrls = activeVideos.map((vid) => vid.tempUrl);
+    console.log("Submitting job with images: ", imageFiles, imageTempUrls);
+    console.log("Submitting job with videos: ", videoFiles, videoTempUrls);
+
+    // Detect removed files: So sánh URLs trong HTML với existingFiles
+    // Nếu một file trong existingFiles có URL không còn xuất hiện trong HTML, 
+    // nghĩa là user đã xóa nó khỏi editor
+    let filesToRemove: FileStorage[] = [];
+    if (isEditingRef.current && existingFiles.length > 0) {
+      // Extract all media URLs from current note HTML
+      const currentUrls = extractMediaUrlsFromHtml(note);
+      console.log("Current URLs in HTML:", currentUrls);
+      console.log("Existing files:", existingFiles);
+
+      // Find files that are no longer in the HTML
+      filesToRemove = existingFiles.filter((file) => {
+        // Check if this file's URL is still in the HTML
+        const fileUrl = file.dropboxLink;
+        const isStillInHtml = currentUrls.some((url) => url.includes(fileUrl) || fileUrl.includes(url));
+        return !isStillInHtml;
+      });
+
+      console.log("Files to remove:", filesToRemove);
+
+      // Merge with manually removed files
+      filesToRemove = [...filesToRemove, ...removedFileStorages];
+    }
+
+    // Server sẽ nhận:
+    // - note HTML (chứa tempUrls)
+    // - imageFiles[] và videoFiles[] (để upload lên cloud)
+    // - imageTempUrls[] và videoTempUrls[] (để biết URL nào cần replace)
+    // - fileStoragesNeedRemove[] (để xóa các file không còn trong HTML)
+    // Server sẽ tự động replace tempUrls bằng cloud URLs sau khi upload
 
     if (isEditingRef.current && editingJob) {
       // Check if user cleared assignee or QA fields
-      const isDeleteAssignee = editingJob.assignee?.id && !assignedEmployee;
+      const isDeleteAssignee = Boolean(editingJob.assignee?.id) && !assignedEmployee;
       const isDeleteQualifiedAssignee =
-        editingJob.qualifiedAssignee?.id && !qualifiedAssignee;
+        Boolean(editingJob.qualifiedAssignee?.id) && !qualifiedAssignee;
 
       // Update: send all fields including id and hidden fields
-      onSubmit({
-        id: editingJob.id,
-        code: editingJob.code,
-        caseName,
-        inputNumber: inputCount,
-        outputNumber: outputNum,
-        qaOutputNumber: qaOutputNum,
-        filePrice: price,
-        payPerFile: payPerFileNum,
-        payPerFileQa: payPerFileQaNum,
-        fileCount: fileCountNum,
-        paymentStatus,
-        paymentEmployee,
-        paymentEmployeeQa,
-        jobStatus,
-        inputLink: inputLink,
-        doneLink: doneLink,
-        note: note,
-        employeeNote: employeeNote || null,
-        assigneeId: assigneeId_,
-        qualifiedAssigneeId: qaId_,
-        customerId: customerId_,
-        workRequestId: workReqId_,
-        isDeleteAssignee: isDeleteAssignee,
-        isDeleteQualifiedAssignee: isDeleteQualifiedAssignee,
-      } as JobRequest);
+      onSubmit(
+        {
+          id: editingJob.id,
+          code: editingJob.code,
+          caseName,
+          fileCount: fileCountNum,
+          filePrice: price,
+          payPerFile: payPerFileNum,
+          payPerFileQa: payPerFileQaNum,
+          inputNumber: inputCount,
+          outputNumber: outputNum !== 0 ? outputNum : null,
+          qaOutputNumber: qaOutputNum !== 0 ? qaOutputNum : null,
+          paymentStatus,
+          paymentEmployee,
+          paymentEmployeeQa,
+          jobStatus,
+          inputLink,
+          doneLink,
+          note,
+          employeeNote,
+          assigneeId: assigneeId_,
+          qualifiedAssigneeId: qaId_,
+          customerId: customerId_,
+          workRequestId: workReqId_,
+          deadline: deadline || null,
+          isDeleteAssignee,
+          isDeleteQualifiedAssignee,
+          fileStoragesNeedRemove: filesToRemove.length > 0 ? filesToRemove : undefined,
+        },
+        imageFiles,
+        videoFiles,
+        imageTempUrls,
+        videoTempUrls
+      );
     } else {
       // Create: send only required fields, skip id, code, outputNumber, doneLink
-      onSubmit({
-        caseName,
-        inputNumber: inputCount,
-        filePrice: price,
-        payPerFile: payPerFileNum,
-        fileCount: fileCountNum,
-        paymentStatus,
-        paymentEmployee,
-        jobStatus,
-        inputLink: inputLink,
-        note: note || null,
-        employeeNote: employeeNote || null,
-        assigneeId: assigneeId_,
-        qualifiedAssigneeId: qaId_,
-        customerId: customerId_,
-        workRequestId: workReqId_,
-      } as Omit<JobRequest, "id" | "code" | "outputNumber" | "doneLink">);
+      onSubmit(
+        {
+          caseName,
+          inputNumber: inputCount,
+          filePrice: price,
+          payPerFile: payPerFileNum,
+          fileCount: fileCountNum,
+          paymentStatus,
+          paymentEmployee,
+          jobStatus,
+          inputLink: inputLink,
+          note: note || null,
+          employeeNote: employeeNote || null,
+          assigneeId: assigneeId_,
+          qualifiedAssigneeId: qaId_,
+          customerId: customerId_,
+          workRequestId: workReqId_,
+          deadline: deadline || null,
+        } as Omit<JobRequest, "id" | "code" | "outputNumber" | "doneLink">,
+        imageFiles,
+        videoFiles,
+        imageTempUrls,
+        videoTempUrls,
+      );
     }
 
     // Reset form
@@ -290,7 +469,12 @@ export function JobForm({
       workRequestId: undefined,
       payPerFile: "",
       payPerFileQa: "",
+      deadline: "",
+      images: [],
+      videos: [],
     };
+    setExistingFiles([]);
+    setRemovedFileStorages([]);
     onOpenChange(false);
   };
 
@@ -345,7 +529,8 @@ export function JobForm({
                             name:
                               customers.find(
                                 (c) =>
-                                  c.id.toString() === formRef.current.customerId
+                                  c.id.toString() ===
+                                  formRef.current.customerId,
                               )?.name || "",
                           }
                         : null
@@ -377,7 +562,7 @@ export function JobForm({
                               employees.find(
                                 (e) =>
                                   e.id.toString() ===
-                                  formRef.current.assignedEmployee
+                                  formRef.current.assignedEmployee,
                               )?.fullName || "",
                           }
                         : null
@@ -412,7 +597,7 @@ export function JobForm({
                             qaList.find(
                               (q) =>
                                 q.id.toString() ===
-                                formRef.current.qualifiedAssignee
+                                formRef.current.qualifiedAssignee,
                             )?.fullName || "",
                         }
                       : null
@@ -440,19 +625,20 @@ export function JobForm({
                           id: parseInt(formRef.current.workRequestId),
                           name: workRequests.find(
                             (wr) =>
-                              wr.id.toString() === formRef.current.workRequestId
+                              wr.id.toString() ===
+                              formRef.current.workRequestId,
                           )
                             ? `${
                                 workRequests.find(
                                   (wr) =>
                                     wr.id.toString() ===
-                                    formRef.current.workRequestId
+                                    formRef.current.workRequestId,
                                 )?.categoryName
                               } - ${
                                 workRequests.find(
                                   (wr) =>
                                     wr.id.toString() ===
-                                    formRef.current.workRequestId
+                                    formRef.current.workRequestId,
                                 )?.fileType
                               }`
                             : "",
@@ -539,7 +725,7 @@ export function JobForm({
                   <div className="text-lg font-semibold text-primary">
                     {formatCurrency(
                       parseFloat(formRef.current.outputNumber) *
-                        parseFloat(formRef.current.filePrice) || 0
+                        parseFloat(formRef.current.filePrice) || 0,
                     )}
                   </div>
                 </div>
@@ -551,17 +737,17 @@ export function JobForm({
                   Giá trả nhân viên/file{" "}
                   <span className="text-red-500">(VNĐ)</span>
                 </Label>
-                <Input
-                  id="payPerFile"
-                  type="text"
-                  defaultValue={formRef.current.payPerFile}
-                  onChange={(e) => {
-                    const formatted = formatVNDInput(e.target.value);
-                    formRef.current.payPerFile = formatted;
-                    e.target.value = formatted;
-                    forceUpdate();
-                  }}
-                  placeholder="Nhập giá trả nhân viên cho mỗi file (VD: 1.000)"
+                <SearchableDropdown
+                  options={filePriceEmployeeOptions.map((option) => ({
+                    id: option.id,
+                    name: formatVND(option.name.toString()),
+                  }))}
+                  placeholder="Nhập giá trả nhân viên cho mỗi file"
+                  onChange={(e) =>
+                    (formRef.current.payPerFile = e?.name.toString() || "")
+                  }
+                  defaultValue={{ id: 0, name: formRef.current.payPerFile }}
+                  type="vnd"
                 />
               </div>
 
@@ -571,17 +757,17 @@ export function JobForm({
                   Giá trả nhân viên/file QA{" "}
                   <span className="text-red-500">(VNĐ)</span>
                 </Label>
-                <Input
-                  id="payPerFileQa"
-                  type="text"
-                  defaultValue={formRef.current.payPerFileQa}
-                  onChange={(e) => {
-                    const formatted = formatVNDInput(e.target.value);
-                    formRef.current.payPerFileQa = formatted;
-                    e.target.value = formatted;
-                    forceUpdate();
-                  }}
-                  placeholder="Nhập giá trả nhân viên cho mỗi file QA (VD: 1.000)"
+                <SearchableDropdown
+                  options={filePriceQaOptions.map((option) => ({
+                    id: option.id,
+                    name: formatVND(option.name.toString()),
+                  }))}
+                  placeholder="Nhập giá trả nhân viên cho mỗi file QA"
+                  onChange={(e) =>
+                    (formRef.current.payPerFileQa = e?.name.toString() || "")
+                  }
+                  defaultValue={{ id: 0, name: formRef.current.payPerFileQa }}
+                  type="vnd"
                 />
               </div>
 
@@ -591,8 +777,8 @@ export function JobForm({
                   <Label>Tổng tiền trả nhân viên (VNĐ) (Tính toán)</Label>
                   <div className="text-lg font-semibold text-green-600">
                     {formatCurrencyVND(
-                      parseVNDInput(formRef.current.payPerFile) *
-                        parseFloat(formRef.current.outputNumber)
+                      parseVND(formRef.current.payPerFile) *
+                        parseFloat(formRef.current.outputNumber),
                     )}
                   </div>
                 </div>
@@ -605,8 +791,8 @@ export function JobForm({
                     <Label>Tổng tiền trả nhân viên QA (VNĐ) (Tính toán)</Label>
                     <div className="text-lg font-semibold text-green-600">
                       {formatCurrencyVND(
-                        parseVNDInput(formRef.current.payPerFileQa) *
-                          parseFloat(formRef.current.qaOutputNumber)
+                        parseVND(formRef.current.payPerFileQa) *
+                          parseFloat(formRef.current.qaOutputNumber),
                       )}
                     </div>
                   </div>
@@ -727,6 +913,17 @@ export function JobForm({
                 />
               </div>
 
+              {/* Deadline - Giờ hoàn thành */}
+              <div className="grid gap-2">
+                <Label htmlFor="deadline">Giờ hoàn thành</Label>
+                <Input
+                  id="deadline"
+                  type="time"
+                  defaultValue={formRef.current.deadline}
+                  onChange={(e) => (formRef.current.deadline = e.target.value)}
+                />
+              </div>
+
               {/* Done Link - Only show when editing */}
               {editingJob && (
                 <div className="grid gap-2">
@@ -743,15 +940,56 @@ export function JobForm({
                 </div>
               )}
 
-              {/* Note */}
+              {/* Existing Files Display - Only show when editing and has existing files */}
+              {/* {editingJob && existingFiles.length > 0 && (
+                <div className="grid gap-2">
+                  <Label>Ảnh & Video đã tải lên</Label>
+                  <div className="grid grid-cols-4 gap-4">
+                    {existingFiles.map((file) => (
+                      <div key={file.id} className="relative group">
+                        <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
+                          {file.isImage ? (
+                            <img
+                              src={file.dropboxLink}
+                              alt="Uploaded"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                              <video
+                                src={file.dropboxLink}
+                                className="w-full h-full object-cover"
+                              />
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-white text-xs px-2">
+                                VIDEO
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRemovedFileStorages([...removedFileStorages, file]);
+                            setExistingFiles(existingFiles.filter(f => f.id !== file.id));
+                          }}
+                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )} */}
+              {/* Note - Rich Text Editor (images/videos extracted to formRef) */}
               <div className="grid gap-2">
                 <Label htmlFor="note">Ghi chú</Label>
-                <Textarea
-                  id="note"
-                  defaultValue={formRef.current.note}
-                  onChange={(e) => (formRef.current.note = e.target.value)}
-                  placeholder="Nhập ghi chú bổ sung"
-                  rows={3}
+                <RichTextEditor
+                  value={formRef.current.note}
+                  onChange={(html) => (formRef.current.note = html)}
+                  placeholder="Nhập ghi chú bổ sung (hỗ trợ định dạng, hình ảnh, video...)"
+                  minHeight="120px"
+                  onMediaUpload={handleMediaUpload}
                 />
               </div>
 

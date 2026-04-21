@@ -127,18 +127,93 @@ export const updateGridViewJob = async (data: {
 }
 
 
-export const createJob = async (data: JobRequest) => {
+// Helper to build FormData from JobRequest + files
+const buildJobFormData = (data: JobRequest, images?: File[], videos?: File[], imageTempUrls?: string[], videoTempUrls?: string[]): FormData => {
+    const formData = new FormData();
+
+    // Append all job fields to FormData
+    if (data.id != null) formData.append("id", String(data.id));
+    if (data.code != null) formData.append("code", data.code);
+    if (data.caseName != null) formData.append("caseName", data.caseName);
+    if (data.fileCount != null) formData.append("fileCount", String(data.fileCount));
+    if (data.filePrice != null) formData.append("filePrice", String(data.filePrice));
+    if (data.payPerFile != null) formData.append("payPerFile", String(data.payPerFile));
+    if (data.payPerFileQa != null) formData.append("payPerFileQa", String(data.payPerFileQa));
+    if (data.inputNumber != null) formData.append("inputNumber", String(data.inputNumber));
+    if (data.outputNumber != null) formData.append("outputNumber", String(data.outputNumber));
+    if (data.qaOutputNumber != null) formData.append("qaOutputNumber", String(data.qaOutputNumber));
+    if (data.paymentStatus != null) formData.append("paymentStatus", data.paymentStatus);
+    if (data.paymentEmployee != null) formData.append("paymentEmployee", data.paymentEmployee);
+    if (data.paymentEmployeeQa != null) formData.append("paymentEmployeeQa", data.paymentEmployeeQa);
+    if (data.jobStatus != null) formData.append("jobStatus", data.jobStatus);
+    if (data.inputLink != null) formData.append("inputLink", data.inputLink);
+    if (data.doneLink != null) formData.append("doneLink", data.doneLink);
+    if (data.note != null) formData.append("note", data.note);
+    if (data.employeeNote != null) formData.append("employeeNote", data.employeeNote);
+    if (data.assigneeId != null) formData.append("assigneeId", String(data.assigneeId));
+    if (data.qualifiedAssigneeId != null) formData.append("qualifiedAssigneeId", String(data.qualifiedAssigneeId));
+    if (data.customerId != null) formData.append("customerId", String(data.customerId));
+    if (data.workRequestId != null) formData.append("workRequestId", String(data.workRequestId));
+    if (data.deadline != null) formData.append("deadline", data.deadline);
+    if (data.isDeleteAssignee != null) formData.append("isDeleteAssignee", String(data.isDeleteAssignee));
+    if (data.isDeleteQualifiedAssignee != null) formData.append("isDeleteQualifiedAssignee", String(data.isDeleteQualifiedAssignee));
+    
+    // Append fileStoragesNeedRemove as JSON string
+    if (data.fileStoragesNeedRemove && data.fileStoragesNeedRemove.length > 0) {
+        formData.append("fileStoragesNeedRemove", JSON.stringify(data.fileStoragesNeedRemove));
+    }
+
+    // Append image files
+    if (images && images.length > 0) {
+        images.forEach((file) => {
+            formData.append("images", file);
+        });
+    }
+
+    // Append video files
+    if (videos && videos.length > 0) {
+        videos.forEach((file) => {
+            formData.append("videos", file);
+        });
+    }
+
+    // Append imageTempUrls as JSON string
+    if (imageTempUrls && imageTempUrls.length > 0) {
+        formData.append("imageTempUrls", JSON.stringify(imageTempUrls));
+    }
+
+    // Append videoTempUrls as JSON string
+    if (videoTempUrls && videoTempUrls.length > 0) {
+        formData.append("videoTempUrls", JSON.stringify(videoTempUrls));
+    }
+
+    console.log("Built FormData: ", formData);
+
+    return formData;
+};
+
+export const createJob = async (data: JobRequest, images?: File[], videos?: File[], imageTempUrls?: string[], videoTempUrls?: string[]) => {
     try {
-        const res = await axiosInstance.post(`/admin/jobs/create`, data);
+        const formData = buildJobFormData(data, images, videos, imageTempUrls, videoTempUrls);
+        const res = await axiosInstance.post(`/admin/jobs/create`, formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
         return res as unknown as ApiResponse<JobResponse>;
     } catch (err: any) {
         throw new Error(err.message);
     }
 }
 
-export const updateJobFull = async (data: JobRequest) => {
+export const updateJobFull = async (data: JobRequest, images?: File[], videos?: File[], imageTempUrls?: string[], videoTempUrls?: string[]) => {
     try {
-        const res = await axiosInstance.put(`/admin/jobs/update/${data.id}`, data);
+        const formData = buildJobFormData(data, images, videos, imageTempUrls, videoTempUrls);
+        const res = await axiosInstance.put(`/admin/jobs/update/${data.id}`, formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
         return res as unknown as ApiResponse<JobResponse>;
     } catch (err: any) {
         throw new Error(err.message);

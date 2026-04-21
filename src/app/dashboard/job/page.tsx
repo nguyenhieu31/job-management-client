@@ -71,9 +71,9 @@ export default function JobsPage() {
     }));
   };
 
-  const handleAddJob = useCallback(async (jobData: JobRequest) => {
+  const handleAddJob = useCallback(async (jobData: JobRequest, images?: File[], videos?: File[], imageTempUrls?: string[], videoTempUrls?: string[]) => {
     try {
-      await dispatch(CreateJobAction(jobData));
+      await dispatch(CreateJobAction({ data: jobData, images, videos, imageTempUrls, videoTempUrls })).unwrap();
       setFormOpen(false);
     } catch (error: any) {
       toast.error(error.message || "Lỗi khi tạo công việc");
@@ -81,10 +81,9 @@ export default function JobsPage() {
     }
   }, [dispatch]);
 
-  const handleUpdateJob = useCallback(async (jobData: JobRequest) => {
+  const handleUpdateJob = useCallback(async (jobData: JobRequest, images?: File[], videos?: File[], imageTempUrls?: string[], videoTempUrls?: string[]) => {
     try {
-      
-      await dispatch(UpdateJobAction(jobData));
+      await dispatch(UpdateJobAction({ data: jobData, images, videos, imageTempUrls, videoTempUrls })).unwrap();
       setFormOpen(false);
       setEditingJob(null);
     } catch (error: any) {
@@ -234,9 +233,9 @@ export default function JobsPage() {
     if(roleName === undefined) return;
     if(roleName === "MANAGER"){
       Promise.all([
-        dispatch(GetAllEmployeesAction({pageNumber: 0, pageSize: 100})),
-        dispatch(GetAllWorkRequestsAction({pageNumber: 0, pageSize: 100})),
-        dispatch(GetAllCustomersAction({pageNumber: 0, pageSize: 100}))
+        dispatch(GetAllEmployeesAction({pageNumber: 0, pageSize: 1000})),
+        dispatch(GetAllWorkRequestsAction({pageNumber: 0, pageSize: 1000})),
+        dispatch(GetAllCustomersAction({pageNumber: 0, pageSize: 1000}))
       ]);
     }
   },[dispatch, roleName]);
@@ -278,8 +277,8 @@ export default function JobsPage() {
       <FilterBar
         pagination={pagination}
         onPageChange={handlePageChange}
-        employees={employeeList}
-        customers={customerList}
+        employees={employeeList.filter((e) => e.isJobAccount === true)}
+        customers={customerList.filter((c) => c.isJobAccount === true)}
       />
 
       {/* Table */}
@@ -292,9 +291,9 @@ export default function JobsPage() {
           <JobTable
             jobs={jobs ? jobs.data : []}
             userRole={userRole}
-            employees={employeeList}
+            employees={employeeList.filter((e) => e.isJobAccount === true)}
             qaList={qaList}
-            customers={customerList}
+            customers={customerList.filter((c) => c.isJobAccount === true)}
             onEdit={(job) => {
               setEditingJob(job as unknown as JobResponse);
               setFormOpen(true);
@@ -317,16 +316,16 @@ export default function JobsPage() {
       <JobForm
         open={formOpen}
         onOpenChange={handleFormClose}
-        onSubmit={(jobData) => {
+        onSubmit={(jobData, images, videos, imageTempUrls, videoTempUrls) => {
           if (editingJob) {
-            handleUpdateJob(jobData);
+            handleUpdateJob(jobData as JobRequest, images, videos, imageTempUrls, videoTempUrls);
           } else {
-            handleAddJob(jobData);
+            handleAddJob(jobData as JobRequest, images, videos, imageTempUrls, videoTempUrls);
           }
         }}
         editingJob={editingJob}
-        customers={customerList}
-        employees={employeeList}
+        customers={customerList.filter((c) => c.isJobAccount === true)}
+        employees={employeeList.filter((e) => e.isJobAccount === true)}
         qaList={qaList}
         workRequests={workRequestList}
       />

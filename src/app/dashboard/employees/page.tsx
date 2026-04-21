@@ -102,8 +102,10 @@ export default function EmployeesPage() {
         phoneNumber: employee.phoneNumber || "",
         chatId: employee.chatId || "",
         dateOfBirth: employee.dateOfBirth || new Date(),
-        isActive: employee.isActive || true,
-        role: employee.role || "EMPLOYEE"
+        isActive: employee.isActive ?? true,
+        role: employee.role || "EMPLOYEE",
+        isJobAccount: employee.isJobAccount ?? true,
+        isVideoAccount: employee.isVideoAccount ?? true,
       }
       await dispatch(UpdateEmployeeAction(payload));
       setEditingEmployee(null);
@@ -115,8 +117,10 @@ export default function EmployeesPage() {
         phoneNumber: employee.phoneNumber || "",
         chatId: employee.chatId || "",
         dateOfBirth: employee.dateOfBirth || new Date(),
-        isActive: employee.isActive || true,
-        role: employee.role || "EMPLOYEE"
+        isActive: employee.isActive ?? true,
+        role: employee.role || "EMPLOYEE",
+        isJobAccount: employee.isJobAccount ?? true,
+        isVideoAccount: employee.isVideoAccount ?? true,
       }
       await dispatch(CreateEmployeeAction(payload));
     }

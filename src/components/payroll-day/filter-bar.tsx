@@ -29,6 +29,7 @@ interface FilterBarProps {
   onFiltersChange?: (filters: any) => void;
 }
 
+
 export function FilterBar({
   pagination,
   onPageChange,

@@ -4,6 +4,14 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, RotateCcw } from "lucide-react";
 import type { EmployeeFilters } from "@/types/employees";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 interface EmployeeFilterBarProps {
   filters: EmployeeFilters;
@@ -11,6 +19,12 @@ interface EmployeeFilterBarProps {
   onApply: () => void;
   onReset: () => void;
 }
+
+const EmployeeStatusOptions = [
+  { id: "ACTIVE", name: "Đang hoạt động" },
+  { id: "INACTIVE", name: "Ngừng hoạt động" },
+  { id: "ALL", name: "Tất cả" },
+];
 
 export function EmployeeFilterBar({
   filters,
@@ -38,6 +52,31 @@ export function EmployeeFilterBar({
               className="pl-9"
             />
           </div>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="statusEmployee" className="text-sm font-medium">
+            Trạng thái nhân viên
+          </Label>
+          <Select
+            value="ALL"
+            onValueChange={(value) =>
+              console.log("Selected employee status:", value)
+            }
+          >
+            <SelectTrigger
+              id="statusEmployee"
+              className="w-[200px] min-w-[100px]"
+            >
+              <SelectValue placeholder="Tất cả trạng thái" />
+            </SelectTrigger>
+            <SelectContent>
+              {EmployeeStatusOptions.map((option) => (
+                <SelectItem key={option.id} value={option.id}>
+                  {option.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Action Buttons */}

@@ -19,6 +19,18 @@ interface SearchableDropdownProps {
   type: string;
 }
 
+// Helper function to format number with VND thousand separators (dots)
+const formatVND = (value: string | number): string => {
+  const numericValue = value.toString().replace(/\D/g, "");
+  return numericValue.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+};
+
+// Helper function to parse VND formatted string to number
+const parseVND = (value: string): number => {
+  const numericValue = value.replace(/\./g, "");
+  return parseInt(numericValue) || 0;
+};
+
 export default function SearchableDropdown({
   options,
   placeholder = "Tìm kiếm...",
@@ -51,15 +63,24 @@ export default function SearchableDropdown({
   }, []);
 
   // Filter options dựa trên search term
-  const filteredOptions = useMemo(
-  () =>
-    options.filter((option) =>
+  const filteredOptions = useMemo(() => {
+    // For VND type, compare numeric values
+    if (type === "vnd") {
+      const searchNumeric = parseVND(searchTerm);
+      if (searchTerm.trim() === "") return options;
+      return options.filter((option) => {
+        const optionNumeric = typeof option.name === "number" 
+          ? option.name 
+          : parseVND(option.name.toString());
+        return optionNumeric.toString().includes(searchNumeric.toString());
+      });
+    }
+    return options.filter((option) =>
       option.name.toString().toLowerCase().includes(searchTerm.toLowerCase())
-    ),
-  [options, searchTerm]
-);
+    );
+  }, [options, searchTerm, type]);
 
-  // Xử lý nhập giá trị tùy chỉnh (cho type number)
+  // Xử lý nhập giá trị tùy chỉnh (cho type number hoặc vnd)
   const handleCustomInput = () => {
     if (type === "number" && searchTerm.trim() !== "") {
       const customValue = parseFloat(searchTerm);
@@ -67,6 +88,19 @@ export default function SearchableDropdown({
         const customOption: Option = {
           id: 0,
           name: customValue,
+        };
+        setSelectedValue(customOption);
+        if (onChange) onChange(customOption);
+        setIsOpen(false);
+        setSearchTerm("");
+      }
+    } else if (type === "vnd" && searchTerm.trim() !== "") {
+      const numericValue = parseVND(searchTerm);
+      if (numericValue > 0) {
+        const formattedValue = formatVND(numericValue);
+        const customOption: Option = {
+          id: 0,
+          name: formattedValue, // Store formatted VND string
         };
         setSelectedValue(customOption);
         if (onChange) onChange(customOption);
@@ -118,7 +152,7 @@ export default function SearchableDropdown({
     <div className={`relative ${className}`} ref={dropdownRef}>
       {/* Input/Trigger Button */}
       <div
-        className="relative w-full min-h-[42px] px-3 py-2 bg-white border border-gray-300 rounded-lg shadow-sm cursor-pointer hover:border-gray-400 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 transition-all"
+        className="relative overflow-hidden w-full min-h-[42px] px-3 py-2 bg-white border border-gray-300 rounded-lg shadow-sm cursor-pointer hover:border-gray-400 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 transition-all"
         onClick={() => setIsOpen(!isOpen)}
       >
         <div className="flex items-center gap-2 flex-wrap">
@@ -172,23 +206,31 @@ export default function SearchableDropdown({
           {/* Search Input */}
           <div className="p-2 border-b border-gray-200">
             <input
-              type={type}
+              type={type === "vnd" ? "text" : type}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder={
-                type === "number"
+                type === "number" || type === "vnd"
                   ? "Chọn hoặc nhập giá tùy chỉnh..."
                   : "Tìm kiếm..."
               }
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                if (type === "vnd") {
+                  // Only allow digits, auto-format with dots
+                  const rawValue = e.target.value.replace(/\D/g, "");
+                  setSearchTerm(rawValue ? formatVND(rawValue) : "");
+                } else {
+                  setSearchTerm(e.target.value);
+                }
+              }}
               onClick={(e) => e.stopPropagation()}
               onKeyDown={(e) => {
-                if (e.key === "Enter" && type === "number") {
+                if (e.key === "Enter" && (type === "number" || type === "vnd")) {
                   handleCustomInput();
                 }
               }}
             />
-            {type === "number" && (
+            {(type === "number" || type === "vnd") && (
               <p className="text-xs text-gray-500 mt-1 px-1">
                 💡 Nhấn Enter để sử dụng giá tùy chỉnh
               </p>
@@ -212,11 +254,27 @@ export default function SearchableDropdown({
                 </div>
               )}
 
+            {/* Custom input option for VND type */}
+            {type === "vnd" &&
+              searchTerm.trim() !== "" &&
+              parseVND(searchTerm) > 0 && (
+                <div
+                  className="px-3 py-2 cursor-pointer bg-green-50 hover:bg-green-100 border-b border-green-200 flex items-center justify-between"
+                  onClick={handleCustomInput}
+                >
+                  <span className="text-green-700 font-medium">
+                    💡 Sử dụng giá: <strong>{searchTerm} VNĐ</strong>
+                  </span>
+                  <Check size={16} className="text-green-600" />
+                </div>
+              )}
+
             {filteredOptions.length === 0 ? (
               <div className="px-3 py-8 text-center text-gray-500">
-                {type === "number" &&
+                {(type === "number" &&
                 searchTerm.trim() !== "" &&
-                !isNaN(parseFloat(searchTerm))
+                !isNaN(parseFloat(searchTerm))) ||
+                (type === "vnd" && searchTerm.trim() !== "" && parseVND(searchTerm) > 0)
                   ? "Nhấn vào 'Sử dụng giá' phía trên"
                   : "Không tìm thấy kết quả"}
               </div>

@@ -2,6 +2,7 @@ import { ApiResponse } from "@/components/types/ApiResponse";
 import { PageRequest, PageResponse } from "@/components/types/Page";
 import { axiosInstance } from "@/lib/utils/axios-instance";
 import { VideoRequest, VideoResponse, VideoViewResponse } from "@/types/videos";
+import { FileStorage } from "@/types/jobs";
 
 export const getAllVideos = async (data: PageRequest & { fromDate?: string | null }) => {
   try {
@@ -122,6 +123,7 @@ export const updateGridViewVideo = async (data: {
   filePrice: number | null;
   inputNumber: number | null;
   outputNumber?: number | null;
+  editedNumber?: number | null;
   qaOutputNumber?: number | null;
   qualifiedAssigneeId?: number | null;
   paymentStatus?: string | null;
@@ -130,11 +132,69 @@ export const updateGridViewVideo = async (data: {
   payPerFile?: number | null;
   payPerFileQa?: number | null;
   isDeleteAssignee?: boolean;
-}) => {
+  fileStoragesNeedRemove?: FileStorage[];
+}, images?: File[], videos?: File[], imageTempUrls?: string[], videoTempUrls?: string[]) => {
   try {
+    const formData = new FormData();
+
+    // Append all fields to FormData
+    if (data.jobId != null) formData.append("jobId", String(data.jobId));
+    if (data.caseName != null) formData.append("caseName", data.caseName);
+    if (data.note != null) formData.append("note", data.note);
+    if (data.employeeNote != null) formData.append("employeeNote", data.employeeNote);
+    if (data.inputLink != null) formData.append("inputLink", data.inputLink);
+    if (data.assigneeId != null) formData.append("assigneeId", String(data.assigneeId));
+    if (data.customerId != null) formData.append("customerId", String(data.customerId));
+    if (data.filePrice != null) formData.append("filePrice", String(data.filePrice));
+    if (data.inputNumber != null) formData.append("inputNumber", String(data.inputNumber));
+    if (data.outputNumber != null) formData.append("outputNumber", String(data.outputNumber));
+    if (data.editedNumber != null) formData.append("editedNumber", String(data.editedNumber));
+    if (data.qaOutputNumber != null) formData.append("qaOutputNumber", String(data.qaOutputNumber));
+    if (data.qualifiedAssigneeId != null) formData.append("qualifiedAssigneeId", String(data.qualifiedAssigneeId));
+    if (data.paymentStatus != null) formData.append("paymentStatus", data.paymentStatus);
+    if (data.paymentEmployee != null) formData.append("paymentEmployee", data.paymentEmployee);
+    if (data.doneLink != null) formData.append("doneLink", data.doneLink);
+    if (data.payPerFile != null) formData.append("payPerFile", String(data.payPerFile));
+    if (data.payPerFileQa != null) formData.append("payPerFileQa", String(data.payPerFileQa));
+    if (data.isDeleteAssignee != null) formData.append("isDeleteAssignee", String(data.isDeleteAssignee));
+
+    // Append fileStoragesNeedRemove as JSON string
+    if (data.fileStoragesNeedRemove && data.fileStoragesNeedRemove.length > 0) {
+      formData.append("fileStoragesNeedRemove", JSON.stringify(data.fileStoragesNeedRemove));
+    }
+
+    // Append image files
+    if (images && images.length > 0) {
+      images.forEach((file) => {
+        formData.append("images", file);
+      });
+    }
+
+    // Append video files
+    if (videos && videos.length > 0) {
+      videos.forEach((file) => {
+        formData.append("videos", file);
+      });
+    }
+
+    // Append imageTempUrls as JSON string
+    if (imageTempUrls && imageTempUrls.length > 0) {
+      formData.append("imageTempUrls", JSON.stringify(imageTempUrls));
+    }
+
+    // Append videoTempUrls as JSON string
+    if (videoTempUrls && videoTempUrls.length > 0) {
+      formData.append("videoTempUrls", JSON.stringify(videoTempUrls));
+    }
+
     const res = await axiosInstance.post(
       `/admin/videos/update-grid-view`,
-      data
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
     );
     return res as unknown as ApiResponse<VideoResponse>;
   } catch (err: any) {
