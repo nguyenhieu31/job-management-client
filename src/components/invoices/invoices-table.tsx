@@ -10,7 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Eye, Send, X, Search } from "lucide-react";
+import { Eye, Send, X, Search, Copy } from "lucide-react";
 import type { InvoiceResponse, InvoiceStatus } from "@/types/invoices";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
+import { toast } from "react-toastify";
 
 interface InvoicesTableProps {
   invoices: PageResponse<InvoiceResponse[]> | undefined;
@@ -118,6 +119,7 @@ export function InvoicesTable({
   const renderActions = (invoice: InvoiceResponse) => {
     const status = invoice.status as InvoiceStatus;
     const viewLink = invoice.detail?.metadata?.invoicer_view_url || "";
+    const viewCustomLink = invoice.detail?.metadata?.recipient_view_url || "";
 
     return (
       <div className="flex items-center justify-center gap-2">
@@ -130,6 +132,19 @@ export function InvoicesTable({
         >
           <Eye className="h-4 w-4" />
         </Link>
+
+        <Button
+          variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0 flex items-center justify-center"
+            title="Copy link"
+            onClick={() => {
+              toast.success("Đã sao chép link vào clipboard!");
+              navigator.clipboard.writeText(viewCustomLink)
+            }}
+        >
+          <Copy className="h-4 w-4" />
+        </Button>
 
         {/* DRAFT: Show Send button */}
         {status === "DRAFT" && (
