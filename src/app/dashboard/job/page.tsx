@@ -53,6 +53,7 @@ export default function JobsPage() {
     if (role === "manager" || role === "admin") return "manager";
     if (role === "qa") return "qa";
     if (role === "special") return "special";
+    if (role === "saler") return "saler";
     return "employee";
   };
 
@@ -207,7 +208,7 @@ export default function JobsPage() {
     if(roleName === undefined) return;
     
     const fetchJobs = () => {
-      if(roleName === "MANAGER"){
+      if(roleName === "MANAGER" || roleName === "SALER"){
         dispatch(GetAllJobsAction({pageNumber: pagination.currentPage - 1, pageSize: pagination.pageSize, fromDate: getFirstDayOfMonth()}));
       }else if(roleName === "QA"){
         dispatch(GetAllJobsByQualifiedAssigneeAction({pageNumber: pagination.currentPage - 1, pageSize: pagination.pageSize, email: email || "", fromDate: getFirstDayOfMonth()}));
@@ -231,7 +232,7 @@ export default function JobsPage() {
   // Load related data (employees, work requests, customers) only for Manager on mount
   useEffect(() => {
     if(roleName === undefined) return;
-    if(roleName === "MANAGER"){
+    if(roleName === "MANAGER" || roleName === "SALER"){
       Promise.all([
         dispatch(GetAllEmployeesAction({pageNumber: 0, pageSize: 1000})),
         dispatch(GetAllWorkRequestsAction({pageNumber: 0, pageSize: 1000})),
@@ -252,7 +253,7 @@ export default function JobsPage() {
         </div>
 
         <div>
-          {userRole === "manager" && (
+          {(userRole === "manager" || userRole === "saler") && (
             <Button
               onClick={() => setFormOpen(true)}
               className="sm:w-auto mr-2 cursor-pointer"

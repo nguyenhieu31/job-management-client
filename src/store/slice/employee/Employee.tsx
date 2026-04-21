@@ -6,6 +6,7 @@ import {
   createAsyncThunk,
   type PayloadAction,
 } from "@reduxjs/toolkit";
+import { toast } from "react-toastify";
 
 interface InitialValuesStyle {
   loading: boolean;
@@ -44,8 +45,10 @@ export const CreateEmployeeAction = createAsyncThunk<
 >("CreateEmployeeAction", async (data: EmployeeRequest) => {
   try {
     const response = await createEmployee(data);
+    toast.success("Tài khoản nhân viên đã được tạo thành công");
     return response.data as EmployeeResponse;
   } catch (err: any) {
+    toast.error("Số điện thoại đã tồn tại hoặc có lỗi xảy ra");
     throw new Error(err.message);
   }
 });
@@ -56,8 +59,10 @@ export const UpdateEmployeeAction = createAsyncThunk<
 >("UpdateEmployeeAction", async (data: EmployeeRequest) => {
   try {
     const response = await updateEmployee(data);
+    toast.success("Tài khoản nhân viên đã được cập nhật thành công");
     return response.data as EmployeeResponse;
   } catch (err: any) {
+    toast.error("Có lỗi xảy ra khi cập nhật thông tin nhân viên");
     throw new Error(err.message);
   }
 });

@@ -164,7 +164,7 @@ export interface JobActionPayload {
   qaOutputNumber?: number | null;
 }
 
-export type UserRole = "manager" | "qa" | "employee" | "special";
+export type UserRole = "manager" | "qa" | "employee" | "special" | "saler";
 
 // Filter interface
 export interface JobFilters {
@@ -267,6 +267,20 @@ export const ROLE_COLUMNS = {
     "paymentEmployee",
     "actions",
   ],
+  saler: [
+    "code",
+    "deadline",
+    "date",
+    "customerName",
+    "caseName",
+    "linkInput",
+    "inputCount",
+    "outputCount",
+    "jobStatus",
+    "linkDone",
+    "assignedEmployee",
+    "qa"
+  ]
 } as const;
 
 export const PAYROLL_DAY_COLUMN = [
