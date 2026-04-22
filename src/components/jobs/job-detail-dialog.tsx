@@ -94,6 +94,7 @@ export function JobDetailDialog({
     const role = roleName?.toLowerCase();
     if (role === "manager" || role === "admin") return "manager";
     if (role === "qa") return "qa";
+    if (role === "saler") return "saler";
     return "employee";
   };
 
