@@ -20,6 +20,7 @@ import { formatCurrencyVND } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import MultiSelectDropdown from "@/components/ui/multi-select-dropdown";
 import { Filter } from "lucide-react";
+import axios from "axios";
 
 export default function PayrollPage() {
   const dispatch = useAppDispatch();
@@ -34,10 +35,10 @@ export default function PayrollPage() {
     payrollPeriods.length > 0
       ? payrollPeriods[0].period
       : (() => {
-          const now = new Date();
-          now.setMonth(now.getMonth() - 1); // 👈 giảm 1 tháng
-          return now.toISOString().slice(0, 7); // format yyyy-MM
-        })()
+        const now = new Date();
+        now.setMonth(now.getMonth() - 1); // 👈 giảm 1 tháng
+        return now.toISOString().slice(0, 7); // format yyyy-MM
+      })()
   );
   const [selectedEmployees, setSelectedEmployees] = useState<
     { id: number; name: string }[]
@@ -45,6 +46,7 @@ export default function PayrollPage() {
   const [selectedStatuses, setSelectedStatuses] = useState<
     { id: number; name: string }[]
   >([]);
+  const [banks, setBanks] = useState<any[]>([]);
 
   // Filter payrolls based on selected employees and statuses
   const filteredPayrolls = useMemo(() => {
@@ -92,7 +94,7 @@ export default function PayrollPage() {
     const paidAmount = filteredPayrolls
       .filter((p: any) => p.payrollStatus === "PAID")
       .reduce((sum: number, p: any) => sum + p.totalAmount, 0);
-    
+
     return {
       totalEmployees,
       totalAmount,
@@ -112,6 +114,15 @@ export default function PayrollPage() {
       dispatch(GetAllPayrollByPeriodAction(period));
     }
   }, [dispatch, period]);
+
+  useEffect(() => {
+    const fetchBanks = async () => {
+      const res = await axios.get("https://api.vietqr.io/v2/banks");
+      const data = res.data;
+      setBanks(data.data);
+    }
+    fetchBanks();
+  }, []);
 
   const handlePeriodChange = (period: string) => {
     setPeriod(period);
@@ -305,7 +316,7 @@ export default function PayrollPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <PayrollTable payrolls={filteredPayrolls} onRefresh={handleRefresh} />
+            <PayrollTable payrolls={filteredPayrolls} onRefresh={handleRefresh} banks={banks} />
           </CardContent>
         </Card>
       )}

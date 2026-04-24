@@ -19,9 +19,10 @@ import { formatCurrencyVND } from "@/lib/utils";
 interface PayrollTableProps {
   payrolls: EmployeePayroll[];
   onRefresh?: () => void;
+  banks: any[];
 }
 
-export default function PayrollTable({ payrolls, onRefresh }: PayrollTableProps) {
+export default function PayrollTable({ payrolls, onRefresh, banks }: PayrollTableProps) {
   const [selectedPayroll, setSelectedPayroll] = useState<EmployeePayroll | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [actionDialogOpen, setActionDialogOpen] = useState(false);
@@ -138,7 +139,7 @@ export default function PayrollTable({ payrolls, onRefresh }: PayrollTableProps)
                         onClick={() => handleAction(payroll, "pay")}
                         className="text-xs bg-blue-600 hover:bg-blue-700"
                       >
-                        Đã Thanh Toán
+                        Thanh Toán
                       </Button>
                     )}
                   </div>
@@ -161,6 +162,7 @@ export default function PayrollTable({ payrolls, onRefresh }: PayrollTableProps)
             actionType={actionType}
             open={actionDialogOpen}
             onOpenChange={handleCloseActionDialog}
+            banks={banks}
           />
         </>
       )}

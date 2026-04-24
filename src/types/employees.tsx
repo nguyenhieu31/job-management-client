@@ -11,6 +11,9 @@ export interface EmployeeResponse {
     createdAt: Date;
     isJobAccount: boolean;
     isVideoAccount: boolean;
+    bankId: number;
+    bankAccountNumber: string;
+    bankAccountName: string;
 }
 
 export interface EmployeeRequest {
@@ -26,6 +29,9 @@ export interface EmployeeRequest {
     role: string;
     isJobAccount: boolean;
     isVideoAccount: boolean;
+    bankId?: number | null;
+    bankAccountNumber?: string | null;
+    bankAccountName?: string | null;
 }
 
 export interface RoleDto {

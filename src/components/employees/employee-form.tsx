@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import SearchableDropdown from "@/components/ui/search-able-dropdown";
 import type { EmployeeRequest, EmployeeResponse, RoleDto } from "@/types/employees";
 
 interface EmployeeFormProps {
@@ -28,6 +29,7 @@ interface EmployeeFormProps {
   editingEmployee: EmployeeResponse | null;
   roles: RoleDto[];
   onResetPassword?: (employeeId: number) => void;
+  banks: any[];
 }
 
 export function EmployeeForm({
@@ -37,7 +39,13 @@ export function EmployeeForm({
   editingEmployee,
   roles,
   onResetPassword,
+  banks
 }: EmployeeFormProps) {
+  const bankOptions = banks?.map((bank: any) => ({
+    id: bank.id,
+    name: bank.shortName ? `${bank.shortName} - ${bank.name}` : bank.name,
+  })) || [];
+
   const [formData, setFormData] = useState({
     code: "",
     email: "",
@@ -50,6 +58,9 @@ export function EmployeeForm({
     isActive: true,
     isJobAccount: true,
     isVideoAccount: true,
+    bankId: null,
+    bankAccountNumber: "",
+    bankAccountName: "",
   });
   const [showNewPassword, setShowNewPassword] = useState(false);
 
@@ -69,6 +80,9 @@ export function EmployeeForm({
         isActive: editingEmployee.isActive,
         isJobAccount: editingEmployee.isJobAccount,
         isVideoAccount: editingEmployee.isVideoAccount,
+        bankId: editingEmployee.bankId,
+        bankAccountNumber: editingEmployee.bankAccountNumber || "",
+        bankAccountName: editingEmployee.bankAccountName || "",
       });
     } else {
       setFormData({
@@ -83,6 +97,9 @@ export function EmployeeForm({
         isActive: true,
         isJobAccount: true,
         isVideoAccount: true,
+        bankId: null,
+        bankAccountNumber: "",
+        bankAccountName: "",
       });
     }
   }, [editingEmployee, open]);
@@ -105,11 +122,15 @@ export function EmployeeForm({
       isActive: formData.isActive,
       isJobAccount: formData.isJobAccount,
       isVideoAccount: formData.isVideoAccount,
+      bankId: formData.bankId,
+      bankAccountNumber: formData.bankAccountNumber,
+      bankAccountName: formData.bankAccountName,
     };
 
     onSubmit(employee);
     onOpenChange(false);
   };
+  console.log("formData: ", formData)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -156,7 +177,7 @@ export function EmployeeForm({
               required
             />
           </div>
-          {}
+          { }
           <div className="space-y-2">
             <div className="relative space-y-2">
               <div className="flex items-center justify-between">
@@ -253,6 +274,51 @@ export function EmployeeForm({
                 setFormData({ ...formData, chatId: e.target.value })
               }
               placeholder="6797071231"
+            />
+          </div>
+
+          {/* Bank Information */}
+          <div className="space-y-2">
+            <Label htmlFor="bankName">Ngân hàng</Label>
+            <SearchableDropdown
+              key={formData.bankId || "bank"}
+              type="text"
+              options={bankOptions}
+              placeholder="Chọn ngân hàng"
+              defaultValue={{
+                id: formData.bankId || 0,
+                name: bankOptions.find((b: any) => b.id === formData.bankId)
+                  ?.name || "",
+              }}
+              onChange={(option) =>
+                setFormData({ ...formData, bankId: option?.id || null })
+              }
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="bankAccountNumber">Số tài khoản</Label>
+            <Input
+              id="bankAccountNumber"
+              type="text"
+              value={formData.bankAccountNumber}
+              onChange={(e) =>
+                setFormData({ ...formData, bankAccountNumber: e.target.value })
+              }
+              placeholder="Nhập số tài khoản"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="bankAccountName">Tên chủ tài khoản</Label>
+            <Input
+              id="bankAccountName"
+              type="text"
+              value={formData.bankAccountName}
+              onChange={(e) =>
+                setFormData({ ...formData, bankAccountName: e.target.value.toUpperCase() })
+              }
+              placeholder="Ví dụ: NGUYEN VAN A"
             />
           </div>
 
