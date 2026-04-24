@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { EmployeePayroll } from "@/types/payroll";
 import { useAppDispatch, useAppSelector } from "@/store/store";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { formatCurrencyVND } from "@/lib/utils";
 import { UpdatePayrollStatusAction } from "@/store/slice/payroll/Payroll";
@@ -16,6 +16,7 @@ interface PayrollActionDialogProps {
   actionType: "approve" | "reject" | "pay";
   open: boolean;
   onOpenChange: (open: boolean, refreshed?: boolean) => void;
+  banks: any[];
 }
 
 export default function PayrollActionDialog({
@@ -23,11 +24,21 @@ export default function PayrollActionDialog({
   actionType,
   open,
   onOpenChange,
+  banks
 }: PayrollActionDialogProps) {
   const dispatch = useAppDispatch();
   const [notes, setNotes] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [bankInfo, setBankInfo] = useState<any>(null);
   const loading = useAppSelector((state) => state.payroll.loading);
+
+  useEffect(() => {
+    if (banks) {
+      const bank = banks.find((bank) => bank.id === payroll.employee.bankId);
+      setBankInfo(bank);
+    }
+
+  }, [banks]);
 
   const handleConfirm = async () => {
     try {
@@ -67,7 +78,7 @@ export default function PayrollActionDialog({
       case "reject":
         return "Từ Chối Bảng Lương";
       case "pay":
-        return "Đánh Dấu Đã Thanh Toán";
+        return "Thanh Toán Bảng Lương";
     }
   };
 
@@ -78,7 +89,7 @@ export default function PayrollActionDialog({
       case "reject":
         return `Bạn sắp từ chối bảng lương cho ${payroll.employee.fullName} kỳ ${payroll.payrollPeriod}`;
       case "pay":
-        return `Bạn sắp đánh dấu bảng lương cho ${payroll.employee.fullName} kỳ ${payroll.payrollPeriod} là đã thanh toán`;
+        return `Vui lòng quét mã QR bên dưới để thanh toán bảng lương cho ${payroll.employee.fullName} kỳ ${payroll.payrollPeriod}`;
     }
   };
 
@@ -89,7 +100,7 @@ export default function PayrollActionDialog({
       case "reject":
         return "Từ Chối";
       case "pay":
-        return "Xác Nhận";
+        return "Hoàn tất chuyển khoản";
     }
   };
 
@@ -113,6 +124,40 @@ export default function PayrollActionDialog({
                 onChange={(e) => setNotes(e.target.value)}
                 rows={4}
               />
+            </div>
+          )}
+
+          {actionType === "pay" && (
+            <div className="flex flex-col items-center space-y-4 my-4">
+              {payroll.employee.bankId && payroll.employee.bankAccountNumber ? (
+                bankInfo ? (
+                  <div className="flex flex-col items-center gap-3 p-4 border rounded-xl bg-slate-50 shadow-sm w-full">
+                    <div className="bg-white p-2 rounded-lg shadow-sm">
+                      <img
+                        src={`https://img.vietqr.io/image/${bankInfo.bin}-${payroll.employee.bankAccountNumber}-compact2.png?amount=${payroll.totalAmount}&addInfo=${encodeURIComponent('Thanh toan luong ky ' + payroll.payrollPeriod)}&accountName=${encodeURIComponent(payroll.employee.bankAccountName || '')}`}
+                        alt="VietQR"
+                        className="w-64 h-64 object-contain"
+                      />
+                    </div>
+                    <div className="text-sm text-center space-y-1 mt-2">
+                      <p><span className="text-gray-500">Ngân hàng:</span> <span className="font-medium">{bankInfo.shortName}</span></p>
+                      <p><span className="text-gray-500">Số tài khoản:</span> <span className="font-medium">{payroll.employee.bankAccountNumber}</span></p>
+                      <p><span className="text-gray-500">Chủ tài khoản:</span> <span className="font-medium">{payroll.employee.bankAccountName}</span></p>
+                      <p><span className="text-gray-500">Số tiền:</span> <span className="font-semibold text-blue-600">{formatCurrencyVND(payroll.totalAmount)}</span></p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center p-8 border rounded-lg w-full">
+                    <p className="text-sm text-gray-500">Đang tải mã QR...</p>
+                  </div>
+                )
+              ) : (
+                <div className="p-4 border rounded-lg bg-yellow-50 text-yellow-800 text-sm w-full text-center">
+                  Nhân viên này chưa được cập nhật đầy đủ thông tin ngân hàng.
+                  <br />
+                  Bạn vẫn có thể xác nhận nếu đã thanh toán bằng phương thức khác.
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -18,6 +18,7 @@ import { useAppDispatch, useAppSelector } from "@/store/store";
 import Loader from "@/components/ui/loader";
 import { CreateEmployeeAction, DeleteEmployeeAction, GetAllEmployeesAction, ResetPasswordEmployeeAction, SearchEmployeesAction, UpdateEmployeeAction } from "@/store/slice/employee/Employee";
 import { PageResponse } from "@/components/types/Page";
+import axios from "axios";
 
 // Demo roles
 const rolesList: RoleDto[] = [
@@ -32,6 +33,16 @@ export default function EmployeesPage() {
   const dispatch = useAppDispatch();
   const [formOpen, setFormOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<EmployeeResponse | null>(null);
+  const [banks, setBanks] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchBanks = async () => {
+      const res = await axios.get("https://api.vietqr.io/v2/banks");
+      const data = res.data;
+      setBanks(data.data);
+    }
+    fetchBanks();
+  }, []);
 
   // Filters state
   const [filters, setFilters] = useState<EmployeeFilters>({
@@ -78,7 +89,7 @@ export default function EmployeesPage() {
     };
     setFilters(resetFilters);
     setPagination((prev) => ({ ...prev, currentPage: 1 }));
-    fetchEmployees(); 
+    fetchEmployees();
   };
 
   // Handle pagination actions
@@ -107,6 +118,9 @@ export default function EmployeesPage() {
         role: employee.role || "EMPLOYEE",
         isJobAccount: employee.isJobAccount ?? true,
         isVideoAccount: employee.isVideoAccount ?? true,
+        bankId: employee.bankId ?? null,
+        bankAccountNumber: employee.bankAccountNumber ?? "",
+        bankAccountName: employee.bankAccountName ?? "",
       }
       await dispatch(UpdateEmployeeAction(payload));
       setEditingEmployee(null);
@@ -122,6 +136,9 @@ export default function EmployeesPage() {
         role: employee.role || "EMPLOYEE",
         isJobAccount: employee.isJobAccount ?? true,
         isVideoAccount: employee.isVideoAccount ?? true,
+        bankId: employee.bankId ?? null,
+        bankAccountNumber: employee.bankAccountNumber ?? "",
+        bankAccountName: employee.bankAccountName ?? "",
       }
       await dispatch(CreateEmployeeAction(payload));
     }
@@ -133,14 +150,14 @@ export default function EmployeesPage() {
   };
 
   const handleResetPassword = async (employeeId: number) => {
-    if(!employeeId) return;
+    if (!employeeId) return;
     await dispatch(ResetPasswordEmployeeAction(employeeId));
   }
 
   const handleDeleteEmployee = async (id: number) => {
     // TODO: Call API to delete employee
     console.log("Deleting employee:", id);
-    if(!id) return
+    if (!id) return
     await dispatch(DeleteEmployeeAction(id));
     // Refresh the employee list
     fetchEmployees();
@@ -155,7 +172,7 @@ export default function EmployeesPage() {
 
   const fetchEmployees = useCallback(() => {
     if (roleName === undefined) return;
-    
+
     dispatch(
       GetAllEmployeesAction({
         pageNumber: pagination.currentPage - 1,
@@ -245,6 +262,7 @@ export default function EmployeesPage() {
         onResetPassword={handleResetPassword}
         editingEmployee={editingEmployee}
         roles={rolesList}
+        banks={banks}
       />
     </div>
   );
