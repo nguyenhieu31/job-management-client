@@ -32,6 +32,23 @@ interface EmployeeFormProps {
   banks: any[];
 }
 
+interface EmployeeFormData {
+  code: string;
+  email: string;
+  password?: string; // Optional vì có khi không sửa password
+  fullName: string;
+  dateOfBirth: string;
+  chatId: string;
+  phoneNumber: string;
+  roleId: string;
+  isActive: boolean;
+  isJobAccount: boolean;
+  isVideoAccount: boolean;
+  bankId: number | null; // Đây là dòng quan trọng nhất
+  bankAccountNumber: string;
+  bankAccountName: string;
+}
+
 export function EmployeeForm({
   open,
   onOpenChange,
@@ -46,7 +63,7 @@ export function EmployeeForm({
     name: bank.shortName ? `${bank.shortName} - ${bank.name}` : bank.name,
   })) || [];
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<EmployeeFormData>({
     code: "",
     email: "",
     password: "",
