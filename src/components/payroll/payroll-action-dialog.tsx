@@ -10,6 +10,8 @@ import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { formatCurrencyVND } from "@/lib/utils";
 import { UpdatePayrollStatusAction } from "@/store/slice/payroll/Payroll";
+import { BankTransaction, resetData } from "@/store/slice/bank-transaction/BankTransaction";
+import { Loader2 } from "lucide-react";
 
 interface PayrollActionDialogProps {
   payroll: EmployeePayroll;
@@ -31,6 +33,10 @@ export default function PayrollActionDialog({
   const [isLoading, setIsLoading] = useState(false);
   const [bankInfo, setBankInfo] = useState<any>(null);
   const loading = useAppSelector((state) => state.payroll.loading);
+  const { data, loading: bankTransferLoading }: {
+    data: BankTransaction | null;
+    loading: boolean;
+  } = useAppSelector((state) => state.bankTransaction);
 
   useEffect(() => {
     if (banks) {
@@ -39,6 +45,27 @@ export default function PayrollActionDialog({
     }
 
   }, [banks]);
+
+  useEffect(() => {
+    if (data && data.sepayId && !bankTransferLoading) {
+      const handleCallUpdatePayrollStatus = async () => {
+        try {
+          await dispatch(UpdatePayrollStatusAction({
+            payrollId: payroll.id,
+            status: "PAID",
+            sepayId: Number(data.sepayId)
+          }));
+          toast.success(`Chuyển khoản thành công với nội dung: ${data.content}`);
+          onOpenChange(false, true);
+          dispatch(resetData());
+        } catch (error) {
+          toast.error("Cập nhật trạng thái bảng lương thất bại!");
+        }
+      };
+
+      handleCallUpdatePayrollStatus();
+    }
+  }, [bankTransferLoading, data, dispatch, onOpenChange]);
 
   const handleConfirm = async () => {
     try {
@@ -68,6 +95,7 @@ export default function PayrollActionDialog({
 
   const handleCancel = () => {
     setNotes("");
+    dispatch(resetData());
     onOpenChange(false);
   };
 
@@ -134,7 +162,7 @@ export default function PayrollActionDialog({
                   <div className="flex flex-col items-center gap-3 p-4 border rounded-xl bg-slate-50 shadow-sm w-full">
                     <div className="bg-white p-2 rounded-lg shadow-sm">
                       <img
-                        src={`https://img.vietqr.io/image/${bankInfo.bin}-${payroll.employee.bankAccountNumber}-compact2.png?amount=${payroll.totalAmount}&addInfo=${encodeURIComponent('Thanh toan luong ky ' + payroll.payrollPeriod)}&accountName=${encodeURIComponent(payroll.employee.bankAccountName || '')}`}
+                        src={`https://img.vietqr.io/image/${bankInfo.bin}-${payroll.employee.bankAccountNumber}-compact2.png?amount=${payroll.totalAmount}&addInfo=${encodeURIComponent(payroll.employee.fullName.toUpperCase() + ' ' + payroll.payrollPeriod + ' ' + `MSNV${payroll.employee.code}`)}&accountName=${encodeURIComponent(payroll.employee.bankAccountName || '')}`}
                         alt="VietQR"
                         className="w-64 h-64 object-contain"
                       />
@@ -145,6 +173,12 @@ export default function PayrollActionDialog({
                       <p><span className="text-gray-500">Chủ tài khoản:</span> <span className="font-medium">{payroll.employee.bankAccountName}</span></p>
                       <p><span className="text-gray-500">Số tiền:</span> <span className="font-semibold text-blue-600">{formatCurrencyVND(payroll.totalAmount)}</span></p>
                     </div>
+                    {bankTransferLoading && (
+                      <div className="flex items-center mt-2">
+                        <Loader2 className="animate-spin text-blue-500 mr-2" />
+                        <span className="text-blue-500 font-medium">Không được thoát khi hệ thống đang xử lý chuyển khoản!</span>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="flex items-center justify-center p-8 border rounded-lg w-full">
@@ -162,23 +196,28 @@ export default function PayrollActionDialog({
           )}
         </div>
 
+
         <DialogFooter>
-          <Button variant="outline" onClick={handleCancel} disabled={isLoading}>
+          <Button variant="outline" onClick={handleCancel} disabled={isLoading || loading}>
             Hủy
           </Button>
-          <Button
-            onClick={handleConfirm}
-            disabled={isLoading || loading}
-            className={
-              actionType === "reject"
-                ? "bg-red-600 hover:bg-red-700"
-                : actionType === "approve"
-                  ? "bg-green-600 hover:bg-green-700"
-                  : "bg-blue-600 hover:bg-blue-700"
-            }
-          >
-            {isLoading || loading ? "Đang xử lý..." : getButtonLabel()}
-          </Button>
+          {
+            actionType !== 'pay' && (
+              <Button
+                onClick={handleConfirm}
+                disabled={isLoading || loading}
+                className={
+                  actionType === "reject"
+                    ? "bg-red-600 hover:bg-red-700"
+                    : actionType === "approve"
+                      ? "bg-green-600 hover:bg-green-700"
+                      : "bg-blue-600 hover:bg-blue-700"
+                }
+              >
+                {isLoading || loading ? "Đang xử lý..." : getButtonLabel()}
+              </Button>
+            )
+          }
         </DialogFooter>
       </DialogContent>
     </Dialog>

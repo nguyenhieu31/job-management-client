@@ -15,6 +15,9 @@ import { useState } from "react";
 import PayrollDetailDialog from "./payroll-detail-dialog";
 import PayrollActionDialog from "./payroll-action-dialog";
 import { formatCurrencyVND } from "@/lib/utils";
+import { toast } from "react-toastify";
+import { useAppDispatch } from "@/store/store";
+import { updateStateLoading } from "@/store/slice/bank-transaction/BankTransaction";
 
 interface PayrollTableProps {
   payrolls: EmployeePayroll[];
@@ -23,6 +26,7 @@ interface PayrollTableProps {
 }
 
 export default function PayrollTable({ payrolls, onRefresh, banks }: PayrollTableProps) {
+  const dispatch = useAppDispatch();
   const [selectedPayroll, setSelectedPayroll] = useState<EmployeePayroll | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [actionDialogOpen, setActionDialogOpen] = useState(false);
@@ -49,6 +53,13 @@ export default function PayrollTable({ payrolls, onRefresh, banks }: PayrollTabl
   };
 
   const handleAction = (payroll: EmployeePayroll, type: "approve" | "pay") => {
+    if (type === "pay") {
+      if (!payroll.employee.bankId || !payroll.employee.bankAccountNumber) {
+        toast.error("Nhân viên chưa có thông tin ngân hàng");
+        return;
+      }
+      dispatch(updateStateLoading(true));
+    }
     setSelectedPayroll(payroll);
     setActionType(type);
     setActionDialogOpen(true);
