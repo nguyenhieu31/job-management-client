@@ -57,10 +57,10 @@ export const GetPayrollByEmployeeAction = createAsyncThunk<
 
 export const UpdatePayrollStatusAction = createAsyncThunk<
   EmployeePayroll,
-  { payrollId: number; status: string }
+  { payrollId: number; status: string, sepayId?: number }
 >(
   "UpdatePayrollStatusAction",
-  async (data: { payrollId: number; status: string }) => {
+  async (data: { payrollId: number; status: string, sepayId?: number }) => {
     try {
       const response = await updatePayrollStatus(data);
       return response.data as EmployeePayroll;
@@ -82,7 +82,7 @@ const payrollSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-      builder
+    builder
       .addCase(GetAllPayrollByPeriodAction.pending, (state) => {
         state.loading = true;
       })

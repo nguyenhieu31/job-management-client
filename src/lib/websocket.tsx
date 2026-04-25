@@ -8,12 +8,13 @@ import { toast } from 'react-toastify';
 import { addNotificationLocal } from '@/store/slice/notification/Notification';
 import { createJobRealTime, deleteJobByIdRealTime, deleteMultipleJobsRealTime, updateJob, updatePaymentEmployeeMultipleJobsRealTime } from '@/store/slice/jobs/Jobs';
 import { createVideoRealTime, deleteMultipleVideosRealTime, deleteVideoByIdRealTime, updatePaymentEmployeeMultipleVideosRealTime, updateVideo } from '@/store/slice/videos/Videos';
+import { updateData, updateStateLoading } from '@/store/slice/bank-transaction/BankTransaction';
 let stompClient: Client;
 // const websocketUrl = "https://clientportal24h.com/api/v1/ws";
 const websocketUrl = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:8086/api/v1/ws';
 export const WebsocketConnection: React.FC = () => {
     const dispatch = useAppDispatch();
-    const {email, isLoginned } = useAppSelector((state) => state.authenticate);
+    const { email, isLoginned } = useAppSelector((state) => state.authenticate);
     useEffect(() => {
         const token = JsCookie.get('accessToken');
         if (!token || !email || !isLoginned) {
@@ -23,7 +24,7 @@ export const WebsocketConnection: React.FC = () => {
         }
 
         stompClient = new Client({
-            webSocketFactory: () => new SockJS(websocketUrl, null, { 
+            webSocketFactory: () => new SockJS(websocketUrl, null, {
                 transports: ['websocket', 'xhr-streaming', 'xhr-polling']
             }),
             connectHeaders: {
@@ -122,6 +123,15 @@ export const WebsocketConnection: React.FC = () => {
                 const data = JSON.parse(message.body);
                 console.log('Received video response update payment employee status:', data);
                 dispatch(updatePaymentEmployeeMultipleVideosRealTime(data));
+            });
+
+            stompClient?.subscribe(`/user/${email}/queue/update-status-bank-transfer-sepay`, (message) => {
+                const data = JSON.parse(message.body);
+                console.log('Received update status bank transfer sepay:', data);
+                Promise.all([
+                    dispatch(updateData(data)),
+                    dispatch(updateStateLoading(false))
+                ])
             });
         };
 

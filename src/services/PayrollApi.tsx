@@ -13,16 +13,16 @@ export const getAllPayrollByPeriod = async (period: string) => {
 
 export const getPayrollByPeriodAndEmployee = async () => {
   try {
-      const res = await axiosInstance.get(`/admin/payroll/employee`);
-      return res as unknown as ApiResponse<EmployeePayroll[]>;
+    const res = await axiosInstance.get(`/admin/payroll/employee`);
+    return res as unknown as ApiResponse<EmployeePayroll[]>;
   } catch (err: any) {
     throw new Error(err.message);
   }
 };
 
-export const updatePayrollStatus = async (data: {payrollId: number; status: string;}) => {
+export const updatePayrollStatus = async (data: { payrollId: number; status: string; sepayId?: number }) => {
   try {
-    const res = await axiosInstance.put(`/admin/payroll/update-status/${data.payrollId}?status=${data.status}`);
+    const res = await axiosInstance.put(`/admin/payroll/update-status/${data.payrollId}?status=${data.status}${data.sepayId ? `&sepayId=${data.sepayId}` : ''}`);
     return res as unknown as ApiResponse<EmployeePayroll>;
   } catch (err: any) {
     throw new Error(err.message);
