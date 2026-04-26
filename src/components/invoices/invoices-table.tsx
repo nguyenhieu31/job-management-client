@@ -124,6 +124,19 @@ export function InvoicesTable({
     return (
       <div className="flex items-center justify-center gap-2">
         {/* View button - visible for all statuses */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 p-0 flex items-center justify-center"
+          title="Copy link"
+          onClick={() => {
+            toast.success("Đã sao chép link vào clipboard!");
+            navigator.clipboard.writeText(viewCustomLink)
+          }}
+        >
+          <Copy className="h-4 w-4" />
+        </Button>
+
         <Link
           href={viewLink}
           target="_blank"
@@ -132,19 +145,6 @@ export function InvoicesTable({
         >
           <Eye className="h-4 w-4" />
         </Link>
-
-        <Button
-          variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0 flex items-center justify-center"
-            title="Copy link"
-            onClick={() => {
-              toast.success("Đã sao chép link vào clipboard!");
-              navigator.clipboard.writeText(viewCustomLink)
-            }}
-        >
-          <Copy className="h-4 w-4" />
-        </Button>
 
         {/* DRAFT: Show Send button */}
         {status === "DRAFT" && (
