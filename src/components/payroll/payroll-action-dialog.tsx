@@ -162,7 +162,7 @@ export default function PayrollActionDialog({
                   <div className="flex flex-col items-center gap-3 p-4 border rounded-xl bg-slate-50 shadow-sm w-full">
                     <div className="bg-white p-2 rounded-lg shadow-sm">
                       <img
-                        src={`https://img.vietqr.io/image/${bankInfo.bin}-${payroll.employee.bankAccountNumber}-compact2.png?amount=${payroll.totalAmount}&addInfo=${encodeURIComponent(payroll.employee.fullName.toUpperCase() + ' ' + payroll.payrollPeriod + ' ' + `MSNV${payroll.employee.code}`)}&accountName=${encodeURIComponent(payroll.employee.bankAccountName || '')}`}
+                        src={`https://img.vietqr.io/image/${bankInfo.bin}-${payroll.employee.bankAccountNumber}-compact2.png?amount=${payroll.totalAmount}&addInfo=${'SEVQR ' + encodeURIComponent(payroll.employee.fullName.toUpperCase() + ' ' + payroll.payrollPeriod + ' ' + `MSNV${payroll.employee.code}`)}&accountName=${encodeURIComponent(payroll.employee.bankAccountName || '')}`}
                         alt="VietQR"
                         className="w-64 h-64 object-contain"
                       />
