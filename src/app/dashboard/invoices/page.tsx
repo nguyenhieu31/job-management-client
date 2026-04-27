@@ -137,31 +137,27 @@ export default function InvoicesPage() {
 
   const handleSendInvoice = async (invoice: InvoiceResponse) => {
     console.log("Send invoice:", invoice);
-    await Promise.all([
-      dispatch(SendInvoiceAction(invoice.invoiceId)),
-      dispatch(
+    await dispatch(SendInvoiceAction(invoice.invoiceId)),
+      await dispatch(
         GetAllInvoicesAction({
           pageNumber: currentPage - 1,
           pageSize,
           invoiceStatus: selectedStatus,
         })
-      ),
-    ]);
+      );
   };
 
   const handleCancelInvoice = async (invoice: InvoiceResponse) => {
     console.log("Cancel invoice:", invoice);
-    await Promise.all([
-      dispatch(CancelInvoiceAction(invoice.invoiceId)),
-      dispatch(GetCustomerJobSummaryAction()),
-      dispatch(
-        GetAllInvoicesAction({
-          pageNumber: currentPage - 1,
-          pageSize,
-          invoiceStatus: selectedStatus,
-        })
-      ),
-    ]);
+    await dispatch(CancelInvoiceAction(invoice.invoiceId));
+    await dispatch(GetCustomerJobSummaryAction());
+    await dispatch(
+      GetAllInvoicesAction({
+        pageNumber: currentPage - 1,
+        pageSize,
+        invoiceStatus: selectedStatus,
+      })
+    );
   };
 
   if (loading && customerJobSummary.length === 0) {
