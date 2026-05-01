@@ -83,6 +83,7 @@ export default function PayrollActionDialog({
           status: "PAID"
         }));
         toast.success("Bảng lương đã được đánh dấu là đã thanh toán");
+        dispatch(resetData());
       }
       setNotes("");
       onOpenChange(false, true);
@@ -201,7 +202,7 @@ export default function PayrollActionDialog({
           <Button variant="outline" onClick={handleCancel} disabled={isLoading || loading}>
             Hủy
           </Button>
-          {
+          {/* {
             actionType !== 'pay' && (
               <Button
                 onClick={handleConfirm}
@@ -217,7 +218,20 @@ export default function PayrollActionDialog({
                 {isLoading || loading ? "Đang xử lý..." : getButtonLabel()}
               </Button>
             )
-          }
+          } */}
+          <Button
+            onClick={handleConfirm}
+            disabled={isLoading || loading}
+            className={
+              actionType === "reject"
+                ? "bg-red-600 hover:bg-red-700"
+                : actionType === "approve"
+                  ? "bg-green-600 hover:bg-green-700"
+                  : "bg-blue-600 hover:bg-blue-700"
+            }
+          >
+            {isLoading || loading ? "Đang xử lý..." : getButtonLabel()}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
