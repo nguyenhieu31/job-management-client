@@ -54,10 +54,10 @@ export default function PayrollTable({ payrolls, onRefresh, banks }: PayrollTabl
 
   const handleAction = (payroll: EmployeePayroll, type: "approve" | "pay") => {
     if (type === "pay") {
-      if (!payroll.employee.bankId || !payroll.employee.bankAccountNumber) {
-        toast.error("Nhân viên chưa có thông tin ngân hàng");
-        return;
-      }
+      // if (!payroll.employee.bankId || !payroll.employee.bankAccountNumber) {
+      //   toast.error("Nhân viên chưa có thông tin ngân hàng");
+      //   return;
+      // }
       dispatch(updateStateLoading(true));
     }
     setSelectedPayroll(payroll);
