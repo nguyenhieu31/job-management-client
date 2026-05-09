@@ -202,20 +202,116 @@ export const updateGridViewVideo = async (data: {
   }
 };
 
-export const createVideo = async (data: VideoRequest) => {
+// Helper to build FormData from VideoRequest + files
+const buildVideoFormData = (
+  data: VideoRequest,
+  images?: File[],
+  videos?: File[],
+  imageTempUrls?: string[],
+  videoTempUrls?: string[],
+): FormData => {
+  const formData = new FormData();
+
+  if (data.id != null) formData.append("id", String(data.id));
+  if (data.code != null) formData.append("code", data.code);
+  if (data.caseName != null) formData.append("caseName", data.caseName);
+  if (data.fileCount != null) formData.append("fileCount", String(data.fileCount));
+  if (data.filePrice != null) formData.append("filePrice", String(data.filePrice));
+  if (data.payPerFile != null) formData.append("payPerFile", String(data.payPerFile));
+  if (data.inputNumber != null) formData.append("inputNumber", String(data.inputNumber));
+  if (data.outputNumber != null) formData.append("outputNumber", String(data.outputNumber));
+  if (data.editedNumber != null) formData.append("editedNumber", String(data.editedNumber));
+  if (data.paymentStatus != null) formData.append("paymentStatus", data.paymentStatus);
+  if (data.paymentEmployee != null) formData.append("paymentEmployee", data.paymentEmployee);
+  if (data.jobStatus != null) formData.append("jobStatus", data.jobStatus);
+  if (data.inputLink != null) formData.append("inputLink", data.inputLink);
+  if (data.doneLink != null) formData.append("doneLink", data.doneLink);
+  if (data.note != null) formData.append("note", data.note);
+  if (data.employeeNote != null) formData.append("employeeNote", data.employeeNote);
+  if (data.assigneeId != null) formData.append("assigneeId", String(data.assigneeId));
+  if (data.customerId != null) formData.append("customerId", String(data.customerId));
+  if (data.workRequestId != null) formData.append("workRequestId", String(data.workRequestId));
+  if (data.isDeleteAssignee != null) formData.append("isDeleteAssignee", String(data.isDeleteAssignee));
+
+  if (data.fileStoragesNeedRemove && data.fileStoragesNeedRemove.length > 0) {
+    formData.append(
+      "fileStoragesNeedRemove",
+      JSON.stringify(data.fileStoragesNeedRemove),
+    );
+  }
+
+  if (images && images.length > 0) {
+    images.forEach((file) => {
+      formData.append("images", file);
+    });
+  }
+
+  if (videos && videos.length > 0) {
+    videos.forEach((file) => {
+      formData.append("videos", file);
+    });
+  }
+
+  if (imageTempUrls && imageTempUrls.length > 0) {
+    formData.append("imageTempUrls", JSON.stringify(imageTempUrls));
+  }
+
+  if (videoTempUrls && videoTempUrls.length > 0) {
+    formData.append("videoTempUrls", JSON.stringify(videoTempUrls));
+  }
+
+  return formData;
+};
+
+export const createVideo = async (
+  data: VideoRequest,
+  images?: File[],
+  videos?: File[],
+  imageTempUrls?: string[],
+  videoTempUrls?: string[],
+) => {
   try {
-    const res = await axiosInstance.post(`/admin/videos/create`, data);
+    const formData = buildVideoFormData(
+      data,
+      images,
+      videos,
+      imageTempUrls,
+      videoTempUrls,
+    );
+    const res = await axiosInstance.post(`/admin/videos/create`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
     return res as unknown as ApiResponse<VideoResponse>;
   } catch (err: any) {
     throw new Error(err.message);
   }
 };
 
-export const updateVideoFull = async (data: VideoRequest) => {
+export const updateVideoFull = async (
+  data: VideoRequest,
+  images?: File[],
+  videos?: File[],
+  imageTempUrls?: string[],
+  videoTempUrls?: string[],
+) => {
   try {
+    const formData = buildVideoFormData(
+      data,
+      images,
+      videos,
+      imageTempUrls,
+      videoTempUrls,
+    );
     const res = await axiosInstance.put(
       `/admin/videos/update/${data.id}`,
-      data
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      },
     );
     return res as unknown as ApiResponse<VideoResponse>;
   } catch (err: any) {

@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useEffect, useRef, useReducer, memo } from "react";
+import { useEffect, useRef, useReducer, memo, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,7 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import type {
   VideoRequest,
   VideoResponse,
@@ -30,6 +30,7 @@ import type {
 import type { WorkRequestResponse } from "@/types/work-requests";
 import { EmployeeResponse } from "@/types/employees";
 import { CustomerResponse } from "@/types/customers";
+import type { FileStorage } from "@/types/jobs";
 import { formatCurrency, formatCurrencyVND } from "@/lib/utils";
 import SearchableDropdown from "../ui/search-able-dropdown";
 import { filePriceOptions } from "./video-table";
@@ -43,7 +44,11 @@ interface VideoFormProps {
           VideoRequest,
           "id" | "code" | "date" | "totalPrice" | "outputCount" | "linkDone"
         >
-      | VideoRequest
+      | VideoRequest,
+    images?: File[],
+    videos?: File[],
+    imageTempUrls?: string[],
+    videoTempUrls?: string[],
   ) => void;
   editingVideo?: VideoResponse | null;
   customers?: CustomerResponse[];
@@ -64,6 +69,13 @@ export function VideoForm({
   // Use useReducer for re-render trigger
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
+  // State for existing fileStorages from server
+  const [existingFiles, setExistingFiles] = useState<FileStorage[]>([]);
+  // State for files that need to be removed
+  const [removedFileStorages, setRemovedFileStorages] = useState<FileStorage[]>(
+    [],
+  );
+
   // Use refs instead of useState to avoid unnecessary re-renders
   const formRef = useRef({
     caseName: "",
@@ -82,6 +94,8 @@ export function VideoForm({
     customerId: undefined as string | undefined,
     workRequestId: undefined as string | undefined,
     payPerFile: "",
+    images: [] as Array<{ file: File; tempUrl: string }>,
+    videos: [] as Array<{ file: File; tempUrl: string }>,
   });
 
   const isEditingRef = useRef(false);
@@ -100,6 +114,52 @@ export function VideoForm({
     const numericValue = value.replace(/\./g, "");
     return parseInt(numericValue) || 0;
   };
+
+  // Helper function to extract all media URLs from HTML content
+  const extractMediaUrlsFromHtml = useCallback((html: string): string[] => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+    const urls: string[] = [];
+
+    doc.querySelectorAll("img").forEach((img) => {
+      const src = img.getAttribute("src");
+      if (src && !src.startsWith("blob:") && !src.startsWith("data:")) {
+        urls.push(src);
+      }
+    });
+
+    doc.querySelectorAll("video").forEach((video) => {
+      const src = video.getAttribute("src");
+      if (src && !src.startsWith("blob:") && !src.startsWith("data:")) {
+        urls.push(src);
+      }
+    });
+
+    doc.querySelectorAll("video source").forEach((source) => {
+      const src = source.getAttribute("src");
+      if (src && !src.startsWith("blob:") && !src.startsWith("data:")) {
+        urls.push(src);
+      }
+    });
+
+    return urls;
+  }, []);
+
+  // Handler to capture media files from RichTextEditor into formRef
+  const handleMediaUpload = useCallback(
+    async (file: File, type: "image" | "video"): Promise<string> => {
+      const tempUrl = URL.createObjectURL(file);
+
+      if (type === "image") {
+        formRef.current.images = [...formRef.current.images, { file, tempUrl }];
+      } else {
+        formRef.current.videos = [...formRef.current.videos, { file, tempUrl }];
+      }
+
+      return tempUrl;
+    },
+    [],
+  );
 
   useEffect(() => {
     if (editingVideo) {
@@ -128,9 +188,21 @@ export function VideoForm({
         // Format pay per file with thousand separators
         payPerFile: editingVideo.payPerFile
           ? formatVNDInput(String(editingVideo.payPerFile))
-          : ""
+          : "",
+        images: [],
+        videos: [],
       };
       isEditingRef.current = true;
+
+      // Load existing fileStorages
+      if (editingVideo.fileStorages && editingVideo.fileStorages.length > 0) {
+        setExistingFiles(editingVideo.fileStorages);
+      } else {
+        setExistingFiles([]);
+      }
+      formRef.current.images = [];
+      formRef.current.videos = [];
+      setRemovedFileStorages([]);
     } else {
       formRef.current = {
         caseName: "",
@@ -149,8 +221,12 @@ export function VideoForm({
         customerId: undefined,
         workRequestId: undefined,
         payPerFile: "",
+        images: [],
+        videos: [],
       };
       isEditingRef.current = false;
+      setExistingFiles([]);
+      setRemovedFileStorages([]);
     }
     // Trigger re-render to update UI
     forceUpdate();
@@ -184,9 +260,38 @@ export function VideoForm({
     const payPerFileNum = parseVNDInput(payPerFile);
     const fileCountNum = parseInt(fileCount) || 0;
     const outputNum = parseInt(outputNumber) || 0;
-    const customerId_ = customerId || null;
-    const assigneeId_ = assignedEmployee || null;
-    const workReqId_ = workRequestId || null;
+    const customerId_ = customerId ? parseInt(customerId) : null;
+    const assigneeId_ = assignedEmployee ? parseInt(assignedEmployee) : null;
+    const workReqId_ = workRequestId ? parseInt(workRequestId) : null;
+
+    // Filter out media files that were removed from the editor
+    const activeImages = formRef.current.images.filter((img) =>
+      note.includes(img.tempUrl)
+    );
+    const activeVideos = formRef.current.videos.filter((vid) =>
+      note.includes(vid.tempUrl)
+    );
+
+    const imageFiles = activeImages.map((img) => img.file);
+    const videoFiles = activeVideos.map((vid) => vid.file);
+    const imageTempUrls = activeImages.map((img) => img.tempUrl);
+    const videoTempUrls = activeVideos.map((vid) => vid.tempUrl);
+
+    // Detect removed files by comparing HTML with existing fileStorages
+    let filesToRemove: FileStorage[] = [];
+    if (isEditingRef.current && existingFiles.length > 0) {
+      const currentUrls = extractMediaUrlsFromHtml(note);
+
+      filesToRemove = existingFiles.filter((file) => {
+        const fileUrl = file.dropboxLink;
+        const isStillInHtml = currentUrls.some(
+          (url) => url.includes(fileUrl) || fileUrl.includes(url)
+        );
+        return !isStillInHtml;
+      });
+
+      filesToRemove = [...filesToRemove, ...removedFileStorages];
+    }
 
     if (isEditingRef.current && editingVideo) {
       // Check if user cleared assignee or QA fields
@@ -212,26 +317,39 @@ export function VideoForm({
         assigneeId: assigneeId_,
         customerId: customerId_,
         workRequestId: workReqId_,
-        isDeleteAssignee: isDeleteAssignee
-      } as VideoRequest);
+        isDeleteAssignee: isDeleteAssignee,
+        fileStoragesNeedRemove:
+          filesToRemove.length > 0 ? filesToRemove : undefined,
+      } as VideoRequest,
+      imageFiles,
+      videoFiles,
+      imageTempUrls,
+      videoTempUrls,
+      );
     } else {
       // Create: send only required fields, skip id, code, outputNumber, doneLink
-      onSubmit({
-        caseName,
-        inputNumber: inputCount,
-        filePrice: price,
-        payPerFile: payPerFileNum,
-        fileCount: fileCountNum,
-        paymentStatus,
-        paymentEmployee,
-        jobStatus,
-        inputLink: inputLink,
-        note: note || null,
-        employeeNote: employeeNote || null,
-        assigneeId: assigneeId_,
-        customerId: customerId_,
-        workRequestId: workReqId_,
-      } as Omit<VideoRequest, "id" | "code" | "outputNumber" | "doneLink">);
+      onSubmit(
+        {
+          caseName,
+          inputNumber: inputCount,
+          filePrice: price,
+          payPerFile: payPerFileNum,
+          fileCount: fileCountNum,
+          paymentStatus,
+          paymentEmployee,
+          jobStatus,
+          inputLink: inputLink,
+          note: note || null,
+          employeeNote: employeeNote || null,
+          assigneeId: assigneeId_,
+          customerId: customerId_,
+          workRequestId: workReqId_,
+        } as Omit<VideoRequest, "id" | "code" | "outputNumber" | "doneLink">,
+        imageFiles,
+        videoFiles,
+        imageTempUrls,
+        videoTempUrls,
+      );
     }
 
     // Reset form
@@ -251,8 +369,12 @@ export function VideoForm({
       assignedEmployee: undefined,
       customerId: undefined,
       workRequestId: undefined,
-      payPerFile: ""
+      payPerFile: "",
+      images: [],
+      videos: [],
     };
+    setExistingFiles([]);
+    setRemovedFileStorages([]);
     onOpenChange(false);
   };
 
@@ -598,12 +720,12 @@ export function VideoForm({
               {/* Note */}
               <div className="grid gap-2">
                 <Label htmlFor="note">Ghi chú</Label>
-                <Textarea
-                  id="note"
-                  defaultValue={formRef.current.note}
-                  onChange={(e) => (formRef.current.note = e.target.value)}
-                  placeholder="Nhập ghi chú bổ sung"
-                  rows={3}
+                <RichTextEditor
+                  value={formRef.current.note}
+                  onChange={(html) => (formRef.current.note = html)}
+                  placeholder="Nhập ghi chú bổ sung (hỗ trợ định dạng, hình ảnh, video...)"
+                  minHeight="120px"
+                  onMediaUpload={handleMediaUpload}
                 />
               </div>
 

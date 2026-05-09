@@ -136,29 +136,54 @@ export const UpdateGridViewVideoAction = createAsyncThunk(
   }
 );
 
-export const CreateVideoAction = createAsyncThunk(
-  "video/createVideo",
-  async (data: VideoRequest) => {
-    const res = await VideoApi.createVideo(data);
-    if(res.code == 201){
-      toast.success("Tạo video thành công");
-    }
-    return res.data;
+export const CreateVideoAction = createAsyncThunk<
+  VideoResponse,
+  {
+    data: VideoRequest;
+    images?: File[];
+    videos?: File[];
+    imageTempUrls?: string[];
+    videoTempUrls?: string[];
   }
-);
+>("video/createVideo", async ({ data, images, videos, imageTempUrls, videoTempUrls }) => {
+  const res = await VideoApi.createVideo(
+    data,
+    images,
+    videos,
+    imageTempUrls,
+    videoTempUrls,
+  );
+  if (res.code == 201) {
+    toast.success("Tạo video thành công");
+  }
+  return res.data;
+});
 
-export const UpdateVideoFullAction = createAsyncThunk(
-  "video/updateVideoFull",
-  async (data: VideoRequest) => {
-    const res = await VideoApi.updateVideoFull(data);
-    return res.data;
+export const UpdateVideoFullAction = createAsyncThunk<
+  VideoResponse,
+  {
+    data: VideoRequest;
+    images?: File[];
+    videos?: File[];
+    imageTempUrls?: string[];
+    videoTempUrls?: string[];
   }
-);
+>("video/updateVideoFull", async ({ data, images, videos, imageTempUrls, videoTempUrls }) => {
+  const res = await VideoApi.updateVideoFull(
+    data,
+    images,
+    videos,
+    imageTempUrls,
+    videoTempUrls,
+  );
+  return res.data;
+});
 
 export const DeleteVideoByIdAction = createAsyncThunk(
   "video/deleteVideoById",
   async (videoId: number) => {
     const res = await VideoApi.deleteVideoById(videoId);
+    toast.success("Xóa video thành công");
     return res.data;
   }
 );

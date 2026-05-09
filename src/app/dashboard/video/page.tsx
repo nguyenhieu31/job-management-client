@@ -91,9 +91,23 @@ export default function VideosPage() {
   };
 
   const handleAddVideo = useCallback(
-    async (jobData: VideoRequest) => {
+    async (
+      jobData: VideoRequest,
+      images?: File[],
+      videos?: File[],
+      imageTempUrls?: string[],
+      videoTempUrls?: string[],
+    ) => {
       try {
-        await dispatch(CreateVideoAction(jobData));
+        await dispatch(
+          CreateVideoAction({
+            data: jobData,
+            images,
+            videos,
+            imageTempUrls,
+            videoTempUrls,
+          }),
+        );
         setFormOpen(false);
       } catch (error: any) {
         toast.error(error.message || "Lỗi khi tạo video");
@@ -104,9 +118,23 @@ export default function VideosPage() {
   );
 
   const handleUpdateJob = useCallback(
-    async (jobData: VideoRequest) => {
+    async (
+      jobData: VideoRequest,
+      images?: File[],
+      videos?: File[],
+      imageTempUrls?: string[],
+      videoTempUrls?: string[],
+    ) => {
       try {
-        await dispatch(UpdateVideoFullAction(jobData));
+        await dispatch(
+          UpdateVideoFullAction({
+            data: jobData,
+            images,
+            videos,
+            imageTempUrls,
+            videoTempUrls,
+          }),
+        );
         setFormOpen(false);
         setEditingJob(null);
       } catch (error: any) {
@@ -331,11 +359,23 @@ export default function VideosPage() {
       <VideoForm
         open={formOpen}
         onOpenChange={handleFormClose}
-        onSubmit={(jobData) => {
+        onSubmit={(jobData, images, videos, imageTempUrls, videoTempUrls) => {
           if (editingVideo) {
-            handleUpdateJob(jobData);
+            handleUpdateJob(
+              jobData,
+              images,
+              videos,
+              imageTempUrls,
+              videoTempUrls,
+            );
           } else {
-            handleAddVideo(jobData);
+            handleAddVideo(
+              jobData,
+              images,
+              videos,
+              imageTempUrls,
+              videoTempUrls,
+            );
           }
         }}
         editingVideo={editingVideo}
