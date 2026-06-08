@@ -32,6 +32,7 @@ export default function PayrollActionDialog({
   const [notes, setNotes] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [bankInfo, setBankInfo] = useState<any>(null);
+  const [qrVersion, setQrVersion] = useState(0);
   const loading = useAppSelector((state) => state.payroll.loading);
   const { data, loading: bankTransferLoading }: {
     data: BankTransaction | null;
@@ -43,8 +44,8 @@ export default function PayrollActionDialog({
       const bank = banks.find((bank) => bank.id === payroll.employee.bankId);
       setBankInfo(bank);
     }
-
-  }, [banks]);
+    setQrVersion((v) => v + 1);
+  }, [banks, payroll.employee.bankId, payroll.totalAmount]);
 
   useEffect(() => {
     if (data && data.sepayId && !bankTransferLoading) {
@@ -163,7 +164,7 @@ export default function PayrollActionDialog({
                   <div className="flex flex-col items-center gap-3 p-4 border rounded-xl bg-slate-50 shadow-sm w-full">
                     <div className="bg-white p-2 rounded-lg shadow-sm">
                       <img
-                        src={`https://img.vietqr.io/image/${bankInfo.bin}-${payroll.employee.bankAccountNumber}-compact2.png?amount=${payroll.totalAmount}&addInfo=${'SEVQR ' + encodeURIComponent(payroll.employee.fullName.toUpperCase() + ' ' + payroll.payrollPeriod + ' ' + `MSNV${payroll.employee.code}`)}&accountName=${encodeURIComponent(payroll.employee.bankAccountName || '')}`}
+                        src={`https://img.vietqr.io/image/${bankInfo.bin}-${payroll.employee.bankAccountNumber}-compact2.png?amount=${payroll.totalAmount}&addInfo=${'SEVQR ' + encodeURIComponent(payroll.employee.fullName.toUpperCase() + ' ' + payroll.payrollPeriod + ' ' + `MSNV${payroll.employee.code}`)}&accountName=${encodeURIComponent(payroll.employee.bankAccountName || '')}&v=${qrVersion}`}
                         alt="VietQR"
                         className="w-64 h-64 object-contain"
                       />
