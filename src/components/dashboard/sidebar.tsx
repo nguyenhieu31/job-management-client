@@ -24,6 +24,7 @@ const navigation = [
   { name: "Bảng Lương Của Tôi", href: "/dashboard/my-payroll", icon: Banknote },
   // { name: "Cấu Hình Thư Mục", href: "/dashboard/settings", icon: Folder },
   { name: "Thay Đổi Mật Khẩu", href: "/dashboard/change-password", icon: Lock },
+  { name: "Dịch Vụ", href: "/dashboard/order-service", icon: Briefcase },
 ]
 
 export function Sidebar() {
@@ -32,25 +33,33 @@ export function Sidebar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const {email, fullName, roleName} = useAppSelector((state) => state.authenticate);
 
-  // Filter navigation based on role
-  // Default to employee/QA view if roleName is not loaded yet (for security)
-  const filteredNavigation = !roleName || roleName === 'EMPLOYEE' || roleName === 'QA' || roleName === 'SPECIAL'
-    ? navigation.filter(item => 
-        item.href === '/dashboard/job' || 
-        item.href === '/dashboard/video' ||
-        item.href === '/dashboard/my-payroll' ||
-        item.href === '/dashboard/change-password'
-      )
-    : roleName === 'MANAGER'
-    ? navigation.filter(item => item.href !== '/dashboard/my-payroll')
-    : roleName === 'SALER'
-    ? navigation.filter(item => 
-        item.href === '/dashboard/job' || 
-        item.href === '/dashboard/video' ||
-        item.href === '/dashboard/customers' ||
-        item.href === '/dashboard/change-password'
-      )
-    : navigation;
+  let filteredNavigation;
+  if(roleName === 'CUSTOMER'){
+    filteredNavigation = navigation.filter(item =>
+      item.href === '/dashboard/order-service'
+    );
+  }else{
+    // Filter navigation based on role
+    // Default to employee/QA view if roleName is not loaded yet (for security)
+    filteredNavigation = !roleName || roleName === 'EMPLOYEE' || roleName === 'QA' || roleName === 'SPECIAL'
+      ? navigation.filter(item => 
+          item.href === '/dashboard/job' || 
+          item.href === '/dashboard/video' ||
+          item.href === '/dashboard/my-payroll' ||
+          item.href === '/dashboard/change-password'
+        )
+      : roleName === 'MANAGER'
+      ? navigation.filter(item => item.href !== '/dashboard/my-payroll')
+      : roleName === 'SALER'
+      ? navigation.filter(item => 
+          item.href === '/dashboard/job' || 
+          item.href === '/dashboard/video' ||
+          item.href === '/dashboard/customers' ||
+          item.href === '/dashboard/change-password'
+        )
+      : navigation;
+  }
+  
 
   const handleClickLogout = async () => {
     const res = await dispatch(LogoutAction());

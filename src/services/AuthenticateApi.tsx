@@ -1,6 +1,19 @@
 import type { ApiResponse } from "@/components/types/ApiResponse";
-import { axiosInstance } from "@/lib/utils/axios-instance";
-import type { LoginRequest, LoginResponse, RegisterRequest, UserInfoResponse } from "@/types/authentication";
+import { axiosInstance, baseUrl } from "@/lib/utils/axios-instance";
+import type { LoginRequest, LoginResponse, RegisterRequest, UserInfoResponse, GoogleAuthResponse } from "@/types/authentication";
+
+export const GoogleAuthRedirectUrl = () => {
+    return `${baseUrl}/oauth2/authorization/google`;
+}
+
+export const GoogleAuthCallbackService = async (code: string) => {
+    try {
+        const res = await axiosInstance.post(`/authenticate/google/callback`, { code });
+        return res as unknown as ApiResponse<GoogleAuthResponse>;
+    } catch (err: any) {
+        throw new Error(err.message);
+    }
+}
 
 export const RegisterAccountService= async (data:RegisterRequest)=>{
     try{

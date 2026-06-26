@@ -21,3 +21,12 @@ export type UserInfoResponse = {
     fullName: string;
     phoneNumber: string;
 }
+
+export type GoogleAuthResponse = {
+    token: string;
+    email: string;
+    fullName: string;
+    phoneNumber: string;
+    roleName: string;
+    isNewUser: boolean;
+}
