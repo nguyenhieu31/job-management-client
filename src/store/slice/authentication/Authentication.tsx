@@ -4,12 +4,13 @@ import {
   type PayloadAction,
 } from "@reduxjs/toolkit";
 import {
-  ActiveAccountService,
-  CheckSessionLoginService,
-  FindEmailExistAPI,
-  LoginService,
-  LogoutService,
+  GoogleAuthCallbackService,
   RegisterAccountService,
+  ActiveAccountService,
+  LoginService,
+  CheckSessionLoginService,
+  LogoutService,
+  FindEmailExistAPI,
   SendUpdatePasswordAPI,
 } from "@/services/AuthenticateApi";
 import type {
@@ -135,6 +136,19 @@ export const SendUpdatePasswordAction = createAsyncThunk<
   }
 );
 
+export const GoogleAuthAction = createAsyncThunk<LoginResponse, { code: string; state: string }>(
+  "GoogleAuthAction",
+  async ({ code, state }) => {
+    try {
+      const response = await GoogleAuthCallbackService(code, state);
+      return response.data as LoginResponse;
+    } catch (err: any) {
+      toast.error("Google authentication failed. Please try again.");
+      throw new Error(err.message);
+    }
+  }
+);
+
 const initialState: InitialValuesStyle = {
   loading: false,
   errorRegister: null,
@@ -184,6 +198,9 @@ const AuthenticateSlice = createSlice({
       .addCase(SendUpdatePasswordAction.pending, (state) => {
         state.loading = true;
       })
+      .addCase(GoogleAuthAction.pending, (state) => {
+        state.loading = true;
+      })
       .addCase(RegisterAccountAction.fulfilled, (state, action) => {
         state.loading = false;
         state.errorRegister = false;
@@ -230,6 +247,17 @@ const AuthenticateSlice = createSlice({
         state.loading = false;
         state.updatePassword = true;
       })
+      .addCase(
+        GoogleAuthAction.fulfilled,
+        (state, action: PayloadAction<LoginResponse>) => {
+          state.loading = false;
+          state.fullName = action.payload.fullName;
+          state.roleName = action.payload.roleName;
+          state.email = action.payload.email;
+          state.phoneNumber = action.payload.phoneNumber;
+          state.isLoginned = true;
+        }
+      )
       .addCase(RegisterAccountAction.rejected, (state, action) => {
         state.loading = false;
         state.errorRegister = true;
@@ -263,6 +291,11 @@ const AuthenticateSlice = createSlice({
         state.updatePassword = false;
         toast.error("Mật khẩu cũ không đúng");
         state.error = action.error.message || "Update password is failed";
+      })
+      .addCase(GoogleAuthAction.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || "Google authentication failed";
+        state.isLoginned = false;
       });
   },
 });
