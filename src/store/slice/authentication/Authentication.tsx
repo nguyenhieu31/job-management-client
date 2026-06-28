@@ -4,20 +4,19 @@ import {
   type PayloadAction,
 } from "@reduxjs/toolkit";
 import {
-  ActiveAccountService,
-  CheckSessionLoginService,
-  FindEmailExistAPI,
-  LoginService,
-  LogoutService,
-  RegisterAccountService,
-  SendUpdatePasswordAPI,
   GoogleAuthCallbackService,
+  RegisterAccountService,
+  ActiveAccountService,
+  LoginService,
+  CheckSessionLoginService,
+  LogoutService,
+  FindEmailExistAPI,
+  SendUpdatePasswordAPI,
 } from "@/services/AuthenticateApi";
 import type {
   LoginRequest,
   LoginResponse,
   RegisterRequest,
-  GoogleAuthResponse,
 } from "@/types/authentication";
 import { toast } from "react-toastify";
 
@@ -137,18 +136,12 @@ export const SendUpdatePasswordAction = createAsyncThunk<
   }
 );
 
-export const GoogleAuthAction = createAsyncThunk<LoginResponse, string>(
+export const GoogleAuthAction = createAsyncThunk<LoginResponse, { code: string; state: string }>(
   "GoogleAuthAction",
-  async (code: string) => {
+  async ({ code, state }) => {
     try {
-      const response = await GoogleAuthCallbackService(code);
-      const data = response.data as GoogleAuthResponse;
-      return {
-        fullName: data.fullName,
-        roleName: data.roleName,
-        email: data.email,
-        phoneNumber: data.phoneNumber,
-      } as LoginResponse;
+      const response = await GoogleAuthCallbackService(code, state);
+      return response.data as LoginResponse;
     } catch (err: any) {
       toast.error("Google authentication failed. Please try again.");
       throw new Error(err.message);

@@ -11,8 +11,8 @@ import { Card } from "@/components/ui/card"
 import { Briefcase, ArrowRight, Mail, Lock, Eye, EyeOff } from "lucide-react"
 import { useAppDispatch } from "@/store/store"
 import { LoginAccountAction } from "@/store/slice/authentication/Authentication"
-import { GoogleAuthRedirectUrl } from "@/services/AuthenticateApi"
 import { LoginResponse } from "@/types/authentication"
+import { RedirectToGoogle } from "@/services/AuthenticateApi"
 import useRouter from "@/hooks/use-router"
 import { toast } from "react-toastify"
 
@@ -28,26 +28,27 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    console.log("Logging in with:", { email, password })
     try{
       const payload = await dispatch(LoginAccountAction({ email, password }));
       const response = payload.payload as LoginResponse;
       if(response){
         router.push("/dashboard/job");
       }
-      console.log("Login response:", response);
     }catch(err:any){
         toast.error(err.message?err.message:"Have error when try login account. Please contact hotline xxx for consulting support.");
-        setIsLoading(false);
     }finally{
         setIsLoading(false);
-        return;
     }
   }
 
-  const handleGoogleLogin = () => {
-    setGoogleLoading(true)
-    window.location.href = GoogleAuthRedirectUrl()
+  const handleGoogleLogin = async () => {
+    setGoogleLoading(true);
+    try {
+      await RedirectToGoogle("login");
+    } catch (err: any) {
+      toast.error("Failed to redirect to Google login");
+      setGoogleLoading(false);
+    }
   }
 
   return (
