@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 interface RadioOption {
   value: string;
   label: string;
+  price?: number;
 }
 
 interface RadioGroupFieldProps {
@@ -67,6 +68,11 @@ export function RadioGroupField({
               className="sr-only"
             />
             <span className="text-sm">{option.label}</span>
+            {option.price != null && (
+              <span className="ml-auto text-xs text-muted-foreground">
+                +{option.price.toLocaleString("vi-VN")}₫
+              </span>
+            )}
           </label>
         ))}
       </div>

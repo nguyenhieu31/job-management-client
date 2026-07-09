@@ -2,11 +2,24 @@
 
 import { AddServiceForm } from "@/components/services/add-service-form";
 import { toast } from "react-toastify";
-import type { AddServiceFormState } from "@/types/services";
+import {
+  computeEstimatedPrice,
+  type AddServiceFormState,
+} from "@/types/services";
+import type { CreateOrderRequestBody } from "@/types/orders";
 
 export default function OrderServicePage() {
   const handleSubmit = (state: AddServiceFormState) => {
-    console.log("Order submitted:", state);
+    const estimatedPrice = computeEstimatedPrice(state);
+    const body: CreateOrderRequestBody = {
+      customerName: state.customerName,
+      customerEmail: state.customerEmail,
+      customerPhone: state.customerPhone || "unspecified",
+      orderNotes: state.orderNotes,
+      configuration: JSON.parse(JSON.stringify(state)),
+      estimatedPrice,
+    };
+    console.log("Order submitted:", body);
     toast.success("Đơn hàng đã được gửi thành công!");
   };
 
