@@ -10,7 +10,7 @@ export async function proxy(req: NextRequest) {
   // Nếu đang ở trang login và đã có token → redirect dashboard
   if (pathname.startsWith("/auth/login")) {
     if (token || sessionId) {
-      return NextResponse.redirect(new URL("/dashboard/job", req.url));
+      return NextResponse.redirect(new URL("/dashboard", req.url));
     }
     return NextResponse.next();
   }
@@ -26,7 +26,7 @@ export async function proxy(req: NextRequest) {
   // Root path
   if (pathname === "/") {
     if (token || sessionId) {
-      return NextResponse.redirect(new URL("/dashboard/job", req.url));
+      return NextResponse.redirect(new URL("/dashboard", req.url));
     }
     return NextResponse.redirect(new URL("/auth/login", req.url));
   }

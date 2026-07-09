@@ -33,6 +33,9 @@ interface ServiceDetailsStepProps {
   ) => void;
   errors: Partial<Record<keyof AddServiceFormState, string>>;
   onMusicFileChange: (files: UploadedFile[]) => void;
+  attachmentFiles: UploadedFile[];
+  onAttachmentFilesChange: (files: UploadedFile[]) => void;
+  disableCustomerFields?: boolean;
 }
 
 export function ServiceDetailsStep({
@@ -40,6 +43,9 @@ export function ServiceDetailsStep({
   onChange,
   errors,
   onMusicFileChange,
+  attachmentFiles,
+  onAttachmentFilesChange,
+  disableCustomerFields,
 }: ServiceDetailsStepProps) {
   const hasVideo = isVideoServiceSelected(state.selectedServices);
   const hasVirtualStaging = isVirtualStagingSelected(state.selectedServices);
@@ -59,6 +65,7 @@ export function ServiceDetailsStep({
               placeholder="Nguyễn Văn A"
               value={state.customerName}
               onChange={(e) => onChange("customerName", e.target.value)}
+              readOnly={disableCustomerFields}
               className={errors.customerName ? "border-destructive" : ""}
             />
             {errors.customerName && (
@@ -75,10 +82,16 @@ export function ServiceDetailsStep({
               placeholder="example@email.com"
               value={state.customerEmail}
               onChange={(e) => onChange("customerEmail", e.target.value)}
+              readOnly={disableCustomerFields}
               className={errors.customerEmail ? "border-destructive" : ""}
             />
             {errors.customerEmail && (
               <p className="text-xs text-destructive">{errors.customerEmail}</p>
+            )}
+            {disableCustomerFields && (
+              <p className="text-xs text-muted-foreground">
+                Đã được điền tự động từ tài khoản của bạn.
+              </p>
             )}
           </div>
           <div className="space-y-2">
@@ -90,17 +103,17 @@ export function ServiceDetailsStep({
               onChange={(e) => onChange("customerPhone", e.target.value)}
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="orderNotes">Ghi chú đơn hàng</Label>
-            <Input
-              id="orderNotes"
-              placeholder="Yêu cầu đặc biệt khác..."
-              value={state.orderNotes}
-              onChange={(e) => onChange("orderNotes", e.target.value)}
-            />
-          </div>
         </div>
       </section>
+
+      <TextareaField
+        id="orderNotes"
+        label="Ghi chú đơn hàng"
+        placeholder="Yêu cầu đặc biệt khác..."
+        value={state.orderNotes}
+        onChange={(v) => onChange("orderNotes", v)}
+        rows={4}
+      />
 
       <Separator />
 
@@ -398,8 +411,8 @@ export function ServiceDetailsStep({
           googleDriveLink={state.googleDriveLink}
           wetransferLink={state.wetransferLink}
           onLinkChange={onChange}
-          files={[]}
-          onFilesChange={() => {}}
+          files={attachmentFiles}
+          onFilesChange={onAttachmentFilesChange}
           error={errors.uploadMethods}
         />
       </section>

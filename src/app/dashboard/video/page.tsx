@@ -22,6 +22,7 @@ import {
   GetAllVideosAction,
   GetAllVideosByAssigneeAction,
   GetVideoFromDropboxAction,
+  SearchVideoByConditionsAction,
   updateVideo,
   UpdateVideoFullAction,
   UpdateVideoStatusAction,
@@ -47,6 +48,9 @@ export default function VideosPage() {
     totalItems: 0,
     totalPages: 0,
   });
+
+  // Active filters state for pagination
+  const [activeFilters, setActiveFilters] = useState<any>(null);
 
   // Get user role from Redux store
   const { roleName, email } = useAppSelector((state) => state.authenticate);
@@ -228,51 +232,47 @@ export default function VideosPage() {
     [workRequests],
   );
 
-  // Fetch videos when pagination changes - this handles navigation back to page
+  // Fetch videos when pagination or filters change
   useEffect(() => {
     if (roleName === undefined) return;
 
-    const fetchVideos = () => {
-      if (roleName === "MANAGER" || roleName === "SALER") {
-        dispatch(
-          GetAllVideosAction({
-            pageNumber: pagination.currentPage - 1,
-            pageSize: pagination.pageSize,
-            fromDate: getFirstDayOfMonth(),
-          }),
-        );
-      } else if (roleName === "QA") {
-        dispatch(
-          GetAllVideosByAssigneeAction({
-            pageNumber: pagination.currentPage - 1,
-            pageSize: pagination.pageSize,
-            email: email || "",
-            fromDate: getFirstDayOfMonth(),
-          }),
-        );
-      } else if (roleName === "EMPLOYEE" || roleName === "SPECIAL") {
-        dispatch(
-          GetAllVideosByAssigneeAction({
-            pageNumber: pagination.currentPage - 1,
-            pageSize: pagination.pageSize,
-            email: email || "",
-            fromDate: getFirstDayOfMonth(),
-          }),
-        );
-      }
-    };
+    if (activeFilters) {
+      dispatch(SearchVideoByConditionsAction({
+        ...activeFilters,
+        pageNumber: pagination.currentPage - 1,
+        pageSize: pagination.pageSize,
+      }));
+      return;
+    }
 
-    // Initial fetch
-    fetchVideos();
-
-    // Set up interval to fetch every 5 minutes
-    // const intervalId = setInterval(() => {
-    //   fetchVideos();
-    // }, 300000);
-
-    // // Cleanup interval on unmount or when dependencies change
-    // return () => clearInterval(intervalId);
-  }, [pagination.currentPage, pagination.pageSize, roleName, email, dispatch]);
+    if (roleName === "MANAGER" || roleName === "SALER") {
+      dispatch(
+        GetAllVideosAction({
+          pageNumber: pagination.currentPage - 1,
+          pageSize: pagination.pageSize,
+          fromDate: getFirstDayOfMonth(),
+        }),
+      );
+    } else if (roleName === "QA") {
+      dispatch(
+        GetAllVideosByAssigneeAction({
+          pageNumber: pagination.currentPage - 1,
+          pageSize: pagination.pageSize,
+          email: email || "",
+          fromDate: getFirstDayOfMonth(),
+        }),
+      );
+    } else if (roleName === "EMPLOYEE" || roleName === "SPECIAL") {
+      dispatch(
+        GetAllVideosByAssigneeAction({
+          pageNumber: pagination.currentPage - 1,
+          pageSize: pagination.pageSize,
+          email: email || "",
+          fromDate: getFirstDayOfMonth(),
+        }),
+      );
+    }
+  }, [pagination.currentPage, pagination.pageSize, roleName, email, dispatch, activeFilters]);
 
   // Load related data (employees, work requests, customers) only for Manager on mount
   useEffect(() => {
@@ -327,6 +327,7 @@ export default function VideosPage() {
         onPageChange={handlePageChange}
         employees={employeeList.filter((e) => e.isVideoAccount === true)}
         customers={customerList.filter((c) => c.isVideoAccount === true)}
+        onFiltersChange={setActiveFilters}
       />
 
       {/* Table */}

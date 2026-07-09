@@ -32,7 +32,7 @@ export default function LoginPage() {
       const payload = await dispatch(LoginAccountAction({ email, password }));
       const response = payload.payload as LoginResponse;
       if(response){
-        router.push("/dashboard/job");
+        router.push(response.roleName === "CUSTOMER" ? "/dashboard/order-service" : "/dashboard/job");
       }
     }catch(err:any){
         toast.error(err.message?err.message:"Have error when try login account. Please contact hotline xxx for consulting support.");

@@ -98,7 +98,7 @@ export function Sidebar() {
 
           {/* Navigation */}
           <nav className="flex-1 px-4 py-6 space-y-1">
-            {filteredNavigation.map((item) => {
+            {roleName && filteredNavigation.map((item) => {
               const isActive = pathname === item.href
               const Icon = item.icon
 

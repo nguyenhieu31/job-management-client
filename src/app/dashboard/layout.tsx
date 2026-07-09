@@ -1,20 +1,22 @@
-"use client"
+"use client";
 
-import { Sidebar } from "@/components/dashboard/sidebar"
+import { Sidebar } from "@/components/dashboard/sidebar";
 import { useNotifications } from "@/hooks/use-notifications";
 import { WebsocketConnection } from "@/lib/websocket";
 import { CheckSessionLoginAction } from "@/store/slice/authentication/Authentication";
 import { FetchNotificationsAction } from "@/store/slice/notification/Notification";
-import { useAppDispatch } from "@/store/store";
+import { useAppDispatch, useAppSelector } from "@/store/store";
 import { useEffect, useRef } from "react";
 
 export default function DashboardLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   const dispatch = useAppDispatch();
   const hasChecked = useRef(false);
+  const { roleName } = useAppSelector((state) => state.authenticate);
+
   useEffect(() => {
     if (!hasChecked.current) {
       hasChecked.current = true;
@@ -25,8 +27,10 @@ export default function DashboardLayout({
   // useNotifications(300000);
 
   useEffect(() => {
-    dispatch(FetchNotificationsAction({ page: 0, size: 10 }));
-  }, [dispatch]);
+    if (roleName && roleName !== "CUSTOMER") {
+      dispatch(FetchNotificationsAction({ page: 0, size: 10 }));
+    }
+  }, [dispatch, roleName]);
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar />
@@ -35,5 +39,5 @@ export default function DashboardLayout({
       </main>
       <WebsocketConnection />
     </div>
-  )
+  );
 }
