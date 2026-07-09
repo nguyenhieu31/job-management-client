@@ -18,7 +18,10 @@ import {
   submitOrderAction,
 } from "@/store/slice/orders/Orders";
 import type { CreateOrderRequestBody, OrderStatus } from "@/types/orders";
-import type { AddServiceFormState } from "@/types/services";
+import {
+  computeEstimatedPrice,
+  type AddServiceFormState,
+} from "@/types/services";
 import { toast } from "react-toastify";
 
 const DEFAULT_PAGE_NUMBER = 0;
@@ -71,10 +74,8 @@ export default function OrderServicePage() {
       customerEmail: state.customerEmail,
       customerPhone,
       orderNotes: state.orderNotes,
-      // Round-trip through JSON to strip any non-serializable DOM event
-      // artifacts before sending the configuration as a multipart text part.
       configuration: JSON.parse(JSON.stringify(state)),
-      estimatedPrice: null,
+      estimatedPrice: computeEstimatedPrice(state),
     };
 
     try {

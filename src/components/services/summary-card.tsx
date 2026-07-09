@@ -8,8 +8,20 @@ import {
   PHOTO_SERVICES,
   VIDEO_SERVICES,
   VIDEO_SERVICE_IDS,
+  VIDEO_DURATION_OPTIONS,
+  VIDEO_STYLE_OPTIONS,
+  ASPECT_RATIO_OPTIONS,
+  MUSIC_OPTIONS,
+  REALTOR_AGENT_OPTIONS,
+  TEXT_CAPTIONS_OPTIONS,
+  TRANSITIONS_OPTIONS,
+  CREATIVE_FREEDOM_OPTIONS,
   isVideoServiceSelected,
+  computeEstimatedPrice,
 } from "@/types/services";
+
+const formatPrice = (price: number) =>
+  `${price.toLocaleString("vi-VN")}₫`;
 
 interface SummaryCardProps {
   state: AddServiceFormState;
@@ -24,6 +36,13 @@ function getServiceLabel(id: string): string {
   return id;
 }
 
+function getServicePrice(id: string): number | undefined {
+  const photo = PHOTO_SERVICES.find((s) => s.id === id);
+  if (photo?.price) return photo.price;
+  const video = VIDEO_SERVICES.find((s) => s.id === id);
+  return video?.price;
+}
+
 function getOptionLabel(
   value: string,
   options: { value: string; label: string }[],
@@ -35,6 +54,7 @@ function getOptionLabel(
 export function SummaryCard({ state, mobile = false }: SummaryCardProps) {
   const [isOpen, setIsOpen] = useState(false);
   const hasVideo = isVideoServiceSelected(state.selectedServices);
+  const estimatedPrice = computeEstimatedPrice(state);
 
   const content = (
     <div className="space-y-4">
@@ -50,6 +70,19 @@ export function SummaryCard({ state, mobile = false }: SummaryCardProps) {
               {state.customerEmail}
             </p>
           )}
+          {state.zaloId && (
+            <p className="text-xs text-muted-foreground">Zalo: {state.zaloId}</p>
+          )}
+          {state.instagramHandle && (
+            <p className="text-xs text-muted-foreground">
+              Instagram: {state.instagramHandle}
+            </p>
+          )}
+          {state.websiteUrl && (
+            <p className="text-xs text-muted-foreground">
+              Website: {state.websiteUrl}
+            </p>
+          )}
         </div>
       )}
 
@@ -60,30 +93,20 @@ export function SummaryCard({ state, mobile = false }: SummaryCardProps) {
             Dịch vụ đã chọn ({state.selectedServices.length})
           </p>
           <ul className="mt-1 space-y-0.5">
-            {state.selectedServices.map((id) => (
-              <li key={id} className="text-sm">
-                {getServiceLabel(id)}
-              </li>
-            ))}
+            {state.selectedServices.map((id) => {
+              const price = getServicePrice(id);
+              return (
+                <li key={id} className="flex items-center justify-between text-sm">
+                  <span>{getServiceLabel(id)}</span>
+                  {price != null && (
+                    <span className="text-xs text-muted-foreground">
+                      +{formatPrice(price)}
+                    </span>
+                  )}
+                </li>
+              );
+            })}
           </ul>
-        </div>
-      )}
-
-      {/* Turnaround */}
-      {state.turnaround && (
-        <div>
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            Thời gian hoàn thành
-          </p>
-          <p className="text-sm mt-0.5">
-            {getOptionLabel(state.turnaround, [
-              { value: "6h", label: "6 giờ" },
-              { value: "12h", label: "12 giờ" },
-              { value: "24h", label: "24 giờ" },
-              { value: "48h", label: "48 giờ" },
-              { value: "custom", label: "Tùy chỉnh" },
-            ])}
-          </p>
         </div>
       )}
 
@@ -94,45 +117,50 @@ export function SummaryCard({ state, mobile = false }: SummaryCardProps) {
             Video Options
           </p>
           <ul className="mt-1 space-y-0.5 text-sm">
+            {state.videoDuration && (
+              <li className="flex items-center justify-between">
+                <span>
+                  Thời lượng:{" "}
+                  {getOptionLabel(state.videoDuration, VIDEO_DURATION_OPTIONS)}
+                </span>
+              </li>
+            )}
             {state.videoStyle && (
-              <li>
-                Style:{" "}
-                {getOptionLabel(state.videoStyle, [
-                  { value: "clean-simple", label: "Clean & Simple" },
-                  { value: "luxury-cinematic", label: "Luxury & Cinematic" },
-                  {
-                    value: "fast-paced-social",
-                    label: "Fast-paced Social Media",
-                  },
-                  {
-                    value: "advertising-marketing",
-                    label: "Advertising / Marketing",
-                  },
-                  {
-                    value: "editor-decides",
-                    label: "Để editor tự quyết định",
-                  },
-                ])}
+              <li className="flex items-center justify-between">
+                <span>
+                  Style:{" "}
+                  {getOptionLabel(state.videoStyle, VIDEO_STYLE_OPTIONS)}
+                </span>
               </li>
             )}
             {state.aspectRatios.length > 0 && (
-              <li>Aspect: {state.aspectRatios.join(", ")}</li>
+              <li>
+                Aspect: {state.aspectRatios.join(", ")}
+              </li>
             )}
             {state.music && (
               <li>
                 Music:{" "}
-                {getOptionLabel(state.music, [
-                  { value: "i-will-provide", label: "Tôi cung cấp nhạc" },
-                  { value: "editor-chooses", label: "Editor chọn nhạc" },
-                  { value: "no-music", label: "Không nhạc" },
-                ])}
+                {getOptionLabel(state.music, MUSIC_OPTIONS)}
               </li>
             )}
+            {state.realtorAgent.length > 0 && (
+              <li>Realtor: {state.realtorAgent.join(", ")}</li>
+            )}
+            {state.textCaptions.length > 0 && (
+              <li>Text: {state.textCaptions.join(", ")}</li>
+            )}
             {state.transitions && (
-              <li>Transitions: {state.transitions}</li>
+              <li>
+                Transitions:{" "}
+                {getOptionLabel(state.transitions, TRANSITIONS_OPTIONS)}
+              </li>
             )}
             {state.creativeFreedom && (
-              <li>Creative freedom: {state.creativeFreedom}</li>
+              <li>
+                Creative freedom:{" "}
+                {getOptionLabel(state.creativeFreedom, CREATIVE_FREEDOM_OPTIONS)}
+              </li>
             )}
           </ul>
         </div>
@@ -155,6 +183,23 @@ export function SummaryCard({ state, mobile = false }: SummaryCardProps) {
                 ]),
               )
               .join(", ")}
+          </p>
+        </div>
+      )}
+
+      {/* Estimated Total */}
+      {estimatedPrice > 0 && (
+        <div className="border-t pt-3">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              Tạm tính
+            </p>
+            <p className="text-sm font-bold text-primary">
+              {formatPrice(estimatedPrice)}
+            </p>
+          </div>
+          <p className="mt-1 text-[10px] text-muted-foreground">
+            Giá ước tính, có thể thay đổi
           </p>
         </div>
       )}
