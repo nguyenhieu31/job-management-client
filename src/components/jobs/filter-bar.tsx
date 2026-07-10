@@ -36,6 +36,7 @@ interface FilterBarProps {
   onPageChange: (page: number) => void;
   employees?: EmployeeResponse[];
   customers?: CustomerInfo[];
+  onFiltersChange?: (filters: any) => void;
 }
 
 export function FilterBar({
@@ -43,6 +44,7 @@ export function FilterBar({
   onPageChange,
   employees,
   customers,
+  onFiltersChange,
 }: FilterBarProps) {
   const dispatch = useAppDispatch();
   const { roleName } = useAppSelector((state) => state.authenticate);
@@ -129,6 +131,7 @@ export function FilterBar({
       selectedEmployeeIds: selectedEmployees ? selectedEmployees.map((e) => e.id) : undefined,
       selectedCustomerIds: selectedCustomers ? selectedCustomers.map((c) => c.id) : undefined,
     };
+    onFiltersChange?.(payload);
     onPageChange(1);
     dispatch(SearchJobByConditionsAction(payload));
   };
@@ -147,6 +150,7 @@ export function FilterBar({
     setSelectedCustomers([]);
     setSearchTerm("");
     setShowSearchResults(false);
+    onFiltersChange?.(null);
     // onPageChange(1);
   };
 

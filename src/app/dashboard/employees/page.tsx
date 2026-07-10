@@ -72,15 +72,13 @@ export default function EmployeesPage() {
     return employees.data;
   }, [employees]);
 
+  // Active filters state for pagination
+  const [activeFilters, setActiveFilters] = useState<{keyword: string} | null>(null);
+
   // Handle filter actions
-  const handleApplyFilters = async () => {
+  const handleApplyFilters = () => {
     setPagination((prev) => ({ ...prev, currentPage: 1 }));
-    const payload = {
-      pageNumber: 0,
-      pageSize: pagination.pageSize,
-      keyword: filters.search,
-    }
-    await dispatch(SearchEmployeesAction(payload));
+    setActiveFilters({ keyword: filters.search });
   };
 
   const handleResetFilters = () => {
@@ -88,8 +86,8 @@ export default function EmployeesPage() {
       search: "",
     };
     setFilters(resetFilters);
+    setActiveFilters(null);
     setPagination((prev) => ({ ...prev, currentPage: 1 }));
-    fetchEmployees();
   };
 
   // Handle pagination actions
@@ -173,13 +171,21 @@ export default function EmployeesPage() {
   const fetchEmployees = useCallback(() => {
     if (roleName === undefined) return;
 
-    dispatch(
-      GetAllEmployeesAction({
+    if (activeFilters) {
+      dispatch(SearchEmployeesAction({
+        ...activeFilters,
         pageNumber: pagination.currentPage - 1,
         pageSize: pagination.pageSize,
-      })
-    );
-  }, [dispatch, pagination.currentPage, pagination.pageSize, roleName]);
+      }));
+    } else {
+      dispatch(
+        GetAllEmployeesAction({
+          pageNumber: pagination.currentPage - 1,
+          pageSize: pagination.pageSize,
+        })
+      );
+    }
+  }, [dispatch, pagination.currentPage, pagination.pageSize, roleName, activeFilters]);
 
   useEffect(() => {
     fetchEmployees();

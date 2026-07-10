@@ -12,6 +12,7 @@ import PayrollSlice from "./slice/payroll/Payroll";
 import PayrollPeriodSlice from "./slice/payroll-period/PayrollPeriod";
 import VideoSlice from "./slice/videos/Videos";
 import BankTransactionSlice from "./slice/bank-transaction/BankTransaction";
+import OrdersSlice from "./slice/orders/Orders";
 import { injectStore } from "@/lib/utils/axios-instance";
 
 export const store = configureStore({
@@ -28,6 +29,7 @@ export const store = configureStore({
         payroll: PayrollSlice,
         payrollPeriod: PayrollPeriodSlice,
         bankTransaction: BankTransactionSlice,
+        order: OrdersSlice,
     }
 });
 

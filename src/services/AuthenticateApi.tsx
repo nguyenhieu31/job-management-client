@@ -1,13 +1,47 @@
 import type { ApiResponse } from "@/components/types/ApiResponse";
-import { axiosInstance } from "@/lib/utils/axios-instance";
+import { axiosInstance, baseUrl } from "@/lib/utils/axios-instance";
 import type { LoginRequest, LoginResponse, RegisterRequest, UserInfoResponse } from "@/types/authentication";
 
-export const RegisterAccountService= async (data:RegisterRequest)=>{
-    try{
-        const res= await axiosInstance.post(`/authenticate/register`,data);
+type GoogleAuthUrlResponse = {
+    url: string;
+    state: string;
+}
+
+export const GetGoogleAuthUrl = async (mode: string) => {
+    try {
+        const res = await axiosInstance.get(`/authenticate/google/url`, {
+            params: { mode }
+        });
+        return res as unknown as ApiResponse<GoogleAuthUrlResponse>;
+    } catch (err: any) {
+        throw new Error(err.message);
+    }
+}
+
+export const RedirectToGoogle = async (mode: string) => {
+    const response = await GetGoogleAuthUrl(mode);
+    const data = response.data as GoogleAuthUrlResponse;
+    if (data.state) {
+        sessionStorage.setItem("googleOAuthState", data.state);
+    }
+    window.location.href = data.url;
+}
+
+export const GoogleAuthCallbackService = async (code: string, state: string) => {
+    try {
+        const res = await axiosInstance.post(`/authenticate/google/callback`, { code, state });
+        return res as unknown as ApiResponse<LoginResponse>;
+    } catch (err: any) {
+        throw new Error(err.message);
+    }
+}
+
+export const RegisterAccountService = async (data: RegisterRequest) => {
+    try {
+        const res = await axiosInstance.post(`/authenticate/register`, data);
         return res as unknown as ApiResponse<string>;
-    }catch(err:any){
-        throw new Error(err.response);
+    } catch (err: any) {
+        throw new Error(err.message);
     }
 }
 

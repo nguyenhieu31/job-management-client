@@ -51,15 +51,13 @@ export default function CustomersPage() {
     return customers.data;
   }, [customers]);
 
+  // Active filters state for pagination
+  const [activeFilters, setActiveFilters] = useState<{keyword: string} | null>(null);
+
   // Handle filter actions
-  const handleApplyFilters = async () => {
+  const handleApplyFilters = () => {
     setPagination((prev) => ({ ...prev, currentPage: 1 }));
-    const payload = {
-      pageNumber: 0,
-      pageSize: pagination.pageSize,
-      keyword: filters.search,
-    }
-    await dispatch(SearchCustomersAction(payload));
+    setActiveFilters({ keyword: filters.search });
   };
 
   const handleResetFilters = () => {
@@ -67,8 +65,8 @@ export default function CustomersPage() {
       search: "",
     };
     setFilters(resetFilters);
+    setActiveFilters(null);
     setPagination((prev) => ({ ...prev, currentPage: 1 }));
-    fetchCustomers();
   };
 
   // Handle pagination actions
@@ -131,14 +129,22 @@ export default function CustomersPage() {
 
   const fetchCustomers = useCallback(() => {
     if (roleName === undefined) return;
-    
-    dispatch(
-      GetAllCustomersAction({
+
+    if (activeFilters) {
+      dispatch(SearchCustomersAction({
+        ...activeFilters,
         pageNumber: pagination.currentPage - 1,
         pageSize: pagination.pageSize,
-      })
-    );
-  }, [dispatch, pagination.currentPage, pagination.pageSize, roleName]);
+      }));
+    } else {
+      dispatch(
+        GetAllCustomersAction({
+          pageNumber: pagination.currentPage - 1,
+          pageSize: pagination.pageSize,
+        })
+      );
+    }
+  }, [dispatch, pagination.currentPage, pagination.pageSize, roleName, activeFilters]);
 
   useEffect(() => {
     fetchCustomers();

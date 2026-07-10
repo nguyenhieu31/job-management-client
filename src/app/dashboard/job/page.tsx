@@ -17,7 +17,7 @@ import type {
 import { useAppDispatch, useAppSelector } from "@/store/store";
 import { toast } from "react-toastify";
 import Loader from "@/components/ui/loader";
-import { CreateJobAction, GetAllJobsAction, GetAllJobsByAssigneeAction, GetAllJobsByQualifiedAssigneeAction, GetJobFromDropboxAction, GetRandomJobAction, updateJob, UpdateJobAction, UpdateJobStatusAction } from "@/store/slice/jobs/Jobs";
+import { CreateJobAction, GetAllJobsAction, GetAllJobsByAssigneeAction, GetAllJobsByQualifiedAssigneeAction, GetJobFromDropboxAction, GetRandomJobAction, SearchJobByConditionsAction, updateJob, UpdateJobAction, UpdateJobStatusAction } from "@/store/slice/jobs/Jobs";
 import { PageResponse } from "@/components/types/Page";
 import { GetAllEmployeesAction } from "@/store/slice/employee/Employee";
 import { EmployeeResponse } from "@/types/employees";
@@ -39,6 +39,9 @@ export default function JobsPage() {
     totalItems: 0,
     totalPages: 0,
   });
+
+  // Active filters state for pagination
+  const [activeFilters, setActiveFilters] = useState<any>(null);
 
   // Get user role from Redux store
   const { roleName, email  } = useAppSelector((state) => state.authenticate);
@@ -203,31 +206,27 @@ export default function JobsPage() {
     [workRequests]
   );
 
-  // Fetch jobs when pagination changes - this handles navigation back to page
+  // Fetch jobs when pagination or filters change
   useEffect(()=>{
     if(roleName === undefined) return;
-    
-    const fetchJobs = () => {
-      if(roleName === "MANAGER" || roleName === "SALER"){
-        dispatch(GetAllJobsAction({pageNumber: pagination.currentPage - 1, pageSize: pagination.pageSize, fromDate: getFirstDayOfMonth()}));
-      }else if(roleName === "QA"){
-        dispatch(GetAllJobsByQualifiedAssigneeAction({pageNumber: pagination.currentPage - 1, pageSize: pagination.pageSize, email: email || "", fromDate: getFirstDayOfMonth()}));
-      }else if(roleName === "EMPLOYEE" || roleName === "SPECIAL"){
-        dispatch(GetAllJobsByAssigneeAction({pageNumber: pagination.currentPage - 1, pageSize: pagination.pageSize, email: email || "", fromDate: getFirstDayOfMonth()}));
-      }
-    };
 
-    // Initial fetch
-    fetchJobs();
-    
-    // Set up interval to fetch every 5 minutes
-    // const intervalId = setInterval(() => {
-    //   fetchJobs();
-    // }, 300000);
-    
-    // // Cleanup interval on unmount or when dependencies change
-    // return () => clearInterval(intervalId);
-  }, [pagination.currentPage, pagination.pageSize, roleName, email, dispatch]);
+    if (activeFilters) {
+      dispatch(SearchJobByConditionsAction({
+        ...activeFilters,
+        pageNumber: pagination.currentPage - 1,
+        pageSize: pagination.pageSize,
+      }));
+      return;
+    }
+
+    if(roleName === "MANAGER" || roleName === "SALER"){
+      dispatch(GetAllJobsAction({pageNumber: pagination.currentPage - 1, pageSize: pagination.pageSize, fromDate: getFirstDayOfMonth()}));
+    }else if(roleName === "QA"){
+      dispatch(GetAllJobsByQualifiedAssigneeAction({pageNumber: pagination.currentPage - 1, pageSize: pagination.pageSize, email: email || "", fromDate: getFirstDayOfMonth()}));
+    }else if(roleName === "EMPLOYEE" || roleName === "SPECIAL"){
+      dispatch(GetAllJobsByAssigneeAction({pageNumber: pagination.currentPage - 1, pageSize: pagination.pageSize, email: email || "", fromDate: getFirstDayOfMonth()}));
+    }
+  }, [pagination.currentPage, pagination.pageSize, roleName, email, dispatch, activeFilters]);
 
   // Load related data (employees, work requests, customers) only for Manager on mount
   useEffect(() => {
@@ -280,6 +279,7 @@ export default function JobsPage() {
         onPageChange={handlePageChange}
         employees={employeeList.filter((e) => e.isJobAccount === true)}
         customers={customerList.filter((c) => c.isJobAccount === true)}
+        onFiltersChange={setActiveFilters}
       />
 
       {/* Table */}

@@ -54,15 +54,13 @@ export default function WorkRequestsPage() {
     return workRequests.data;
   }, [workRequests]);
 
+  // Active filters state for pagination
+  const [activeFilters, setActiveFilters] = useState<{keyword: string} | null>(null);
+
   // Handle filter actions
-  const handleApplyFilters = async () => {
+  const handleApplyFilters = () => {
     setPagination((prev) => ({ ...prev, currentPage: 1 }));
-    const payload = {
-      pageNumber: 0,
-      pageSize: pagination.pageSize,
-      keyword: filters.search,
-    }
-    await dispatch(SearchWorkRequestsAction(payload));
+    setActiveFilters({ keyword: filters.search });
   };
 
   const handleResetFilters = () => {
@@ -70,8 +68,8 @@ export default function WorkRequestsPage() {
       search: "",
     };
     setFilters(resetFilters);
+    setActiveFilters(null);
     setPagination((prev) => ({ ...prev, currentPage: 1 }));
-    fetchWorkRequests();
   };
 
   // Handle pagination actions
@@ -134,14 +132,22 @@ export default function WorkRequestsPage() {
 
   const fetchWorkRequests = useCallback(() => {
     if (roleName === undefined) return;
-    
-    dispatch(
-      GetAllWorkRequestsAction({
+
+    if (activeFilters) {
+      dispatch(SearchWorkRequestsAction({
+        ...activeFilters,
         pageNumber: pagination.currentPage - 1,
         pageSize: pagination.pageSize,
-      })
-    );
-  }, [dispatch, pagination.currentPage, pagination.pageSize, roleName]);
+      }));
+    } else {
+      dispatch(
+        GetAllWorkRequestsAction({
+          pageNumber: pagination.currentPage - 1,
+          pageSize: pagination.pageSize,
+        })
+      );
+    }
+  }, [dispatch, pagination.currentPage, pagination.pageSize, roleName, activeFilters]);
 
   useEffect(() => {
     fetchWorkRequests();
