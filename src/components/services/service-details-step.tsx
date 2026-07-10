@@ -154,15 +154,6 @@ export function ServiceDetailsStep({
         </div>
       </section>
 
-      <TextareaField
-        id="orderNotes"
-        label="Ghi chú đơn hàng"
-        placeholder="Yêu cầu đặc biệt khác..."
-        value={state.orderNotes}
-        onChange={(v) => onChange("orderNotes", v)}
-        rows={4}
-      />
-
       <Separator />
 
       {/* 2. Video Editing Sections (conditional) */}
@@ -467,15 +458,14 @@ export function ServiceDetailsStep({
       <Separator />
 
       {/* 6. Order Notes */}
-      <section className="space-y-2">
-        <Label htmlFor="orderNotes">Ghi chú đơn hàng</Label>
-        <Input
-          id="orderNotes"
-          placeholder="Yêu cầu đặc biệt khác..."
-          value={state.orderNotes}
-          onChange={(e) => onChange("orderNotes", e.target.value)}
-        />
-      </section>
+      <TextareaField
+        id="orderNotes"
+        label="Ghi chú đơn hàng"
+        placeholder="Yêu cầu đặc biệt khác..."
+        value={state.orderNotes}
+        onChange={(v) => onChange("orderNotes", v)}
+        rows={4}
+      />
 
       <Separator />
 
