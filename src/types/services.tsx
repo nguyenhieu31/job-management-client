@@ -3,6 +3,7 @@ export interface ServiceOption {
   label: string;
   subtitle: string;
   price?: number;
+  samplesAvailable?: boolean;
 }
 
 export interface AddServiceFormState {
@@ -169,6 +170,19 @@ export function isVirtualStagingSelected(selectedServices: string[]): boolean {
 }
 
 type PriceLookupOption = { price?: number } & ({ value: string } | { id: string });
+
+export interface SampleImagePair {
+  before: string;
+  after: string;
+}
+
+export const SERVICE_SAMPLE_IMAGES: Record<string, SampleImagePair[]> = {};
+
+export const SERVICE_SAMPLE_ALT: Record<string, { before: string; after: string }> = {};
+
+export function getServiceSampleImages(serviceId: string): SampleImagePair[] {
+  return SERVICE_SAMPLE_IMAGES[serviceId] ?? [];
+}
 
 const getServicePrice = (services: ServiceOption[], id: string): number =>
   services.find((s) => s.id === id)?.price ?? 0;

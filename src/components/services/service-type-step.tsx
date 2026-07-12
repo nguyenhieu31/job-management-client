@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { ServiceCard } from "./service-card";
+import { ServiceSampleDialog } from "./service-sample-dialog";
 import {
   PHOTO_SERVICES,
   VIDEO_SERVICES,
@@ -12,6 +14,10 @@ interface ServiceTypeStepProps {
 }
 
 export function ServiceTypeStep({ value, onChange }: ServiceTypeStepProps) {
+  const [selectedSampleService, setSelectedSampleService] = useState<
+    string | null
+  >(null);
+
   const toggleService = (id: string, checked: boolean) => {
     if (checked) {
       onChange([id]);
@@ -36,6 +42,8 @@ export function ServiceTypeStep({ value, onChange }: ServiceTypeStepProps) {
               subtitle={service.subtitle}
               checked={value.includes(service.id)}
               onChange={toggleService}
+              samplesAvailable={service.samplesAvailable}
+              onViewSamples={setSelectedSampleService}
             />
           ))}
         </div>
@@ -68,6 +76,12 @@ export function ServiceTypeStep({ value, onChange }: ServiceTypeStepProps) {
           <span>dịch vụ đã chọn</span>
         </div>
       )}
+
+      <ServiceSampleDialog
+        serviceId={selectedSampleService}
+        open={selectedSampleService !== null}
+        onClose={() => setSelectedSampleService(null)}
+      />
     </div>
   );
 }
