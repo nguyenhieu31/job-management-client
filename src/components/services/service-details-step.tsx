@@ -25,9 +25,7 @@ import {
   type AddServiceFormState,
 } from "@/types/services";
 import type { UploadedFile } from "@/components/ui/file-upload";
-
-const formatPrice = (price: number) =>
-  `${price.toLocaleString("vi-VN")}₫`;
+import { formatCurrency } from "@/lib/utils";
 
 interface ServiceDetailsStepProps {
   state: AddServiceFormState;
@@ -65,7 +63,7 @@ export function ServiceDetailsStep({
       <span className="text-sm">{option.label}</span>
       {option.price != null && (
         <span className="ml-auto text-xs text-muted-foreground">
-          +{formatPrice(option.price)}
+          +{formatCurrency(option.price)}
         </span>
       )}
     </label>
@@ -431,7 +429,7 @@ export function ServiceDetailsStep({
           <div className="flex items-center justify-between">
             <span className="text-sm font-semibold">Tạm tính:</span>
             <span className="text-lg font-bold text-primary">
-              {formatPrice(estimatedPrice)}
+              {formatCurrency(estimatedPrice)}
             </span>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">

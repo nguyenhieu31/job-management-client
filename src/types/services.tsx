@@ -37,27 +37,28 @@ export interface AddServiceFormState {
 }
 
 export const PHOTO_SERVICES: ServiceOption[] = [
-  { id: "hdr-editing", label: "HDR Editing", subtitle: "Xử lý ảnh HDR chuyên nghiệp" },
-  { id: "flambient-editing", label: "Flambient Editing", subtitle: "Kết hợp flash và ánh sáng tự nhiên" },
-  { id: "day-to-dusk", label: "Day to Dusk", subtitle: "Chuyển ảnh ngày sang hoàng hôn" },
-  { id: "virtual-twilight", label: "Virtual Twilight", subtitle: "Tạo hiệu ứng chạng vạng" },
-  { id: "sky-replacement", label: "Sky Replacement", subtitle: "Thay thế bầu trời" },
-  { id: "grass-replacement", label: "Grass Replacement", subtitle: "Thay thế cỏ" },
-  { id: "item-removal", label: "Item Removal", subtitle: "Xóa vật thể không mong muốn" },
-  { id: "virtual-staging", label: "Virtual Staging", subtitle: "Dàn dựng nội thất ảo" },
-  { id: "virtual-renovation", label: "Virtual Renovation", subtitle: "Cải tạo ảo" },
-  { id: "floor-plan", label: "Floor Plan", subtitle: "Vẽ sơ đồ mặt bằng" },
-  { id: "drone-photo-editing", label: "Drone Photo Editing", subtitle: "Chỉnh sửa ảnh flycam" },
+  { id: "hdr-editing", label: "HDR Editing", subtitle: "Xử lý ảnh HDR chuyên nghiệp", price: 0.75 },
+  { id: "single-photo", label: "Single Photo Editing", subtitle: "Chỉnh sửa ảnh đơn lẻ", price: 0.6 },
+  { id: "flash", label: "Flash Editing", subtitle: "Chỉnh sửa ảnh flash", price: 1 },
+  { id: "flambient-editing", label: "Flambient Editing", subtitle: "Kết hợp flash và ánh sáng tự nhiên", price: 1.2 },
+  { id: "day-to-dusk", label: "Natural Twilight", subtitle: "Hiệu ứng chạng vạng tự nhiên", price: 1 },
+  { id: "virtual-twilight", label: "Virtual Twilight", subtitle: "Tạo hiệu ứng chạng vạng", price: 5 },
+  { id: "virtual-staging", label: "Virtual Staging", subtitle: "Dàn dựng nội thất ảo", price: 13 },
+  { id: "object-removal-1-4", label: "Object Removal: 1–4 Items", subtitle: "Xóa 1–4 vật thể", price: 4 },
+  { id: "object-removal-clear-room", label: "Object Removal: Clear Room", subtitle: "Dọn sạch phòng", price: 10 },
+  { id: "lawn-replacement", label: "Lawn Replacement", subtitle: "Thay thế thảm cỏ", price: 1 },
+  { id: "water-in-pool", label: "Water in Pool", subtitle: "Thêm nước vào hồ bơi", price: 7 },
+  { id: "virtual-renovation", label: "Virtual Renovation", subtitle: "Cải tạo ảo", price: 19 },
 ];
 
 export const VIDEO_SERVICES: ServiceOption[] = [
-  { id: "property-tour-video", label: "Property Tour Video", subtitle: "Video tham quan bất động sản" },
-  { id: "social-media-reel", label: "Social Media Reel", subtitle: "Video ngắn cho mạng xã hội" },
-  { id: "luxury-cinematic-video", label: "Luxury Cinematic Video", subtitle: "Video điện ảnh cao cấp" },
-  { id: "marketing-video", label: "Marketing Video", subtitle: "Video tiếp thị" },
-  { id: "agent-introduction-video", label: "Agent Introduction Video", subtitle: "Video giới thiệu môi giới" },
-  { id: "community-video", label: "Community Video", subtitle: "Video cộng đồng" },
-  { id: "before-after-video", label: "Before & After Video", subtitle: "Video trước và sau" },
+  { id: "property-tour-video", label: "Property Tour Video", subtitle: "Video tham quan bất động sản", price: 5 },
+  { id: "social-media-reel", label: "Social Media Reel", subtitle: "Video ngắn cho mạng xã hội", price: 3 },
+  { id: "luxury-cinematic-video", label: "Luxury Cinematic Video", subtitle: "Video điện ảnh cao cấp", price: 15 },
+  { id: "marketing-video", label: "Marketing Video", subtitle: "Video tiếp thị", price: 8 },
+  { id: "agent-introduction-video", label: "Agent Introduction Video", subtitle: "Video giới thiệu môi giới", price: 4 },
+  { id: "community-video", label: "Community Video", subtitle: "Video cộng đồng", price: 6 },
+  { id: "before-after-video", label: "Before & After Video", subtitle: "Video trước và sau", price: 4 },
 ];
 
 export const PHOTO_SERVICE_IDS = PHOTO_SERVICES.map((s) => s.id);
@@ -71,18 +72,18 @@ export const VIDEO_DURATION_OPTIONS = [
 ];
 
 export const VIDEO_STYLE_OPTIONS = [
-  { value: "clean-simple", label: "Clean & Simple", price: 200000 },
-  { value: "luxury-cinematic", label: "Luxury & Cinematic", price: 500000 },
-  { value: "fast-paced-social", label: "Fast-paced Social Media", price: 300000 },
-  { value: "advertising-marketing", label: "Advertising / Marketing", price: 400000 },
+  { value: "clean-simple", label: "Clean & Simple", price: 2 },
+  { value: "luxury-cinematic", label: "Luxury & Cinematic", price: 5 },
+  { value: "fast-paced-social", label: "Fast-paced Social Media", price: 3 },
+  { value: "advertising-marketing", label: "Advertising / Marketing", price: 4 },
   { value: "editor-decides", label: "Để editor tự quyết định" },
 ];
 
 export const ASPECT_RATIO_OPTIONS = [
-  { value: "9:16", label: "Dọc 9:16 (Instagram Reels / TikTok)", price: 50000 },
+  { value: "9:16", label: "Dọc 9:16 (Instagram Reels / TikTok)", price: 0.5 },
   { value: "16:9", label: "Ngang 16:9 (YouTube)" },
-  { value: "1:1", label: "Vuông 1:1", price: 50000 },
-  { value: "both", label: "Cả hai", price: 100000 },
+  { value: "1:1", label: "Vuông 1:1", price: 0.5 },
+  { value: "both", label: "Cả hai", price: 1 },
 ];
 
 export const MUSIC_OPTIONS = [
@@ -92,28 +93,28 @@ export const MUSIC_OPTIONS = [
 ];
 
 export const REALTOR_AGENT_OPTIONS = [
-  { value: "talking-on-camera", label: "Talking agent on camera", price: 300000 },
-  { value: "start-with-agent", label: "Start with agent", price: 150000 },
-  { value: "end-with-agent", label: "End with agent", price: 150000 },
-  { value: "agent-voice-over", label: "Agent voice-over", price: 100000 },
+  { value: "talking-on-camera", label: "Talking agent on camera", price: 3 },
+  { value: "start-with-agent", label: "Start with agent", price: 1.5 },
+  { value: "end-with-agent", label: "End with agent", price: 1.5 },
+  { value: "agent-voice-over", label: "Agent voice-over", price: 1 },
   { value: "no-agent", label: "No agent appearance" },
 ];
 
 export const TEXT_CAPTIONS_OPTIONS = [
-  { value: "captions", label: "Captions", price: 100000 },
-  { value: "property-info", label: "Property information", price: 50000 },
-  { value: "agent-info", label: "Agent information", price: 50000 },
-  { value: "logo", label: "Logo", price: 100000 },
-  { value: "contact-info", label: "Contact information", price: 50000 },
-  { value: "social-media", label: "Social media handles", price: 50000 },
+  { value: "captions", label: "Captions", price: 1 },
+  { value: "property-info", label: "Property information", price: 0.5 },
+  { value: "agent-info", label: "Agent information", price: 0.5 },
+  { value: "logo", label: "Logo", price: 1 },
+  { value: "contact-info", label: "Contact information", price: 0.5 },
+  { value: "social-media", label: "Social media handles", price: 0.5 },
 ];
 
 export const TRANSITIONS_OPTIONS = [
   { value: "minimal", label: "Minimal" },
-  { value: "smooth", label: "Smooth", price: 100000 },
-  { value: "advanced", label: "Advanced", price: 200000 },
-  { value: "speed-ramp", label: "Speed Ramp", price: 200000 },
-  { value: "cinematic", label: "Cinematic effects", price: 300000 },
+  { value: "smooth", label: "Smooth", price: 1 },
+  { value: "advanced", label: "Advanced", price: 2 },
+  { value: "speed-ramp", label: "Speed Ramp", price: 2 },
+  { value: "cinematic", label: "Cinematic effects", price: 3 },
 ];
 
 export const CREATIVE_FREEDOM_OPTIONS = [
@@ -141,12 +142,12 @@ export const CONFIRMATION_OPTIONS = [
 ];
 
 export const VIRTUAL_STAGING_ROOMS = [
-  { value: "living-room", label: "Living Room", price: 200000 },
-  { value: "dining-room", label: "Dining Room", price: 200000 },
-  { value: "bedroom", label: "Bedroom", price: 200000 },
-  { value: "office", label: "Office", price: 200000 },
-  { value: "patio", label: "Patio", price: 250000 },
-  { value: "outdoor-space", label: "Outdoor Space", price: 250000 },
+  { value: "living-room", label: "Living Room", price: 2 },
+  { value: "dining-room", label: "Dining Room", price: 2 },
+  { value: "bedroom", label: "Bedroom", price: 2 },
+  { value: "office", label: "Office", price: 2 },
+  { value: "patio", label: "Patio", price: 2.5 },
+  { value: "outdoor-space", label: "Outdoor Space", price: 2.5 },
 ];
 
 export const VIRTUAL_STAGING_STYLES = [

@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 
 interface RadioOption {
@@ -70,7 +70,7 @@ export function RadioGroupField({
             <span className="text-sm">{option.label}</span>
             {option.price != null && (
               <span className="ml-auto text-xs text-muted-foreground">
-                +{option.price.toLocaleString("vi-VN")}₫
+                +{formatCurrency(option.price)}
               </span>
             )}
           </label>
