@@ -47,6 +47,14 @@ export default function SearchableDropdown({
   );
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // Sync when parent resets/changes value (defaultValue alone only applies on mount)
+  useEffect(() => {
+    setSelectedValue(defaultValue ?? null);
+    if (!defaultValue) {
+      setSearchTerm("");
+    }
+  }, [defaultValue?.id]);
+
   // Đóng dropdown khi click bên ngoài
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

@@ -65,6 +65,7 @@ export default function CustomersPage() {
   const handleResetFilters = () => {
     const resetFilters: CustomerFilters = {
       search: "",
+      assignedSaleId: undefined,
     };
     setFilters(resetFilters);
     setActiveFilters(null);

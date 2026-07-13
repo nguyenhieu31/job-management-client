@@ -53,6 +53,7 @@ export function CustomerFilterBar({
         <div className="space-y-2">
           <label className="text-sm font-medium">Sale Phụ Trách</label>
           <SearchableDropdown
+            key={filters.assignedSaleId ?? "all-sales"}
             options={saleOptions}
             defaultValue={selectedSale}
             onChange={(option) =>
