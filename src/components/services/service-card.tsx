@@ -1,7 +1,9 @@
 "use client";
 
+import { useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { Check, ImageIcon } from "lucide-react";
+import { getServiceSampleImages } from "@/types/services";
 
 interface ServiceCardProps {
   id: string;
@@ -12,6 +14,16 @@ interface ServiceCardProps {
   disabled?: boolean;
   samplesAvailable?: boolean;
   onViewSamples?: (id: string) => void;
+}
+
+function preloadImages(serviceId: string) {
+  const samples = getServiceSampleImages(serviceId);
+  for (const pair of samples) {
+    const img = new Image();
+    img.src = pair.before;
+    const img2 = new Image();
+    img2.src = pair.after;
+  }
 }
 
 export function ServiceCard({
@@ -29,6 +41,10 @@ export function ServiceCard({
     e.preventDefault();
     onViewSamples?.(id);
   };
+
+  const handleHover = useCallback(() => {
+    preloadImages(id);
+  }, [id]);
 
   return (
     <label
@@ -63,6 +79,7 @@ export function ServiceCard({
         <button
           type="button"
           onClick={handleViewSamples}
+          onMouseEnter={handleHover}
           className="mt-1 flex items-center gap-1 text-xs text-primary underline-offset-4 hover:underline"
         >
           <ImageIcon className="h-3 w-3" />
