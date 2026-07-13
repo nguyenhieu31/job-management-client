@@ -38,28 +38,28 @@ export interface AddServiceFormState {
 }
 
 export const PHOTO_SERVICES: ServiceOption[] = [
-  { id: "hdr-editing", label: "HDR Editing", subtitle: "Xử lý ảnh HDR chuyên nghiệp", price: 0.75 },
-  { id: "single-photo", label: "Single Photo Editing", subtitle: "Chỉnh sửa ảnh đơn lẻ", price: 0.6 },
-  { id: "flash", label: "Flash Editing", subtitle: "Chỉnh sửa ảnh flash", price: 1 },
-  { id: "flambient-editing", label: "Flambient Editing", subtitle: "Kết hợp flash và ánh sáng tự nhiên", price: 1.2 },
-  { id: "day-to-dusk", label: "Natural Twilight", subtitle: "Hiệu ứng chạng vạng tự nhiên", price: 1 },
-  { id: "virtual-twilight", label: "Virtual Twilight", subtitle: "Tạo hiệu ứng chạng vạng", price: 5 },
-  { id: "virtual-staging", label: "Virtual Staging", subtitle: "Dàn dựng nội thất ảo", price: 13 },
-  { id: "object-removal-1-4", label: "Object Removal: 1–4 Items", subtitle: "Xóa 1–4 vật thể", price: 4 },
-  { id: "object-removal-clear-room", label: "Object Removal: Clear Room", subtitle: "Dọn sạch phòng", price: 10 },
-  { id: "lawn-replacement", label: "Lawn Replacement", subtitle: "Thay thế thảm cỏ", price: 1 },
-  { id: "water-in-pool", label: "Water in Pool", subtitle: "Thêm nước vào hồ bơi", price: 7 },
-  { id: "virtual-renovation", label: "Virtual Renovation", subtitle: "Cải tạo ảo", price: 19 },
+  { id: "hdr-editing", label: "HDR Editing", subtitle: "Xử lý ảnh HDR chuyên nghiệp", price: 0.75, samplesAvailable: true },
+  { id: "single-photo", label: "Single Photo Editing", subtitle: "Chỉnh sửa ảnh đơn lẻ", price: 0.6, samplesAvailable: true },
+  { id: "flash", label: "Flash Editing", subtitle: "Chỉnh sửa ảnh flash", price: 1, samplesAvailable: true },
+  { id: "flambient-editing", label: "Flambient Editing", subtitle: "Kết hợp flash và ánh sáng tự nhiên", price: 1.2, samplesAvailable: true },
+  { id: "day-to-dusk", label: "Natural Twilight", subtitle: "Hiệu ứng chạng vạng tự nhiên", price: 1, samplesAvailable: true },
+  { id: "virtual-twilight", label: "Virtual Twilight", subtitle: "Tạo hiệu ứng chạng vạng", price: 5, samplesAvailable: true },
+  { id: "virtual-staging", label: "Virtual Staging", subtitle: "Dàn dựng nội thất ảo", price: 13, samplesAvailable: true },
+  { id: "object-removal-1-4", label: "Object Removal: 1–4 Items", subtitle: "Xóa 1–4 vật thể", price: 4, samplesAvailable: true },
+  { id: "object-removal-clear-room", label: "Object Removal: Clear Room", subtitle: "Dọn sạch phòng", price: 10, samplesAvailable: true },
+  { id: "lawn-replacement", label: "Lawn Replacement", subtitle: "Thay thế thảm cỏ", price: 1, samplesAvailable: true },
+  { id: "water-in-pool", label: "Water in Pool", subtitle: "Thêm nước vào hồ bơi", price: 7, samplesAvailable: true },
+  { id: "virtual-renovation", label: "Virtual Renovation", subtitle: "Cải tạo ảo", price: 19, samplesAvailable: true },
 ];
 
 export const VIDEO_SERVICES: ServiceOption[] = [
   { id: "property-tour-video", label: "Property Tour Video", subtitle: "Video tham quan bất động sản", price: 5 },
   { id: "social-media-reel", label: "Social Media Reel", subtitle: "Video ngắn cho mạng xã hội", price: 3 },
   { id: "luxury-cinematic-video", label: "Luxury Cinematic Video", subtitle: "Video điện ảnh cao cấp", price: 15 },
-  { id: "marketing-video", label: "Marketing Video", subtitle: "Video tiếp thị", price: 8 },
+  // { id: "marketing-video", label: "Marketing Video", subtitle: "Video tiếp thị", price: 8 },
   { id: "agent-introduction-video", label: "Agent Introduction Video", subtitle: "Video giới thiệu môi giới", price: 4 },
-  { id: "community-video", label: "Community Video", subtitle: "Video cộng đồng", price: 6 },
-  { id: "before-after-video", label: "Before & After Video", subtitle: "Video trước và sau", price: 4 },
+  // { id: "community-video", label: "Community Video", subtitle: "Video cộng đồng", price: 6 },
+  // { id: "before-after-video", label: "Before & After Video", subtitle: "Video trước và sau", price: 4 },
 ];
 
 export const PHOTO_SERVICE_IDS = PHOTO_SERVICES.map((s) => s.id);
@@ -176,9 +176,99 @@ export interface SampleImagePair {
   after: string;
 }
 
-export const SERVICE_SAMPLE_IMAGES: Record<string, SampleImagePair[]> = {};
+export const SERVICE_SAMPLE_IMAGES: Record<string, SampleImagePair[]> = {
+  "hdr-editing": [
+    {
+      before: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783934253/2025.12.06_ViaDeiMarchetti_00024_exuvpw.jpg",
+      after: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783934269/2025.12.06_VIDSOL-ViaDeiMarchetti_00025_tqppg5.jpg",
+    },
+  ],
+  "single-photo": [
+    {
+      before: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783935136/IMG_5726_gczv9n.jpg",
+      after: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783935146/IMG_5725_nadupl.jpg",
+    },
+  ],
+  "flash": [
+    {
+      before: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783934178/IMG_6824_tafdld.jpg",
+      after: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783936273/IMG_6824_1_uipb2c.jpg",
+    },
+  ],
+  "flambient-editing": [
+    {
+      before: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783933541/1775_NW_93rd_Pl_019_qbj7rv.jpg",
+      after: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783931754/1775_NW_93rd_Pl_023_umeozb.jpg",
+    },
+  ],
+  "day-to-dusk": [
+    {
+      before: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783934727/IMG_8096_s6dpky.jpg",
+      after: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783934735/IMG_8095_rjffif.jpg",
+    },
+  ],
+  "virtual-twilight": [
+    {
+      before: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783935248/DSC00869_bbgfgv.jpg",
+      after: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783935261/DSC00870_1_grtwll.jpg",
+    },
+  ],
+  "virtual-staging": [
+    {
+      before: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783935585/BB6A2956_1_nqqtbu.jpg",
+      after: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783935230/BB6A2956_final_rbcjbc.jpg",
+    },
+  ],
+  "object-removal-1-4": [
+    {
+      before: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783934772/DSC05073_ygajnm.jpg",
+      after: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783934791/DSC05073_final_tbwvya.jpg",
+    },
+    {
+      before: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783934769/DSC01515_s9qpnm.jpg",
+      after: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783934786/DSC01515_fo4prq.jpg",
+    },
+  ],
+  "object-removal-clear-room": [
+    {
+      before: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783934851/OESR8114_nxofy0.jpg",
+      after: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783934861/OESR8114_nermlb.jpg",
+    },
+  ],
+  "lawn-replacement": [
+    {
+      before: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783934580/P1114971_gjis2n.jpg",
+      after: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783934593/P1114971_v2_fpo8zi.jpg",
+    },
+  ],
+  "water-in-pool": [
+    {
+      before: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783935366/72ba6ebe-8dda-4639-b8fc-94da4b631782_qgtdw8.jpg",
+      after: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783935346/2bf59ea4-2854-4d2c-9447-0b6e9f8d3285_jwa2ca.jpg",
+    },
+  ],
+  "virtual-renovation": [
+    {
+      before: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783934895/DJI_0278_ugmj7z.jpg",
+      after: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783935060/DJI_0278_1_loqqyg.jpg",
+    },
+  ]
+};
 
-export const SERVICE_SAMPLE_ALT: Record<string, { before: string; after: string }> = {};
+export const SERVICE_SAMPLE_ALT: Record<string, { before: string; after: string }> = {
+  "hdr-editing": { before: "Ảnh gốc chưa qua xử lý HDR", after: "Ảnh đã qua xử lý HDR chuyên nghiệp" },
+  "single-photo": { before: "Ảnh gốc chưa chỉnh sửa", after: "Ảnh đã chỉnh sửa hoàn thiện" },
+  "flash": { before: "Ảnh chụp với ánh sáng tự nhiên", after: "Ảnh đã qua xử lý flash" },
+  "flambient-editing": { before: "Ảnh gốc chụp thực tế", after: "Ảnh đã kết hợp flash và ánh sáng tự nhiên" },
+  "day-to-dusk": { before: "Ảnh chụp ban ngày", after: "Hiệu ứng chạng vạng tự nhiên" },
+  "virtual-twilight": { before: "Ảnh gốc ban ngày", after: "Hiệu ứng hoàng hôn ảo" },
+  "virtual-staging": { before: "Phòng trống chưa có nội thất", after: "Phòng đã được dàn dựng nội thất ảo" },
+  "object-removal-1-4": { before: "Ảnh gốc có vật thể cần xóa", after: "Ảnh đã xóa vật thể không mong muốn" },
+  "object-removal-clear-room": { before: "Phòng còn đồ đạc", after: "Phòng đã được dọn sạch" },
+  "lawn-replacement": { before: "Thảm cỏ cũ kém chất lượng", after: "Thảm cỏ mới xanh tươi" },
+  "water-in-pool": { before: "Hồ bơi không có nước", after: "Hồ bơi đã có nước" },
+  "virtual-renovation": { before: "Công trình trước khi cải tạo", after: "Công trình sau khi cải tạo ảo" },
+};
 
 export function getServiceSampleImages(serviceId: string): SampleImagePair[] {
   return SERVICE_SAMPLE_IMAGES[serviceId] ?? [];
