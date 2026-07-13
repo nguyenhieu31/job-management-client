@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState } from "react";
 import Image from "next/image";
-import { Loader2, AlertCircle, ImageIcon } from "lucide-react";
+import { ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -19,7 +19,6 @@ import {
 } from "@/types/services";
 
 type ViewState = "before" | "after";
-type LoadState = "loading" | "loaded" | "error";
 
 function getServiceLabel(serviceId: string): string {
   const service = (PHOTO_SERVICES as ServiceOption[]).find(
@@ -40,8 +39,6 @@ export function ServiceSampleDialog({
   onClose,
 }: ServiceSampleDialogProps) {
   const [view, setView] = useState<ViewState>("before");
-  const [loadState, setLoadState] = useState<LoadState>("loading");
-  const activeServiceId = useRef<string | null>(null);
 
   const samples = serviceId ? getServiceSampleImages(serviceId) : [];
   const currentPair = samples[0] ?? null;
@@ -50,33 +47,6 @@ export function ServiceSampleDialog({
       ? SERVICE_SAMPLE_ALT[serviceId]
       : null;
   const label = serviceId ? getServiceLabel(serviceId) : "";
-
-  useEffect(() => {
-    if (open && serviceId) {
-      activeServiceId.current = serviceId;
-      setView("before");
-      setLoadState(currentPair ? "loading" : "loaded");
-    }
-    if (!open) {
-      activeServiceId.current = null;
-    }
-  }, [open, serviceId, currentPair]);
-
-  const handleLoad = useCallback(() => {
-    if (activeServiceId.current === serviceId) {
-      setLoadState("loaded");
-    }
-  }, [serviceId]);
-
-  const handleError = useCallback(() => {
-    if (activeServiceId.current === serviceId) {
-      setLoadState("error");
-    }
-  }, [serviceId]);
-
-  const handleRetry = useCallback(() => {
-    setLoadState("loading");
-  }, []);
 
   const currentSrc =
     currentPair && view === "before" ? currentPair.before : currentPair?.after;
@@ -97,27 +67,10 @@ export function ServiceSampleDialog({
               <ImageIcon className="h-12 w-12" />
               <p className="text-sm">Chưa có ảnh mẫu cho dịch vụ này</p>
             </div>
-          ) : loadState === "error" ? (
-            <div className="flex flex-col items-center gap-3 py-12 text-muted-foreground">
-              <AlertCircle className="h-12 w-12 text-destructive" />
-              <p className="text-sm">Không thể tải ảnh mẫu</p>
-              <button
-                type="button"
-                onClick={handleRetry}
-                className="text-xs text-primary underline-offset-4 hover:underline"
-              >
-                Thử lại
-              </button>
-            </div>
           ) : (
             <>
               <div className="relative w-full overflow-hidden rounded-lg border bg-muted/30">
                 <div className="relative aspect-[16/10] w-full">
-                  {loadState === "loading" && (
-                    <div className="absolute inset-0 z-10 flex items-center justify-center bg-muted/30">
-                      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                    </div>
-                  )}
                   <Image
                     src={currentSrc}
                     alt={
@@ -129,12 +82,7 @@ export function ServiceSampleDialog({
                     }
                     fill
                     sizes="(max-width: 600px) 100vw, 600px"
-                    className={cn(
-                      "object-contain",
-                      loadState === "loading" && "invisible",
-                    )}
-                    onLoad={handleLoad}
-                    onError={handleError}
+                    className="object-contain"
                     priority
                   />
                 </div>
