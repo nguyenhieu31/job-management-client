@@ -849,6 +849,9 @@ export function JobForm({
                       </SelectItem>
                       <SelectItem value="PAID">Đã thanh toán</SelectItem>
                       <SelectItem value="CANCELLED">Đã hủy</SelectItem>
+                      <SelectItem value="NOT_PAYABLE">
+                        KHÔNG THANH TOÁN
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

@@ -235,6 +235,7 @@ export function VideoFilterBar({
                   <SelectItem value="UNPAID">Chưa thanh toán</SelectItem>
                   <SelectItem value="INVOICE_SENT">Đã gửi hóa đơn</SelectItem>
                   <SelectItem value="PAID">Đã thanh toán</SelectItem>
+                  <SelectItem value="NOT_PAYABLE">KHÔNG THANH TOÁN</SelectItem>
                 </SelectContent>
               </Select>
             </div>

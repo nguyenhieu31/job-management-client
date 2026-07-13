@@ -94,12 +94,15 @@ const paymentStatusColors = {
   INVOICE_DRAFT:
     "bg-gray-500/10 text-gray-700 dark:text-gray-400 border-gray-500/20",
   CANCELLED: "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20",
+  NOT_PAYABLE:
+    "bg-slate-500/10 text-slate-700 dark:text-slate-400 border-slate-500/20",
 };
 
 const paymentStatusOptions = [
   { value: "UNPAID", label: "Chưa thanh toán" },
   { value: "INVOICE_SENT", label: "Đã gửi hóa đơn" },
   { value: "PAID", label: "Đã thanh toán" },
+  { value: "NOT_PAYABLE", label: "KHÔNG THANH TOÁN" },
 ];
 
 const paymentEmployeeOptions = [

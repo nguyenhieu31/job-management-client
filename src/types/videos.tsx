@@ -86,7 +86,8 @@ export type PaymentStatus =
   | "INVOICE_SENT"
   | "PAID"
   | "INVOICE_DRAFT"
-  | "CANCELLED";
+  | "CANCELLED"
+  | "NOT_PAYABLE";
 export type EmployeePaymentStatus = "UNPAID" | "PAID";
 
 // Video action types for different roles
