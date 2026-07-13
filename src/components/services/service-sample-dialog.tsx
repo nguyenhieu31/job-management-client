@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import Image from "next/image";
-import { ImageIcon } from "lucide-react";
+import { Loader2, ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -39,6 +39,8 @@ export function ServiceSampleDialog({
   onClose,
 }: ServiceSampleDialogProps) {
   const [view, setView] = useState<ViewState>("before");
+  const [loading, setLoading] = useState(true);
+  const loadedImages = useRef<Set<string>>(new Set());
 
   const samples = serviceId ? getServiceSampleImages(serviceId) : [];
   const currentPair = samples[0] ?? null;
@@ -51,8 +53,22 @@ export function ServiceSampleDialog({
   const currentSrc =
     currentPair && view === "before" ? currentPair.before : currentPair?.after;
 
+  const handleClose = useCallback(() => {
+    setView("before");
+    setLoading(true);
+    loadedImages.current = new Set();
+    onClose();
+  }, [onClose]);
+
+  const handleLoad = useCallback(() => {
+    if (currentSrc) {
+      loadedImages.current.add(currentSrc);
+    }
+    setLoading(false);
+  }, [currentSrc]);
+
   return (
-    <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={open} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>{label || "Ảnh mẫu"}</DialogTitle>
@@ -71,6 +87,11 @@ export function ServiceSampleDialog({
             <>
               <div className="relative w-full overflow-hidden rounded-lg border bg-muted/30">
                 <div className="relative aspect-[16/10] w-full">
+                  {loading && (
+                    <div className="absolute inset-0 z-10 flex items-center justify-center">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    </div>
+                  )}
                   <Image
                     src={currentSrc}
                     alt={
@@ -82,7 +103,12 @@ export function ServiceSampleDialog({
                     }
                     fill
                     sizes="(max-width: 600px) 100vw, 600px"
-                    className="object-contain"
+                    className={cn(
+                      "object-contain",
+                      loading && "invisible",
+                    )}
+                    onLoad={handleLoad}
+                    onError={handleLoad}
                     priority
                   />
                 </div>
@@ -91,7 +117,12 @@ export function ServiceSampleDialog({
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setView("before")}
+                  onClick={() => {
+                    setView("before");
+                    if (!loadedImages.current.has(currentPair.before)) {
+                      setLoading(true);
+                    }
+                  }}
                   className={cn(
                     "rounded-md px-4 py-1.5 text-sm font-medium transition-colors",
                     view === "before"
@@ -103,7 +134,12 @@ export function ServiceSampleDialog({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setView("after")}
+                  onClick={() => {
+                    setView("after");
+                    if (!loadedImages.current.has(currentPair.after)) {
+                      setLoading(true);
+                    }
+                  }}
                   className={cn(
                     "rounded-md px-4 py-1.5 text-sm font-medium transition-colors",
                     view === "after"
