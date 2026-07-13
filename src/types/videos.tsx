@@ -17,6 +17,7 @@ export interface CustomerInfo {
   email: string;
   phone: string;
   company: string;
+  customerCode?: string;
 }
 
 export interface VideoViewResponse {
@@ -85,7 +86,8 @@ export type PaymentStatus =
   | "INVOICE_SENT"
   | "PAID"
   | "INVOICE_DRAFT"
-  | "CANCELLED";
+  | "CANCELLED"
+  | "NOT_PAYABLE";
 export type EmployeePaymentStatus = "UNPAID" | "PAID";
 
 // Video action types for different roles
@@ -112,9 +114,9 @@ export interface VideoFilters {
   toDate: string;
   videoStatus: VideoStatus | "";
   paymentStatus: PaymentStatus | "";
-  paymentEmployee?: string;
+  paymentEmployee: string;
   keyword: string;
-  selectedEmployeeIds?: number[];
+  customerCode?: string;
 }
 
 // Pagination interface

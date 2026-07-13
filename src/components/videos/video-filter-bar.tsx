@@ -129,6 +129,7 @@ export function VideoFilterBar({
       endDate: filters.toDate || null,
       selectedEmployeeIds: selectedEmployees ? selectedEmployees.map((e) => e.id) : undefined,
       selectedCustomerIds: selectedCustomers ? selectedCustomers.map((c) => c.id) : undefined,
+      customerCode: filters.customerCode || null,
     };
     
     // Save active filters for pagination
@@ -146,6 +147,7 @@ export function VideoFilterBar({
       paymentStatus: "",
       paymentEmployee: "",
       keyword: "",
+      customerCode: "",
     };
     setFilters(resetFilters);
     setSelectedEmployees([]);
@@ -233,6 +235,7 @@ export function VideoFilterBar({
                   <SelectItem value="UNPAID">Chưa thanh toán</SelectItem>
                   <SelectItem value="INVOICE_SENT">Đã gửi hóa đơn</SelectItem>
                   <SelectItem value="PAID">Đã thanh toán</SelectItem>
+                  <SelectItem value="NOT_PAYABLE">KHÔNG THANH TOÁN</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -264,7 +267,7 @@ export function VideoFilterBar({
 
         {/* Row 2: Multi-Select Filters & Search - Manager Only */}
         {(roleName === "MANAGER" || roleName === "SALER") && (
-          <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-4">
             {/* Customer Multi-Select */}
             <div className="space-y-2">
               <Label htmlFor="customer" className="text-sm font-medium">
@@ -281,6 +284,23 @@ export function VideoFilterBar({
                 defaultValue={selectedCustomers}
                 className="w-full"
                 title="Khách hàng"
+              />
+            </div>
+
+            {/* Customer Code Filter */}
+            <div className="space-y-2">
+              <Label htmlFor="customerCode" className="text-sm font-medium">
+                Mã Khách Hàng
+              </Label>
+              <Input
+                id="customerCode"
+                type="text"
+                placeholder="VD: ACME-001"
+                value={filters.customerCode || ""}
+                onChange={(e) =>
+                  handleChange("customerCode", e.target.value)
+                }
+                className="w-full"
               />
             </div>
 

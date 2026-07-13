@@ -28,12 +28,16 @@ interface EmployeeTableProps {
   employees: EmployeeResponse[];
   onEdit: (employee: EmployeeResponse) => void;
   onDelete: (id: number) => void;
+  currentPage: number;
+  pageSize: number;
 }
 
 export function EmployeeTable({
   employees,
   onEdit,
   onDelete,
+  currentPage,
+  pageSize,
 }: EmployeeTableProps) {
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString("en-US", {
@@ -48,6 +52,7 @@ export function EmployeeTable({
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className="w-12">STT</TableHead>
             <TableHead>Mã NV</TableHead>
             <TableHead>Email</TableHead>
             <TableHead>Họ Tên</TableHead>
@@ -62,13 +67,20 @@ export function EmployeeTable({
         <TableBody>
           {employees.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={8} className="text-center py-8">
+              <TableCell colSpan={10} className="text-center py-8">
                 <p className="text-muted-foreground">Không tìm thấy nhân viên</p>
               </TableCell>
             </TableRow>
           ) : (
-            employees.map((employee) => (
-              <TableRow key={employee.id}>
+            employees.map((employee, index) => (
+              <TableRow
+                key={employee.id}
+                className="cursor-pointer"
+                onClick={() => onEdit(employee)}
+              >
+                <TableCell className="text-muted-foreground">
+                  {(currentPage - 1) * pageSize + index + 1}
+                </TableCell>
                 <TableCell className="font-medium">{employee.code}</TableCell>
                 <TableCell>{employee.email}</TableCell>
                 <TableCell>{employee.fullName}</TableCell>
@@ -95,14 +107,18 @@ export function EmployeeTable({
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => onEdit(employee)}
+                      onClick={(e) => { e.stopPropagation(); onEdit(employee); }}
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
 
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="sm">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </AlertDialogTrigger>

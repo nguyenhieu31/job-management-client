@@ -89,6 +89,7 @@ const paymentStatusOptions = [
   { value: "UNPAID", label: "Chưa thanh toán" },
   { value: "INVOICE_SENT", label: "Đã gửi hóa đơn" },
   { value: "PAID", label: "Đã thanh toán" },
+  { value: "NOT_PAYABLE", label: "KHÔNG THANH TOÁN" },
 ];
 
 const paymentEmployeeOptions = [

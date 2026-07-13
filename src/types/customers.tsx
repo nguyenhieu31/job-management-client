@@ -4,6 +4,9 @@ export interface CustomerResponse {
     email: string;
     phone: string;
     company: string;
+    customerCode?: string;
+    assignedSaleId?: number;
+    assignedSaleName?: string;
     isJobAccount: boolean;
     isVideoAccount: boolean;
 }
@@ -14,12 +17,15 @@ export interface CustomerRequest {
     email: string;
     phone: string;
     company: string;
+    customerCode?: string;
+    assignedSaleId?: number;
     isJobAccount: boolean;
     isVideoAccount: boolean;
 }
 
 export interface CustomerFilters {
-    search: string; // Search by name, email, or phone number
+    search: string;
+    assignedSaleId?: number;
 }
 
 export interface CustomerPagination {

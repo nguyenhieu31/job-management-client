@@ -11,13 +11,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import SearchableDropdown from "@/components/ui/search-able-dropdown";
 import type { CustomerResponse } from "@/types/customers";
+import type { EmployeeResponse } from "@/types/employees";
 
 interface CustomerFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (customer: Partial<CustomerResponse>) => void;
   editingCustomer: CustomerResponse | null;
+  sales: EmployeeResponse[];
 }
 
 export function CustomerForm({
@@ -25,12 +28,15 @@ export function CustomerForm({
   onOpenChange,
   onSubmit,
   editingCustomer,
+  sales,
 }: CustomerFormProps) {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
     company: "",
+    customerCode: "",
+    assignedSaleId: 0,
     isJobAccount: true,
     isVideoAccount: true,
   });
@@ -42,6 +48,8 @@ export function CustomerForm({
         email: editingCustomer.email,
         phone: editingCustomer.phone,
         company: editingCustomer.company,
+        customerCode: editingCustomer.customerCode || "",
+        assignedSaleId: editingCustomer.assignedSaleId || 0,
         isJobAccount: editingCustomer.isJobAccount,
         isVideoAccount: editingCustomer.isVideoAccount,
       });
@@ -51,11 +59,24 @@ export function CustomerForm({
         email: "",
         phone: "",
         company: "",
+        customerCode: "",
+        assignedSaleId: 0,
         isJobAccount: true,
         isVideoAccount: true,
       });
     }
   }, [editingCustomer, open]);
+
+  const saleOptions = sales.map((s) => ({
+    id: s.id,
+    name: s.fullName + (s.code ? ` (${s.code})` : ""),
+  }));
+
+  const currentSale = saleOptions.find((o) => o.id === formData.assignedSaleId) || null;
+
+  const handleSaleChange = (option: { id: number; name: string | number } | null) => {
+    setFormData({ ...formData, assignedSaleId: option ? option.id : 0 });
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,6 +87,8 @@ export function CustomerForm({
       email: formData.email,
       phone: formData.phone,
       company: formData.company,
+      customerCode: formData.customerCode || undefined,
+      ...(formData.assignedSaleId > 0 && { assignedSaleId: formData.assignedSaleId }),
       isJobAccount: formData.isJobAccount,
       isVideoAccount: formData.isVideoAccount,
     };
@@ -89,7 +112,6 @@ export function CustomerForm({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Full Name */}
           <div className="space-y-2">
             <Label htmlFor="name">Họ Tên</Label>
             <Input
@@ -103,9 +125,8 @@ export function CustomerForm({
             />
           </div>
 
-          {/* Email */}
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">Email Invoice</Label>
             <Input
               id="email"
               type="email"
@@ -118,22 +139,6 @@ export function CustomerForm({
             />
           </div>
 
-          {/* Phone Number */}
-          {/* <div className="space-y-2">
-            <Label htmlFor="phone">Số Điện Thoại</Label>
-            <Input
-              id="phone"
-              type="tel"
-              value={formData.phone}
-              onChange={(e) =>
-                setFormData({ ...formData, phone: e.target.value })
-              }
-              placeholder="+84 123 456 789"
-              required
-            />
-          </div> */}
-
-          {/* Company */}
           <div className="space-y-2">
             <Label htmlFor="company">Công Ty</Label>
             <Input
@@ -143,11 +148,32 @@ export function CustomerForm({
                 setFormData({ ...formData, company: e.target.value })
               }
               placeholder="Công ty ABC"
-              required
             />
           </div>
 
-          {/* Is Job Account */}
+          <div className="space-y-2">
+            <Label htmlFor="customerCode">Mã Khách Hàng</Label>
+            <Input
+              id="customerCode"
+              value={formData.customerCode}
+              onChange={(e) =>
+                setFormData({ ...formData, customerCode: e.target.value })
+              }
+              placeholder="VD: ACME-001"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Sale Phụ Trách</Label>
+            <SearchableDropdown
+              options={saleOptions}
+              defaultValue={currentSale}
+              onChange={handleSaleChange}
+              placeholder="Chọn sale..."
+              type="text"
+            />
+          </div>
+
           <div className="flex items-center space-x-2">
             <input
               type="checkbox"
@@ -163,7 +189,6 @@ export function CustomerForm({
             </Label>
           </div>
 
-          {/* Is Video Account */}
           <div className="flex items-center space-x-2">
             <input
               type="checkbox"
@@ -179,7 +204,6 @@ export function CustomerForm({
             </Label>
           </div>
 
-          {/* Actions */}
           <div className="flex gap-2 pt-4">
             <Button type="submit" className="flex-1">
               {editingCustomer ? "Cập Nhật" : "Tạo Mới"}

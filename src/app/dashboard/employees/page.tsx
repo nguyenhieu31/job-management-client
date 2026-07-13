@@ -247,6 +247,8 @@ export default function EmployeesPage() {
             employees={filteredEmployees}
             onEdit={handleEditEmployee}
             onDelete={handleDeleteEmployee}
+            currentPage={pagination.currentPage}
+            pageSize={pagination.pageSize}
           />
 
           {/* Pagination */}
