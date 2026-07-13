@@ -17,6 +17,7 @@ export interface CustomerInfo {
   email: string;
   phone: string;
   company: string;
+  customerCode?: string;
 }
 
 export interface VideoViewResponse {
@@ -112,9 +113,9 @@ export interface VideoFilters {
   toDate: string;
   videoStatus: VideoStatus | "";
   paymentStatus: PaymentStatus | "";
-  paymentEmployee?: string;
+  paymentEmployee: string;
   keyword: string;
-  selectedEmployeeIds?: number[];
+  customerCode?: string;
 }
 
 // Pagination interface
