@@ -28,12 +28,16 @@ interface CustomerTableProps {
   customers: CustomerResponse[];
   onEdit: (customer: CustomerResponse) => void;
   onDelete: (id: number) => void;
+  currentPage: number;
+  pageSize: number;
 }
 
 export function CustomerTable({
   customers,
   onEdit,
   onDelete,
+  currentPage,
+  pageSize,
 }: CustomerTableProps) {
   const { roleName }: { roleName: string } = useAppSelector(
     (state) => state.authenticate,
@@ -43,10 +47,10 @@ export function CustomerTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Email</TableHead>
+            <TableHead className="w-12">STT</TableHead>
             <TableHead>Họ Tên</TableHead>
-            {/* <TableHead>Số Điện Thoại</TableHead> */}
-            <TableHead>Công Ty</TableHead>
+            <TableHead>Email Invoice</TableHead>
+            <TableHead>Sale Phụ Trách</TableHead>
             {roleName === "MANAGER" && (
               <TableHead className="text-right">Hành Động</TableHead>
             )}
@@ -62,26 +66,36 @@ export function CustomerTable({
               </TableCell>
             </TableRow>
           ) : (
-            customers.map((customer) => (
-              <TableRow key={customer.id}>
-                <TableCell className="font-medium">{customer.email}</TableCell>
-                <TableCell>{customer.name}</TableCell>
-                {/* <TableCell>{customer.phone}</TableCell> */}
-                <TableCell>{customer.company}</TableCell>
+            customers.map((customer, index) => (
+              <TableRow
+                key={customer.id}
+                className="cursor-pointer"
+                onClick={() => onEdit(customer)}
+              >
+                <TableCell className="text-muted-foreground">
+                  {(currentPage - 1) * pageSize + index + 1}
+                </TableCell>
+                <TableCell className="font-medium">{customer.name}</TableCell>
+                <TableCell>{customer.email}</TableCell>
+                <TableCell>{customer.assignedSaleName || "—"}</TableCell>
                 {roleName === "MANAGER" && (
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => onEdit(customer)}
+                        onClick={(e) => { e.stopPropagation(); onEdit(customer); }}
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
 
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="sm">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </AlertDialogTrigger>

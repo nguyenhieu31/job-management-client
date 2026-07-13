@@ -28,8 +28,8 @@ export const GetAllCustomersAction = createAsyncThunk<
 
 export const SearchCustomersAction = createAsyncThunk<
   PageResponse<CustomerResponse[]>,
-  PageRequest & { keyword: string }
->("SearchCustomersAction", async (data: PageRequest & { keyword: string }) => {
+  PageRequest & { keyword: string; assignedSaleId?: number }
+>("SearchCustomersAction", async (data: PageRequest & { keyword: string; assignedSaleId?: number }) => {
   try {
     const response = await searchCustomers(data);
     return response.data as PageResponse<CustomerResponse[]>;
@@ -119,8 +119,8 @@ const CustomerSlice = createSlice({
         } else {
           state.customers = {
             data: [action.payload],
-            pageNumber: 1,
-            pageSize: 10,
+            pageNumber: 0,
+            pageSize: 16,
             totalElements: 1,
             totalPages: 1,
           };
@@ -130,7 +130,7 @@ const CustomerSlice = createSlice({
         state.loading = false;
         state.message = "Cập nhật khách hàng thành công";
         if (state.customers) {
-          const index = state.customers.data.findIndex(cust => cust.id === action.payload.id);
+          const index = state.customers.data.findIndex((c) => c.id === action.payload.id);
           if (index !== -1) {
             state.customers.data[index] = action.payload;
           }
@@ -140,29 +140,31 @@ const CustomerSlice = createSlice({
         state.loading = false;
         state.message = "Xóa khách hàng thành công";
       })
-      .addCase(SearchCustomersAction.fulfilled, (state, action: PayloadAction<PageResponse<CustomerResponse[]>>) => {
-        state.loading = false;
-        state.customers = action.payload;
-      })
       .addCase(GetAllCustomersAction.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || "Get all customers failed";
+        state.error = action.error.message || "Error";
       })
       .addCase(CreateCustomerAction.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || "Create customer failed";
+        state.error = action.error.message || "Error";
       })
       .addCase(UpdateCustomerAction.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || "Update customer failed";
+        state.error = action.error.message || "Error";
       })
       .addCase(DeleteCustomerAction.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || "Delete customer failed";
+        state.error = action.error.message || "Error";
       })
+      .addCase(SearchCustomersAction.fulfilled,
+        (state, action: PayloadAction<PageResponse<CustomerResponse[]>>) => {
+          state.loading = false;
+          state.customers = action.payload;
+        }
+      )
       .addCase(SearchCustomersAction.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || "Search customers failed";
+        state.error = action.error.message || "Error";
       });
   },
 });

@@ -11,24 +11,25 @@ import type {
   CustomerResponse,
   CustomerFilters,
   CustomerPagination,
+  CustomerRequest,
 } from "@/types/customers";
+import type { EmployeeResponse } from "@/types/employees";
 import { useAppDispatch, useAppSelector } from "@/store/store";
 import Loader from "@/components/ui/loader";
 import { CreateCustomerAction, DeleteCustomerAction, GetAllCustomersAction, SearchCustomersAction, UpdateCustomerAction } from "@/store/slice/customer/Customer";
 import { PageResponse } from "@/components/types/Page";
-import type { CustomerRequest } from "@/types/customers";
+import { getSalesForDropdown } from "@/services/CustomerApi";
 
 export default function CustomersPage() {
   const dispatch = useAppDispatch();
   const [formOpen, setFormOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<CustomerResponse | null>(null);
+  const [sales, setSales] = useState<EmployeeResponse[]>([]);
 
-  // Filters state
   const [filters, setFilters] = useState<CustomerFilters>({
     search: "",
   });
 
-  // Pagination state
   const [pagination, setPagination] = useState<CustomerPagination>({
     currentPage: 1,
     pageSize: 10,
@@ -36,7 +37,6 @@ export default function CustomersPage() {
     totalPages: 0,
   });
 
-  // Get data from Redux store
   const { roleName } = useAppSelector((state) => state.authenticate);
   const {
     customers,
@@ -44,20 +44,22 @@ export default function CustomersPage() {
   }: { customers: PageResponse<CustomerResponse[]> | undefined; loading: boolean } =
     useAppSelector((state) => state.customer);
 
-  // Filter customers
   const filteredCustomers = useMemo(() => {
     if (!customers) return [];
-
     return customers.data;
   }, [customers]);
 
-  // Active filters state for pagination
-  const [activeFilters, setActiveFilters] = useState<{keyword: string} | null>(null);
+  const [activeFilters, setActiveFilters] = useState<{keyword: string; assignedSaleId?: number} | null>(null);
 
-  // Handle filter actions
+  useEffect(() => {
+    getSalesForDropdown().then((res) => {
+      if (res?.data) setSales(res.data);
+    }).catch(() => {});
+  }, []);
+
   const handleApplyFilters = () => {
     setPagination((prev) => ({ ...prev, currentPage: 1 }));
-    setActiveFilters({ keyword: filters.search });
+    setActiveFilters({ keyword: filters.search, assignedSaleId: filters.assignedSaleId });
   };
 
   const handleResetFilters = () => {
@@ -69,7 +71,6 @@ export default function CustomersPage() {
     setPagination((prev) => ({ ...prev, currentPage: 1 }));
   };
 
-  // Handle pagination actions
   const handlePageChange = (page: number) => {
     setPagination((prev) => ({ ...prev, currentPage: page }));
   };
@@ -90,6 +91,8 @@ export default function CustomersPage() {
         email: customer.email || "",
         phone: customer.phone || "",
         company: customer.company || "",
+        customerCode: customer.customerCode || "",
+        assignedSaleId: customer.assignedSaleId || 0,
         isJobAccount: customer.isJobAccount ?? true,
         isVideoAccount: customer.isVideoAccount ?? true,
       }
@@ -101,6 +104,8 @@ export default function CustomersPage() {
         email: customer.email || "",
         phone: customer.phone || "",
         company: customer.company || "",
+        customerCode: customer.customerCode || "",
+        assignedSaleId: customer.assignedSaleId || 0,
         isJobAccount: customer.isJobAccount ?? true,
         isVideoAccount: customer.isVideoAccount ?? true,
       }
@@ -116,7 +121,6 @@ export default function CustomersPage() {
   const handleDeleteCustomer = async (id: number) => {
     if(!id) return
     await dispatch(DeleteCustomerAction(id));
-    // Refresh the customer list
     fetchCustomers();
   };
 
@@ -132,7 +136,8 @@ export default function CustomersPage() {
 
     if (activeFilters) {
       dispatch(SearchCustomersAction({
-        ...activeFilters,
+        keyword: activeFilters.keyword,
+        assignedSaleId: activeFilters.assignedSaleId,
         pageNumber: pagination.currentPage - 1,
         pageSize: pagination.pageSize,
       }));
@@ -150,7 +155,6 @@ export default function CustomersPage() {
     fetchCustomers();
   }, [fetchCustomers]);
 
-  // Update pagination totals when customers data changes
   useEffect(() => {
     if (customers) {
       setPagination((prev) => ({
@@ -163,7 +167,6 @@ export default function CustomersPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
@@ -187,15 +190,14 @@ export default function CustomersPage() {
         </div>
       </div>
 
-      {/* Filters */}
       <CustomerFilterBar
         filters={filters}
         onFilterChange={setFilters}
         onApply={handleApplyFilters}
         onReset={handleResetFilters}
+        sales={sales}
       />
 
-      {/* Table */}
       {loading ? (
         <div className="flex justify-center items-center h-40">
           <Loader width={50} height={50} />
@@ -206,9 +208,10 @@ export default function CustomersPage() {
             customers={filteredCustomers}
             onEdit={handleEditCustomer}
             onDelete={handleDeleteCustomer}
+            currentPage={pagination.currentPage}
+            pageSize={pagination.pageSize}
           />
 
-          {/* Pagination */}
           <Pagination
             pagination={pagination}
             totalElements={customers?.totalElements || 0}
@@ -219,12 +222,12 @@ export default function CustomersPage() {
         </>
       )}
 
-      {/* Form Dialog */}
       <CustomerForm
         open={formOpen}
         onOpenChange={handleFormClose}
         onSubmit={handleAddCustomer}
         editingCustomer={editingCustomer}
+        sales={sales}
       />
     </div>
   );
