@@ -1288,10 +1288,10 @@ console.log("editValue: ", editValue)
         );
 
       case "assignedSale":
-        if (userRole === "manager" && video.sales && video.sales.length > 0) {
+        if (userRole === "manager" && video.customer?.sales && video.customer.sales.length > 0) {
           return (
             <SearchableDropdown
-              options={video.sales.map((s) => ({
+              options={video.customer.sales.map((s) => ({
                 id: s.id,
                 name: s.name,
               }))}
@@ -1300,7 +1300,7 @@ console.log("editValue: ", editValue)
                 if (value === null) {
                   handleFieldChange(video.id, "assignedSale", null);
                 } else {
-                  const sale = video.sales?.find((s) => s.id === value.id);
+                  const sale = video.customer?.sales?.find((s) => s.id === value.id);
                   handleFieldChange(video.id, "assignedSale", sale || null);
                 }
               }}

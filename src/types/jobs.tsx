@@ -36,6 +36,7 @@ export interface CustomerInfo {
   email: string;
   phone: string;
   company: string;
+  sales?: SaleInfo[];
 }
 
 export interface JobViewResponse {
@@ -89,7 +90,6 @@ export interface JobResponse {
   qualifiedAssignee: AssigneeInfo;
   customer: CustomerInfo;
   assignedSale?: SaleInfo | null;
-  sales?: SaleInfo[];
   workRequest: WorkRequestResponse;
   payPerFile: number;
   payPerFileQa: number;
