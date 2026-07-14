@@ -1,4 +1,5 @@
 import { WorkRequestResponse } from "./work-requests";
+import type { SaleInfo } from "./customers";
 
 export interface Job {
   id: number;
@@ -87,6 +88,8 @@ export interface JobResponse {
   assignee: AssigneeInfo;
   qualifiedAssignee: AssigneeInfo;
   customer: CustomerInfo;
+  assignedSale?: SaleInfo | null;
+  sales?: SaleInfo[];
   workRequest: WorkRequestResponse;
   payPerFile: number;
   payPerFileQa: number;
@@ -208,6 +211,7 @@ export const ROLE_COLUMNS = {
     // "totalPayPerFile",
     // "employeeNote",
     // "paymentEmployee",
+    "assignedSale",
     "assignedEmployee",
     "qa",
     // "note",
@@ -279,6 +283,7 @@ export const ROLE_COLUMNS = {
     "outputCount",
     "jobStatus",
     "linkDone",
+    "assignedSale",
     "assignedEmployee",
     "qa"
   ]
