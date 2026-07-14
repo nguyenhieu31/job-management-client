@@ -111,6 +111,7 @@ export function JobForm({
     assignedEmployee: undefined as string | undefined,
     qualifiedAssignee: undefined as string | undefined,
     customerId: undefined as string | undefined,
+    assignedSale: undefined as string | undefined,
     workRequestId: undefined as string | undefined,
     payPerFile: "",
     payPerFileQa: "",
@@ -160,6 +161,9 @@ export function JobForm({
           : undefined,
         workRequestId: editingJob.workRequest?.id
           ? editingJob.workRequest.id.toString()
+          : undefined,
+        assignedSale: editingJob.assignedSale?.id
+          ? editingJob.assignedSale.id.toString()
           : undefined,
         fileCount: String(editingJob.fileCount),
         // Store pay per file with VND formatting (dots as thousand separators)
@@ -222,6 +226,7 @@ export function JobForm({
         assignedEmployee: undefined,
         qualifiedAssignee: undefined,
         customerId: undefined,
+        assignedSale: undefined,
         workRequestId: undefined,
         payPerFile: "",
         payPerFileQa: "",
@@ -298,6 +303,7 @@ export function JobForm({
       caseName,
       customerId,
       assignedEmployee,
+      assignedSale,
       inputNumber,
       filePrice,
       payPerFile,
@@ -329,6 +335,7 @@ export function JobForm({
     const customerId_ = customerId ? parseInt(customerId) : null;
     const assigneeId_ = assignedEmployee ? parseInt(assignedEmployee) : null;
     const qaId_ = qualifiedAssignee ? parseInt(qualifiedAssignee) : null;
+    const assignedSaleId_ = assignedSale ? parseInt(assignedSale) : null;
     const workReqId_ = workRequestId ? parseInt(workRequestId) : null;
 
     // Filter out media files that were removed from the editor
@@ -409,6 +416,7 @@ export function JobForm({
           qualifiedAssigneeId: qaId_,
           customerId: customerId_,
           workRequestId: workReqId_,
+          assignedSaleId: assignedSaleId_,
           deadline: deadline || null,
           isDeleteAssignee,
           isDeleteQualifiedAssignee,
@@ -438,6 +446,7 @@ export function JobForm({
           qualifiedAssigneeId: qaId_,
           customerId: customerId_,
           workRequestId: workReqId_,
+          assignedSaleId: assignedSaleId_,
           deadline: deadline || null,
         } as Omit<JobRequest, "id" | "code" | "outputNumber" | "doneLink">,
         imageFiles,
@@ -466,6 +475,7 @@ export function JobForm({
       assignedEmployee: undefined,
       qualifiedAssignee: undefined,
       customerId: undefined,
+      assignedSale: undefined,
       workRequestId: undefined,
       payPerFile: "",
       payPerFileQa: "",
@@ -505,8 +515,8 @@ export function JobForm({
                 />
               </div>
 
-              {/* Customer and Assignee in one row */}
-              <div className="grid grid-cols-2 gap-4">
+              {/* Customer, Sale, and Assignee in one row */}
+              <div className="grid grid-cols-3 gap-4">
                 {/* Customer Dropdown */}
                 <div className="grid gap-2">
                   <Label htmlFor="customerId">
@@ -532,6 +542,51 @@ export function JobForm({
                                   c.id.toString() ===
                                   formRef.current.customerId,
                               )?.name || "",
+                          }
+                        : null
+                    }
+                    type="text"
+                  />
+                </div>
+
+                {/* Sale Dropdown */}
+                <div className="grid gap-2">
+                  <Label htmlFor="assignedSale">Saler</Label>
+                  <SearchableDropdown
+                    options={
+                      customers
+                        .find(
+                          (c) =>
+                            c.id.toString() === formRef.current.customerId
+                        )
+                        ?.sales?.map((s) => ({
+                          id: s.id,
+                          name: s.name,
+                        })) || []
+                    }
+                    placeholder="Chọn sale..."
+                    onChange={(option) => {
+                      formRef.current.assignedSale = option
+                        ? option.id.toString()
+                        : undefined;
+                      forceUpdate();
+                    }}
+                    defaultValue={
+                      formRef.current.assignedSale
+                        ? {
+                            id: parseInt(formRef.current.assignedSale),
+                            name:
+                              customers
+                                .find(
+                                  (c) =>
+                                    c.id.toString() ===
+                                    formRef.current.customerId
+                                )
+                                ?.sales?.find(
+                                  (s) =>
+                                    s.id.toString() ===
+                                    formRef.current.assignedSale
+                                )?.name || "",
                           }
                         : null
                     }
