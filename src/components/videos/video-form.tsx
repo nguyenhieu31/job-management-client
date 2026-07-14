@@ -91,6 +91,7 @@ export function VideoForm({
     note: "",
     employeeNote: "",
     assignedEmployee: undefined as string | undefined,
+    assignedSale: undefined as string | undefined,
     customerId: undefined as string | undefined,
     workRequestId: undefined as string | undefined,
     payPerFile: "",
@@ -184,6 +185,9 @@ export function VideoForm({
         workRequestId: editingVideo.workRequest?.id
           ? editingVideo.workRequest.id.toString()
           : undefined,
+        assignedSale: editingVideo.assignedSale?.id
+          ? editingVideo.assignedSale.id.toString()
+          : undefined,
         fileCount: String(editingVideo.fileCount),
         // Format pay per file with thousand separators
         payPerFile: editingVideo.payPerFile
@@ -219,6 +223,7 @@ export function VideoForm({
         employeeNote: "",
         assignedEmployee: undefined,
         customerId: undefined,
+        assignedSale: undefined,
         workRequestId: undefined,
         payPerFile: "",
         images: [],
@@ -239,6 +244,7 @@ export function VideoForm({
       caseName,
       customerId,
       assignedEmployee,
+      assignedSale,
       inputNumber,
       filePrice,
       payPerFile,
@@ -262,6 +268,7 @@ export function VideoForm({
     const outputNum = parseInt(outputNumber) || 0;
     const customerId_ = customerId ? parseInt(customerId) : null;
     const assigneeId_ = assignedEmployee ? parseInt(assignedEmployee) : null;
+    const assignedSaleId_ = assignedSale ? parseInt(assignedSale) : null;
     const workReqId_ = workRequestId ? parseInt(workRequestId) : null;
 
     // Filter out media files that were removed from the editor
@@ -317,6 +324,7 @@ export function VideoForm({
         assigneeId: assigneeId_,
         customerId: customerId_,
         workRequestId: workReqId_,
+        assignedSaleId: assignedSaleId_,
         isDeleteAssignee: isDeleteAssignee,
         fileStoragesNeedRemove:
           filesToRemove.length > 0 ? filesToRemove : undefined,
@@ -344,6 +352,7 @@ export function VideoForm({
           assigneeId: assigneeId_,
           customerId: customerId_,
           workRequestId: workReqId_,
+          assignedSaleId: assignedSaleId_,
         } as Omit<VideoRequest, "id" | "code" | "outputNumber" | "doneLink">,
         imageFiles,
         videoFiles,
@@ -368,6 +377,7 @@ export function VideoForm({
       employeeNote: "",
       assignedEmployee: undefined,
       customerId: undefined,
+      assignedSale: undefined,
       workRequestId: undefined,
       payPerFile: "",
       images: [],
@@ -405,8 +415,8 @@ export function VideoForm({
                 />
               </div>
 
-              {/* Customer and Assignee in one row */}
-              <div className="grid grid-cols-2 gap-4">
+              {/* Customer, Sale, and Assignee in one row */}
+              <div className="grid grid-cols-3 gap-4">
                 {/* Customer Dropdown */}
                 <div className="grid gap-2">
                   <Label htmlFor="customerId">
@@ -420,6 +430,8 @@ export function VideoForm({
                     placeholder="Tìm kiếm khách hàng..."
                     onChange={(option) => {
                       formRef.current.customerId = option?.id.toString();
+                      // Clear assigned sale when customer changes
+                      formRef.current.assignedSale = undefined;
                       forceUpdate();
                     }}
                     defaultValue={
@@ -438,7 +450,50 @@ export function VideoForm({
                   />
                 </div>
 
-                {/* Assignee Dropdown */}
+                {/* Sale Dropdown */}
+                <div className="grid gap-2">
+                  <Label htmlFor="assignedSale">Saler</Label>
+                  <SearchableDropdown
+                    options={
+                      customers
+                        .find(
+                          (c) =>
+                            c.id.toString() === formRef.current.customerId
+                        )
+                        ?.sales?.map((s: any) => ({
+                          id: s.id,
+                          name: s.name,
+                        })) || []
+                    }
+                    placeholder="Chọn sale..."
+                    onChange={(option) => {
+                      formRef.current.assignedSale = option
+                        ? option.id.toString()
+                        : undefined;
+                      forceUpdate();
+                    }}
+                    defaultValue={
+                      formRef.current.assignedSale
+                        ? {
+                            id: parseInt(formRef.current.assignedSale),
+                            name:
+                              customers
+                                .find(
+                                  (c) =>
+                                    c.id.toString() ===
+                                    formRef.current.customerId
+                                )
+                                ?.sales?.find(
+                                  (s: any) =>
+                                    s.id.toString() ===
+                                    formRef.current.assignedSale
+                                )?.name || "",
+                          }
+                        : null
+                    }
+                    type="text"
+                  />
+                </div>
                 <div className="grid gap-2">
                   <Label htmlFor="assignedEmployee">Nhân viên được giao</Label>
                   <SearchableDropdown
