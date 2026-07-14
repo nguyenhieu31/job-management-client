@@ -415,8 +415,8 @@ export function VideoForm({
                 />
               </div>
 
-              {/* Customer, Sale, and Assignee in one row */}
-              <div className="grid grid-cols-3 gap-4">
+              {/* Customer and Assignee in one row */}
+              <div className="grid grid-cols-2 gap-4">
                 {/* Customer Dropdown */}
                 <div className="grid gap-2">
                   <Label htmlFor="customerId">
@@ -430,7 +430,6 @@ export function VideoForm({
                     placeholder="Tìm kiếm khách hàng..."
                     onChange={(option) => {
                       formRef.current.customerId = option?.id.toString();
-                      // Clear assigned sale when customer changes
                       formRef.current.assignedSale = undefined;
                       forceUpdate();
                     }}
@@ -450,50 +449,7 @@ export function VideoForm({
                   />
                 </div>
 
-                {/* Sale Dropdown */}
-                <div className="grid gap-2">
-                  <Label htmlFor="assignedSale">Saler</Label>
-                  <SearchableDropdown
-                    options={
-                      customers
-                        .find(
-                          (c) =>
-                            c.id.toString() === formRef.current.customerId
-                        )
-                        ?.sales?.map((s: any) => ({
-                          id: s.id,
-                          name: s.name,
-                        })) || []
-                    }
-                    placeholder="Chọn sale..."
-                    onChange={(option) => {
-                      formRef.current.assignedSale = option
-                        ? option.id.toString()
-                        : undefined;
-                      forceUpdate();
-                    }}
-                    defaultValue={
-                      formRef.current.assignedSale
-                        ? {
-                            id: parseInt(formRef.current.assignedSale),
-                            name:
-                              customers
-                                .find(
-                                  (c) =>
-                                    c.id.toString() ===
-                                    formRef.current.customerId
-                                )
-                                ?.sales?.find(
-                                  (s: any) =>
-                                    s.id.toString() ===
-                                    formRef.current.assignedSale
-                                )?.name || "",
-                          }
-                        : null
-                    }
-                    type="text"
-                  />
-                </div>
+                {/* Assignee Dropdown */}
                 <div className="grid gap-2">
                   <Label htmlFor="assignedEmployee">Nhân viên được giao</Label>
                   <SearchableDropdown
@@ -524,6 +480,51 @@ export function VideoForm({
                     type="text"
                   />
                 </div>
+              </div>
+
+              {/* Sale Dropdown - full width */}
+              <div className="grid gap-2">
+                <Label htmlFor="assignedSale">Saler</Label>
+                <SearchableDropdown
+                  options={
+                    customers
+                      .find(
+                        (c) =>
+                          c.id.toString() === formRef.current.customerId
+                      )
+                      ?.sales?.map((s: any) => ({
+                        id: s.id,
+                        name: s.name,
+                      })) || []
+                  }
+                  placeholder="Chọn sale..."
+                  onChange={(option) => {
+                    formRef.current.assignedSale = option
+                      ? option.id.toString()
+                      : undefined;
+                    forceUpdate();
+                  }}
+                  defaultValue={
+                    formRef.current.assignedSale
+                      ? {
+                          id: parseInt(formRef.current.assignedSale),
+                          name:
+                            customers
+                              .find(
+                                (c) =>
+                                  c.id.toString() ===
+                                  formRef.current.customerId
+                              )
+                              ?.sales?.find(
+                                (s: any) =>
+                                  s.id.toString() ===
+                                  formRef.current.assignedSale
+                              )?.name || "",
+                        }
+                      : null
+                  }
+                  type="text"
+                />
               </div>
 
               {/* Work Request Dropdown */}
