@@ -21,10 +21,19 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import {
   Eye,
   Trash2,
   Save,
   X,
+  XCircle,
   PlayCircle,
   CheckCircle,
   Check,
@@ -203,6 +212,11 @@ export function VideoTable({
   const [bulkMarkAsPaidDialogOpen, setBulkMarkAsPaidDialogOpen] =
     useState(false);
   const [jobToDelete, setJobToDelete] = useState<number | null>(null);
+  const [rejectDialog, setRejectDialog] = useState<{ open: boolean; videoId: number | null }>({
+    open: false,
+    videoId: null,
+  });
+  const [rejectNote, setRejectNote] = useState("");
   const [selectedJobIds, setSelectedJobIds] = useState<Set<number>>(new Set());
   const [totalSelectedPrice, setTotalSelectedPrice] = useState<number>(0);
   const [totalSelectedPriceCustomer, setTotalSelectedPriceCustomer] =
@@ -1350,13 +1364,12 @@ console.log("editValue: ", editValue)
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      const reason = window.prompt("Lý do từ chối duyệt (tối thiểu 5 ký tự):");
-                      if (reason != null) {
-                        onVideoAction(video.id, "reject-video", { reason });
-                      }
+                      setRejectDialog({ open: true, videoId: video.id });
+                      setRejectNote("");
                     }}
                     className="h-8 gap-1 border-red-500 text-red-600 hover:bg-red-50"
                   >
+                    <XCircle className="h-3 w-3" />
                     Từ chối
                   </Button>
                 </>
@@ -1768,6 +1781,55 @@ console.log("editValue: ", editValue)
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Reject Reason Dialog */}
+      <Dialog
+        open={rejectDialog.open}
+        onOpenChange={(open) => setRejectDialog({ ...rejectDialog, open })}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Từ Chối Duyệt Video</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Textarea
+              placeholder="Nhập lý do từ chối (tối thiểu 5 ký tự)..."
+              value={rejectNote}
+              onChange={(e) => setRejectNote(e.target.value)}
+              className="min-h-[120px]"
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setRejectDialog({ open: false, videoId: null });
+                setRejectNote("");
+              }}
+            >
+              Hủy
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (!rejectNote.trim() || rejectNote.trim().length < 5) {
+                  toast.warning("Vui lòng nhập lý do từ chối (tối thiểu 5 ký tự)");
+                  return;
+                }
+                if (rejectDialog.videoId != null) {
+                  onVideoAction(rejectDialog.videoId, "reject-video", {
+                    reason: rejectNote.trim(),
+                  });
+                }
+                setRejectDialog({ open: false, videoId: null });
+                setRejectNote("");
+              }}
+            >
+              Từ Chối
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
