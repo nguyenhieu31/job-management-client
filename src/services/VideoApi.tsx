@@ -55,6 +55,24 @@ export const updateVideoStatus = async (data: {
   }
 };
 
+export const transitionVideo = async (data: {
+  id: number;
+  event: string;
+  reason?: string;
+  linkDone?: string;
+}) => {
+  try {
+    const res = await axiosInstance.put(`/admin/videos/${data.id}/transition`, {
+      event: data.event,
+      reason: data.reason,
+      linkDone: data.linkDone,
+    });
+    return res as unknown as ApiResponse<string>;
+  } catch (err: any) {
+    throw new Error(err.message);
+  }
+};
+
 export const getRandomVideo = async () => {
   try {
     const res = await axiosInstance.get(`/admin/videos/random`);

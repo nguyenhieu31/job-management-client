@@ -54,6 +54,19 @@ export const UpdateVideoStatusAction = createAsyncThunk(
   }
 );
 
+export const TransitionVideoAction = createAsyncThunk(
+  "video/transitionVideo",
+  async (data: {
+    id: number;
+    event: string;
+    reason?: string;
+    linkDone?: string;
+  }) => {
+    const res = await VideoApi.transitionVideo(data);
+    return res.data;
+  }
+);
+
 export const GetRandomVideoAction = createAsyncThunk(
   "video/getRandomVideo",
   async () => {

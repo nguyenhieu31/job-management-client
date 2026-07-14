@@ -40,6 +40,9 @@ export interface VideoResponse {
   paymentStatus: PaymentStatus;
   paymentEmployee: EmployeePaymentStatus;
   jobStatus: VideoStatus;
+  deliveryStatus?: VideoDeliveryStatus;
+  revisionStatus?: VideoRevisionStatus;
+  rejectReason?: string | null;
   inputLink: string;
   doneLink: string;
   note: string;
@@ -81,6 +84,25 @@ export interface VideoRequest {
 
 export type VideoStatus = "PENDING" | "IN_PROGRESS" | "DONE" | "COMPLETED";
 
+export type VideoDeliveryStatus = "NONE" | "NOT_DELIVERED" | "DELIVERED";
+export type VideoRevisionStatus =
+  | "NONE"
+  | "REVISION_REQUESTED"
+  | "REVISION_IN_PROGRESS"
+  | "REVISION_DONE";
+
+export type VideoTransitionEvent =
+  | "TAKE"
+  | "DONE"
+  | "APPROVE"
+  | "REJECT"
+  | "MARK_DELIVERED"
+  | "REQUEST_REVISION"
+  | "START_REVISION"
+  | "FINISH_REVISION"
+  | "RE_REQUEST_REVISION"
+  | "ACCEPT_REVISION";
+
 export type PaymentStatus =
   | "UNPAID"
   | "INVOICE_SENT"
@@ -92,17 +114,26 @@ export type EmployeePaymentStatus = "UNPAID" | "PAID";
 
 // Video action types for different roles
 export type VideoAction =
-  | "take-video" // Employee takes the video (pending -> in-progress)
-  | "done-video" // Employee marks video as done (in-progress -> done)
-  | "complete-video" // Manager marks as completed (done -> completed)
-  | "edit" // Manager edits video
-  | "delete"; // Manager deletes video
+  | "take-video"
+  | "done-video"
+  | "complete-video"
+  | "reject-video"
+  | "mark-delivered"
+  | "request-revision"
+  | "start-revision"
+  | "finish-revision"
+  | "re-request-revision"
+  | "accept-revision"
+  | "edit"
+  | "delete";
 
 // For action with note
 export interface VideoActionPayload {
   videoId: number;
   action: VideoAction;
   qaNote?: string;
+  reason?: string;
+  linkDone?: string;
   qaOutputNumber?: number | null;
 }
 
@@ -128,6 +159,7 @@ export interface Pagination {
 }
 
 // Columns visible for each role
+// R8: hide outputCount, editedNumber, editedFee, payPerFile from table (still editable in form)
 export const ROLE_COLUMNS = {
   manager: [
     "code",
@@ -136,16 +168,11 @@ export const ROLE_COLUMNS = {
     "caseName",
     "linkInput",
     "inputCount",
-    "outputCount",
     "filePrice",
     "totalPrice",
     "jobStatus",
     "linkDone",
-    "editedNumber",
-    "editedFee",
-    "payPerFile",
     "totalPayPerFile",
-    // "employeeNote",
     "assignedEmployee",
     "note",
     "paymentStatus",
@@ -155,15 +182,10 @@ export const ROLE_COLUMNS = {
     "code",
     "date",
     "caseName",
-    // "workRequest",
     "linkInput",
     "linkDone",
     "inputCount",
-    "outputCount",
-    "editedNumber",
-    "editedFee",
     "jobStatus",
-    "payPerFile",
     "totalPayPerFile",
     "note",
     "actions",
@@ -172,15 +194,10 @@ export const ROLE_COLUMNS = {
     "code",
     "date",
     "caseName",
-    // "workRequest",
     "linkInput",
     "linkDone",
     "inputCount",
-    "outputCount",
-    "editedNumber",
-    "editedFee",
     "jobStatus",
-    "payPerFile",
     "totalPayPerFile",
     "note",
     "employeeNote",
@@ -194,14 +211,13 @@ export const ROLE_COLUMNS = {
     "caseName",
     "linkInput",
     "inputCount",
-    "outputCount",
     "filePrice",
     "totalPrice",
     "jobStatus",
     "linkDone",
-    "editedNumber",
     "assignedEmployee",
     "note",
-    "paymentStatus"
-  ]
+    "paymentStatus",
+    "actions",
+  ],
 } as const;
