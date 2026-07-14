@@ -1,5 +1,6 @@
 import { WorkRequestResponse } from "./work-requests";
 import { FileStorage } from "./jobs";
+import type { SaleInfo } from "./customers";
 
 export interface AssigneeInfo {
   id: number;
@@ -49,6 +50,8 @@ export interface VideoResponse {
   employeeNote?: string | null;
   assignee: AssigneeInfo;
   customer: CustomerInfo;
+  assignedSale?: SaleInfo | null;
+  sales?: SaleInfo[];
   workRequest: WorkRequestResponse;
   payPerFile: number;
   totalPayPerFile: number;
@@ -173,6 +176,7 @@ export const ROLE_COLUMNS = {
     "jobStatus",
     "linkDone",
     "totalPayPerFile",
+    "assignedSale",
     "assignedEmployee",
     "note",
     "paymentStatus",
@@ -215,6 +219,7 @@ export const ROLE_COLUMNS = {
     "totalPrice",
     "jobStatus",
     "linkDone",
+    "assignedSale",
     "assignedEmployee",
     "note",
     "paymentStatus",

@@ -140,6 +140,7 @@ const columnLabels: Record<string, string> = {
   qaNote: "Ghi Chú QA",
   employeeNote: "Thuê ngoài",
   assignedEmployee: "Người Được Giao",
+  assignedSale: "Saler",
   qa: "QA",
   deadline: "Deadline",
   actions: "Hành Động",
@@ -989,6 +990,13 @@ export function JobTable({
           <span>
             {employees?.find((e) => e.id === job.assignee?.id)?.fullName ||
               job.assignee?.fullName}
+          </span>
+        );
+
+      case "assignedSale":
+        return (
+          <span className="text-sm">
+            {job.assignedSale?.name || job.sales?.[0]?.name || "—"}
           </span>
         );
 

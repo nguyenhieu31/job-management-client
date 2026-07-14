@@ -153,6 +153,7 @@ const columnLabels: Record<string, string> = {
   qaNote: "Ghi Chú QA",
   employeeNote: "Thuê ngoài",
   assignedEmployee: "Người Được Giao",
+  assignedSale: "Saler",
   qa: "QA",
   editedNumber: "Số Lần Chỉnh Sửa",
   editedFee: "Phí Chỉnh Sửa",
@@ -1282,6 +1283,13 @@ console.log("editValue: ", editValue)
             {employees?.find((e) => e.id === video.assignee?.id)?.fullName ||
               video.assignee?.fullName ||
               ""}
+          </span>
+        );
+
+      case "assignedSale":
+        return (
+          <span className="text-sm">
+            {video.assignedSale?.name || video.sales?.[0]?.name || "—"}
           </span>
         );
 
