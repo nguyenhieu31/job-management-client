@@ -27,6 +27,7 @@ import {
   CheckCircle,
   Eye,
   X,
+  XCircle,
   ImageIcon,
   Film,
 } from "lucide-react";
@@ -182,7 +183,7 @@ export function VideoDetailDialog({
 
         <div className="space-y-6 mt-4">
           {/* Status Badges */}
-          <div className="flex gap-3 flex-wrap">
+          <div className="flex gap-3 flex-wrap items-center">
             <Badge variant="outline" className={videoStatusColors[video.jobStatus]}>
               {videoStatusLabels[video.jobStatus]}
             </Badge>
@@ -194,7 +195,36 @@ export function VideoDetailDialog({
                 {paymentStatusLabels[video.paymentStatus]}
               </Badge>
             )}
+            {video.deliveryStatus && video.deliveryStatus !== "NONE" && (
+              <Badge variant="secondary" className="text-xs">
+                {video.deliveryStatus === "NOT_DELIVERED" ? "Chưa giao hàng" : "Đã giao hàng"}
+              </Badge>
+            )}
+            {video.revisionStatus && video.revisionStatus !== "NONE" && (
+              <Badge variant="outline" className="text-xs border-orange-400 text-orange-600">
+                {video.revisionStatus === "REVISION_REQUESTED"
+                  ? "Cần sửa"
+                  : video.revisionStatus === "REVISION_IN_PROGRESS"
+                  ? "Đang sửa"
+                  : video.revisionStatus === "REVISION_DONE"
+                  ? "Đã sửa"
+                  : ""}
+              </Badge>
+            )}
           </div>
+
+          {/* Reject Reason */}
+          {video.rejectReason && (
+            <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg p-4">
+              <label className="text-sm font-medium text-red-700 dark:text-red-400 flex items-center gap-1">
+                <XCircle className="h-4 w-4" />
+                Lý Do Từ Chối
+              </label>
+              <p className="mt-1 text-sm text-red-600 dark:text-red-300 whitespace-pre-wrap">
+                {video.rejectReason}
+              </p>
+            </div>
+          )}
 
           <Separator />
 
