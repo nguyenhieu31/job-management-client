@@ -996,7 +996,7 @@ export function JobTable({
       case "assignedSale":
         return (
           <span className="text-sm">
-            {job.assignedSale?.name || job.sales?.[0]?.name || "—"}
+            {job.assignedSale?.name || job.customer?.sales?.[0]?.name || "—"}
           </span>
         );
 

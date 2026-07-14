@@ -19,6 +19,7 @@ export interface CustomerInfo {
   phone: string;
   company: string;
   customerCode?: string;
+  sales?: SaleInfo[];
 }
 
 export interface VideoViewResponse {
@@ -51,7 +52,6 @@ export interface VideoResponse {
   assignee: AssigneeInfo;
   customer: CustomerInfo;
   assignedSale?: SaleInfo | null;
-  sales?: SaleInfo[];
   workRequest: WorkRequestResponse;
   payPerFile: number;
   totalPayPerFile: number;
