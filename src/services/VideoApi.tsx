@@ -151,6 +151,7 @@ export const updateGridViewVideo = async (data: {
   doneLink?: string | null;
   payPerFile?: number | null;
   payPerFileQa?: number | null;
+  assignedSaleId?: number | null;
   isDeleteAssignee?: boolean;
   fileStoragesNeedRemove?: FileStorage[];
 }, images?: File[], videos?: File[], imageTempUrls?: string[], videoTempUrls?: string[]) => {
@@ -177,6 +178,7 @@ export const updateGridViewVideo = async (data: {
     if (data.payPerFile != null) formData.append("payPerFile", String(data.payPerFile));
     if (data.payPerFileQa != null) formData.append("payPerFileQa", String(data.payPerFileQa));
     if (data.isDeleteAssignee != null) formData.append("isDeleteAssignee", String(data.isDeleteAssignee));
+    if (data.assignedSaleId != null) formData.append("assignedSaleId", String(data.assignedSaleId));
 
     // Append fileStoragesNeedRemove as JSON string
     if (data.fileStoragesNeedRemove && data.fileStoragesNeedRemove.length > 0) {
@@ -252,6 +254,7 @@ const buildVideoFormData = (
   if (data.customerId != null) formData.append("customerId", String(data.customerId));
   if (data.workRequestId != null) formData.append("workRequestId", String(data.workRequestId));
   if (data.isDeleteAssignee != null) formData.append("isDeleteAssignee", String(data.isDeleteAssignee));
+  if (data.assignedSaleId != null) formData.append("assignedSaleId", String(data.assignedSaleId));
 
   if (data.fileStoragesNeedRemove && data.fileStoragesNeedRemove.length > 0) {
     formData.append(

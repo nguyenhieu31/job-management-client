@@ -81,6 +81,7 @@ export interface VideoRequest {
   assigneeId: number | null;
   customerId: number | null;
   workRequestId: number | null;
+  assignedSaleId?: number | null;
   isDeleteAssignee?: boolean;
   fileStoragesNeedRemove?: FileStorage[];
 }

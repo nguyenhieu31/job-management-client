@@ -126,6 +126,7 @@ export interface JobRequest {
   customerId: number | null;
   workRequestId: number | null;
   deadline?: string | null;
+  assignedSaleId?: number | null;
   isDeleteAssignee?: boolean;
   isDeleteQualifiedAssignee?: boolean;
   fileStoragesNeedRemove?: FileStorage[];
