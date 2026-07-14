@@ -77,7 +77,11 @@ export function CustomerTable({
                 </TableCell>
                 <TableCell className="font-medium">{customer.name}</TableCell>
                 <TableCell>{customer.email}</TableCell>
-                <TableCell>{customer.assignedSaleName || "—"}</TableCell>
+                <TableCell>
+                  {customer.sales && customer.sales.length > 0
+                    ? customer.sales.map((s) => s.name).join(", ")
+                    : "—"}
+                </TableCell>
                 {roleName === "MANAGER" && (
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">

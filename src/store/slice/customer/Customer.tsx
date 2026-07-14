@@ -28,8 +28,8 @@ export const GetAllCustomersAction = createAsyncThunk<
 
 export const SearchCustomersAction = createAsyncThunk<
   PageResponse<CustomerResponse[]>,
-  PageRequest & { keyword: string; assignedSaleId?: number }
->("SearchCustomersAction", async (data: PageRequest & { keyword: string; assignedSaleId?: number }) => {
+  PageRequest & { keyword: string; saleId?: number }
+>("SearchCustomersAction", async (data: PageRequest & { keyword: string; saleId?: number }) => {
   try {
     const response = await searchCustomers(data);
     return response.data as PageResponse<CustomerResponse[]>;

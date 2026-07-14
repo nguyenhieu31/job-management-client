@@ -1,3 +1,9 @@
+export interface SaleInfo {
+    id: number;
+    name: string;
+    code?: string;
+}
+
 export interface CustomerResponse {
     id: number;
     name: string;
@@ -5,8 +11,9 @@ export interface CustomerResponse {
     phone: string;
     company: string;
     customerCode?: string;
-    assignedSaleId?: number;
-    assignedSaleName?: string;
+    primarySaleId?: number;
+    primarySaleName?: string;
+    sales?: SaleInfo[];
     isJobAccount: boolean;
     isVideoAccount: boolean;
 }
@@ -18,14 +25,15 @@ export interface CustomerRequest {
     phone: string;
     company: string;
     customerCode?: string;
-    assignedSaleId?: number;
+    saleIds?: number[];
+    primarySaleId?: number;
     isJobAccount: boolean;
     isVideoAccount: boolean;
 }
 
 export interface CustomerFilters {
     search: string;
-    assignedSaleId?: number;
+    saleId?: number;
 }
 
 export interface CustomerPagination {

@@ -40,7 +40,8 @@ export interface RoleDto {
 }
 
 export interface EmployeeFilters {
-    search: string; // Search by name, email, or phone number
+    search: string;
+    roleId?: string;
 }
 
 export interface EmployeePagination {

@@ -27,7 +27,7 @@ export function CustomerFilterBar({
     name: s.fullName + (s.code ? ` (${s.code})` : ""),
   }));
 
-  const selectedSale = saleOptions.find((o) => o.id === filters.assignedSaleId) || null;
+  const selectedSale = saleOptions.find((o) => o.id === filters.saleId) || null;
 
   return (
     <div className="bg-card rounded-lg border p-4">
@@ -53,11 +53,11 @@ export function CustomerFilterBar({
         <div className="space-y-2">
           <label className="text-sm font-medium">Sale Phụ Trách</label>
           <SearchableDropdown
-            key={filters.assignedSaleId ?? "all-sales"}
+            key={filters.saleId ?? "all-sales"}
             options={saleOptions}
             defaultValue={selectedSale}
             onChange={(option) =>
-              onFilterChange({ ...filters, assignedSaleId: option ? option.id : undefined })
+              onFilterChange({ ...filters, saleId: option ? option.id : undefined })
             }
             placeholder="Tất cả sale"
             type="text"

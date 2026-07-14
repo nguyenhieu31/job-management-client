@@ -49,7 +49,7 @@ export default function CustomersPage() {
     return customers.data;
   }, [customers]);
 
-  const [activeFilters, setActiveFilters] = useState<{keyword: string; assignedSaleId?: number} | null>(null);
+  const [activeFilters, setActiveFilters] = useState<{keyword: string; saleId?: number} | null>(null);
 
   useEffect(() => {
     getSalesForDropdown().then((res) => {
@@ -59,13 +59,13 @@ export default function CustomersPage() {
 
   const handleApplyFilters = () => {
     setPagination((prev) => ({ ...prev, currentPage: 1 }));
-    setActiveFilters({ keyword: filters.search, assignedSaleId: filters.assignedSaleId });
+    setActiveFilters({ keyword: filters.search, saleId: filters.saleId });
   };
 
   const handleResetFilters = () => {
     const resetFilters: CustomerFilters = {
       search: "",
-      assignedSaleId: undefined,
+      saleId: undefined,
     };
     setFilters(resetFilters);
     setActiveFilters(null);
@@ -86,31 +86,31 @@ export default function CustomersPage() {
 
   const handleAddCustomer = async (customer: Partial<CustomerRequest>) => {
     if (customer.id) {
-      const payload = {
+      const payload: CustomerRequest = {
         id: customer.id,
         name: customer.name || "",
         email: customer.email || "",
         phone: customer.phone || "",
         company: customer.company || "",
         customerCode: customer.customerCode || "",
-        assignedSaleId: customer.assignedSaleId || 0,
+        saleIds: customer.saleIds || [],
         isJobAccount: customer.isJobAccount ?? true,
         isVideoAccount: customer.isVideoAccount ?? true,
-      }
-      await dispatch(UpdateCustomerAction(payload as CustomerRequest));
+      };
+      await dispatch(UpdateCustomerAction(payload));
       setEditingCustomer(null);
     } else {
-      const payload = {
+      const payload: CustomerRequest = {
         name: customer.name || "",
         email: customer.email || "",
         phone: customer.phone || "",
         company: customer.company || "",
         customerCode: customer.customerCode || "",
-        assignedSaleId: customer.assignedSaleId || 0,
+        saleIds: customer.saleIds || [],
         isJobAccount: customer.isJobAccount ?? true,
         isVideoAccount: customer.isVideoAccount ?? true,
-      }
-      await dispatch(CreateCustomerAction(payload as CustomerRequest));
+      };
+      await dispatch(CreateCustomerAction(payload));
     }
   };
 
@@ -138,7 +138,7 @@ export default function CustomersPage() {
     if (activeFilters) {
       dispatch(SearchCustomersAction({
         keyword: activeFilters.keyword,
-        assignedSaleId: activeFilters.assignedSaleId,
+        saleId: activeFilters.saleId,
         pageNumber: pagination.currentPage - 1,
         pageSize: pagination.pageSize,
       }));

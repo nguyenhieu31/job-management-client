@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import SearchableDropdown from "@/components/ui/search-able-dropdown";
+import MultiSelectDropdown from "@/components/ui/multi-select-dropdown";
 import type { CustomerResponse } from "@/types/customers";
 import type { EmployeeResponse } from "@/types/employees";
 
@@ -36,20 +36,22 @@ export function CustomerForm({
     phone: "",
     company: "",
     customerCode: "",
-    assignedSaleId: 0,
+    saleIds: [] as number[],
     isJobAccount: true,
     isVideoAccount: true,
   });
 
   useEffect(() => {
     if (editingCustomer) {
+      // Load existing sales from the response (sales array)
+      const existingSaleIds = editingCustomer.sales?.map((s) => s.id) || [];
       setFormData({
         name: editingCustomer.name,
         email: editingCustomer.email,
         phone: editingCustomer.phone,
         company: editingCustomer.company,
         customerCode: editingCustomer.customerCode || "",
-        assignedSaleId: editingCustomer.assignedSaleId || 0,
+        saleIds: existingSaleIds,
         isJobAccount: editingCustomer.isJobAccount,
         isVideoAccount: editingCustomer.isVideoAccount,
       });
@@ -60,7 +62,7 @@ export function CustomerForm({
         phone: "",
         company: "",
         customerCode: "",
-        assignedSaleId: 0,
+        saleIds: [],
         isJobAccount: true,
         isVideoAccount: true,
       });
@@ -72,10 +74,8 @@ export function CustomerForm({
     name: s.fullName + (s.code ? ` (${s.code})` : ""),
   }));
 
-  const currentSale = saleOptions.find((o) => o.id === formData.assignedSaleId) || null;
-
-  const handleSaleChange = (option: { id: number; name: string | number } | null) => {
-    setFormData({ ...formData, assignedSaleId: option ? option.id : 0 });
+  const handleSaleChange = (values: { id: number; name: string }[]) => {
+    setFormData({ ...formData, saleIds: values.map((v) => v.id) });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -88,7 +88,8 @@ export function CustomerForm({
       phone: formData.phone,
       company: formData.company,
       customerCode: formData.customerCode || undefined,
-      ...(formData.assignedSaleId > 0 && { assignedSaleId: formData.assignedSaleId }),
+      // Send as saleIds for backend Create/UpdateCustomerRequest
+      ...(formData.saleIds.length > 0 && { saleIds: formData.saleIds }),
       isJobAccount: formData.isJobAccount,
       isVideoAccount: formData.isVideoAccount,
     };
@@ -164,13 +165,14 @@ export function CustomerForm({
           </div>
 
           <div className="space-y-2">
-            <Label>Sale Phụ Trách</Label>
-            <SearchableDropdown
+            <Label>Sale Phụ Trách (có thể chọn nhiều)</Label>
+            <MultiSelectDropdown
               options={saleOptions}
-              defaultValue={currentSale}
-              onChange={handleSaleChange}
               placeholder="Chọn sale..."
-              type="text"
+              onChange={handleSaleChange}
+              defaultValue={saleOptions.filter((o) => formData.saleIds.includes(o.id))}
+              className="w-full"
+              title="Sale Phụ Trách"
             />
           </div>
 

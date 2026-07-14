@@ -43,14 +43,14 @@ export const deleteCustomer = async (customerId: number) => {
     }
 }
 
-export const searchCustomers = async (data: PageRequest & { keyword: string } & { assignedSaleId?: number }) => {
+export const searchCustomers = async (data: PageRequest & { keyword: string } & { saleId?: number }) => {
     try {
         const params: any = {
             pageNumber: data.pageNumber,
             pageSize: data.pageSize,
         };
         if (data.keyword) params.keyword = data.keyword;
-        if (data.assignedSaleId) params.assignedSaleId = data.assignedSaleId;
+        if (data.saleId) params.saleId = data.saleId;
         const res = await axiosInstance.get(`/admin/customers/search`, { params });
         return res as unknown as ApiResponse<PageResponse<CustomerResponse[]>>;
     } catch (err: any) {

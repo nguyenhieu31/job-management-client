@@ -20,7 +20,6 @@ import { CreateEmployeeAction, DeleteEmployeeAction, GetAllEmployeesAction, Rese
 import { PageResponse } from "@/components/types/Page";
 import axios from "axios";
 
-// Demo roles
 const rolesList: RoleDto[] = [
   { id: 2, name: "MANAGER" },
   { id: 3, name: "EMPLOYEE" },
@@ -44,12 +43,11 @@ export default function EmployeesPage() {
     fetchBanks();
   }, []);
 
-  // Filters state
   const [filters, setFilters] = useState<EmployeeFilters>({
     search: "",
+    roleId: undefined,
   });
 
-  // Pagination state
   const [pagination, setPagination] = useState<EmployeePagination>({
     currentPage: 1,
     pageSize: 10,
@@ -57,7 +55,6 @@ export default function EmployeesPage() {
     totalPages: 0,
   });
 
-  // Get data from Redux store
   const { roleName } = useAppSelector((state) => state.authenticate);
   const {
     employees,
@@ -65,25 +62,25 @@ export default function EmployeesPage() {
   }: { employees: PageResponse<EmployeeResponse[]> | undefined; loading: boolean } =
     useAppSelector((state) => state.employee);
 
-  // Filter employees
   const filteredEmployees = useMemo(() => {
     if (!employees) return [];
-
     return employees.data;
   }, [employees]);
 
-  // Active filters state for pagination
-  const [activeFilters, setActiveFilters] = useState<{keyword: string} | null>(null);
+  const [activeFilters, setActiveFilters] = useState<{keyword?: string; roleId?: number} | null>(null);
 
-  // Handle filter actions
   const handleApplyFilters = () => {
     setPagination((prev) => ({ ...prev, currentPage: 1 }));
-    setActiveFilters({ keyword: filters.search });
+    setActiveFilters({
+      keyword: filters.search || undefined,
+      roleId: filters.roleId ? Number(filters.roleId) : undefined,
+    });
   };
 
   const handleResetFilters = () => {
     const resetFilters: EmployeeFilters = {
       search: "",
+      roleId: undefined,
     };
     setFilters(resetFilters);
     setActiveFilters(null);
@@ -173,7 +170,8 @@ export default function EmployeesPage() {
 
     if (activeFilters) {
       dispatch(SearchEmployeesAction({
-        ...activeFilters,
+        keyword: activeFilters.keyword,
+        roleId: activeFilters.roleId,
         pageNumber: pagination.currentPage - 1,
         pageSize: pagination.pageSize,
       }));
@@ -234,6 +232,7 @@ export default function EmployeesPage() {
         onFilterChange={setFilters}
         onApply={handleApplyFilters}
         onReset={handleResetFilters}
+        roles={rolesList}
       />
 
       {/* Table */}

@@ -29,8 +29,8 @@ export const GetAllEmployeesAction = createAsyncThunk<
 
 export const SearchEmployeesAction = createAsyncThunk<
   PageResponse<EmployeeResponse[]>,
-  PageRequest & { keyword: string }
->("SearchEmployeesAction", async (data: PageRequest & { keyword: string }) => {
+  PageRequest & { keyword?: string; roleId?: number }
+>("SearchEmployeesAction", async (data: PageRequest & { keyword?: string; roleId?: number }) => {
   try {
     const response = await searchEmployees(data);
     return response.data as PageResponse<EmployeeResponse[]>;
