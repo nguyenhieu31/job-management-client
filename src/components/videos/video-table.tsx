@@ -370,6 +370,7 @@ console.log("editValue: ", editValue)
             editedNumber:
               changes?.editedNumber !== undefined ? changes.editedNumber : null,
             isDeleteAssignee: isDeleteAssignee || undefined,
+            assignedSaleId: changes?.assignedSale?.id || null,
             fileStoragesNeedRemove: removedFiles && removedFiles.length > 0 ? removedFiles : undefined,
           },
           images: filteredImages,
@@ -1287,9 +1288,35 @@ console.log("editValue: ", editValue)
         );
 
       case "assignedSale":
+        if (userRole === "manager" && video.sales && video.sales.length > 0) {
+          return (
+            <SearchableDropdown
+              options={video.sales.map((s) => ({
+                id: s.id,
+                name: s.name,
+              }))}
+              placeholder="Chọn sale..."
+              onChange={(value: any) => {
+                if (value === null) {
+                  handleFieldChange(video.id, "assignedSale", null);
+                } else {
+                  const sale = video.sales?.find((s) => s.id === value.id);
+                  handleFieldChange(video.id, "assignedSale", sale || null);
+                }
+              }}
+              defaultValue={
+                video.assignedSale?.id
+                  ? { id: video.assignedSale.id, name: video.assignedSale.name }
+                  : null
+              }
+              className="w-[150px]"
+              type="text"
+            />
+          );
+        }
         return (
           <span className="text-sm">
-            {video.assignedSale?.name || video.sales?.[0]?.name || "—"}
+            {video.assignedSale?.name || "—"}
           </span>
         );
 
