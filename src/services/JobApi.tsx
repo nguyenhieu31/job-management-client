@@ -117,6 +117,7 @@ export const updateGridViewJob = async (data: {
     employeeNote?: string | null;
     isDeleteAssignee?: boolean;
     isDeleteQualifiedAssignee?: boolean;
+    assignedSaleId?: number | null;
 }) => {
     try {
         const res = await axiosInstance.post(`/admin/jobs/update-grid-view`, data);
@@ -157,6 +158,7 @@ const buildJobFormData = (data: JobRequest, images?: File[], videos?: File[], im
     if (data.deadline != null) formData.append("deadline", data.deadline);
     if (data.isDeleteAssignee != null) formData.append("isDeleteAssignee", String(data.isDeleteAssignee));
     if (data.isDeleteQualifiedAssignee != null) formData.append("isDeleteQualifiedAssignee", String(data.isDeleteQualifiedAssignee));
+    if (data.assignedSaleId != null) formData.append("assignedSaleId", String(data.assignedSaleId));
     
     // Append fileStoragesNeedRemove as JSON string
     if (data.fileStoragesNeedRemove && data.fileStoragesNeedRemove.length > 0) {
