@@ -65,7 +65,11 @@ interface VideoTableProps {
   userRole: UserRole;
   employees?: EmployeeResponse[];
   customers?: CustomerInfo[];
-  onVideoAction: (videoId: number, action: VideoAction) => void;
+  onVideoAction: (
+    videoId: number,
+    action: VideoAction,
+    payload?: { reason?: string; linkDone?: string },
+  ) => void;
 }
 
 const videoStatusColors: Record<string, string> = {
@@ -83,6 +87,19 @@ const videoStatusLabels: Record<string, string> = {
   IN_PROGRESS: "Đang làm",
   DONE: "Đang đợi xét duyệt",
   COMPLETED: "Đã hoàn thành",
+};
+
+const deliveryStatusLabels: Record<string, string> = {
+  NONE: "",
+  NOT_DELIVERED: "Chưa giao hàng",
+  DELIVERED: "Đã giao hàng",
+};
+
+const revisionStatusLabels: Record<string, string> = {
+  NONE: "",
+  REVISION_REQUESTED: "Cần sửa",
+  REVISION_IN_PROGRESS: "Đang sửa",
+  REVISION_DONE: "Đã sửa",
 };
 
 const paymentStatusOptions = [
@@ -1072,15 +1089,32 @@ console.log("editValue: ", editValue)
         return <span className="font-medium">{formatCurrencyVND(fee)}</span>;
 
       case "jobStatus":
-        // All roles (including Manager) see status as read-only badge
-        // Status can only be changed through action buttons
         return (
-          <Badge
-            variant="outline"
-            className={videoStatusColors[video.jobStatus]}
-          >
-            {videoStatusLabels[video.jobStatus] || video.jobStatus}
-          </Badge>
+          <div className="flex flex-col gap-1">
+            <Badge
+              variant="outline"
+              className={videoStatusColors[video.jobStatus]}
+            >
+              {videoStatusLabels[video.jobStatus] || video.jobStatus}
+            </Badge>
+            {video.deliveryStatus &&
+              video.deliveryStatus !== "NONE" &&
+              deliveryStatusLabels[video.deliveryStatus] && (
+                <Badge variant="secondary" className="text-xs">
+                  {deliveryStatusLabels[video.deliveryStatus]}
+                </Badge>
+              )}
+            {video.revisionStatus &&
+              video.revisionStatus !== "NONE" &&
+              revisionStatusLabels[video.revisionStatus] && (
+                <Badge
+                  variant="outline"
+                  className="text-xs border-orange-400 text-orange-600"
+                >
+                  {revisionStatusLabels[video.revisionStatus]}
+                </Badge>
+              )}
+          </div>
         );
 
       case "paymentStatus":
@@ -1302,15 +1336,118 @@ console.log("editValue: ", editValue)
             {userRole === "manager" &&
               video.jobStatus === "DONE" &&
               !pendingChangesRef.current[video.id] && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onVideoAction(video.id, "complete-video")}
+                    className="h-8 gap-1 border-emerald-500 text-emerald-600 hover:bg-emerald-50"
+                  >
+                    <CheckCircle className="h-3 w-3" />
+                    Duyệt
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const reason = window.prompt("Lý do từ chối duyệt (tối thiểu 5 ký tự):");
+                      if (reason != null) {
+                        onVideoAction(video.id, "reject-video", { reason });
+                      }
+                    }}
+                    className="h-8 gap-1 border-red-500 text-red-600 hover:bg-red-50"
+                  >
+                    Từ chối
+                  </Button>
+                </>
+              )}
+
+            {/* Delivery + revision actions */}
+            {(userRole === "manager" || userRole === "saler") &&
+              video.jobStatus === "COMPLETED" &&
+              video.deliveryStatus !== "DELIVERED" &&
+              (!video.revisionStatus || video.revisionStatus === "NONE") &&
+              !pendingChangesRef.current[video.id] && (
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => onVideoAction(video.id, "complete-video")}
-                  className="h-8 gap-1 border-emerald-500 text-emerald-600 hover:bg-emerald-50"
+                  onClick={() => onVideoAction(video.id, "mark-delivered")}
+                  className="h-8 gap-1 border-blue-500 text-blue-600 hover:bg-blue-50"
                 >
-                  <CheckCircle className="h-3 w-3" />
-                  Duyệt
+                  Đã giao hàng
                 </Button>
+              )}
+
+            {(userRole === "manager" || userRole === "saler") &&
+              video.jobStatus === "COMPLETED" &&
+              (!video.revisionStatus || video.revisionStatus === "NONE") &&
+              !pendingChangesRef.current[video.id] && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const reason = window.prompt("Lý do cần sửa (tuỳ chọn):") || undefined;
+                    onVideoAction(video.id, "request-revision", { reason });
+                  }}
+                  className="h-8 gap-1 border-orange-500 text-orange-600 hover:bg-orange-50"
+                >
+                  Cần sửa đổi
+                </Button>
+              )}
+
+            {(userRole === "employee" || userRole === "special") &&
+              video.jobStatus === "COMPLETED" &&
+              video.revisionStatus === "REVISION_REQUESTED" &&
+              !pendingChangesRef.current[video.id] && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onVideoAction(video.id, "start-revision")}
+                  className="h-8 gap-1 border-orange-500 text-orange-600 hover:bg-orange-50"
+                >
+                  Sửa
+                </Button>
+              )}
+
+            {(userRole === "employee" || userRole === "special") &&
+              video.jobStatus === "COMPLETED" &&
+              video.revisionStatus === "REVISION_IN_PROGRESS" &&
+              !pendingChangesRef.current[video.id] && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onVideoAction(video.id, "finish-revision")}
+                  className="h-8 gap-1 border-green-500 text-green-600 hover:bg-green-50"
+                >
+                  Đã sửa
+                </Button>
+              )}
+
+            {(userRole === "manager" || userRole === "saler") &&
+              video.jobStatus === "COMPLETED" &&
+              video.revisionStatus === "REVISION_DONE" &&
+              !pendingChangesRef.current[video.id] && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onVideoAction(video.id, "accept-revision")}
+                    className="h-8 gap-1 border-emerald-500 text-emerald-600 hover:bg-emerald-50"
+                  >
+                    Duyệt bản sửa
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const reason = window.prompt("Lý do sửa lại (tuỳ chọn):") || undefined;
+                      onVideoAction(video.id, "re-request-revision", { reason });
+                    }}
+                    className="h-8 gap-1 border-orange-500 text-orange-600 hover:bg-orange-50"
+                  >
+                    Sửa lại
+                  </Button>
+                </>
               )}
 
             {/* Delete button - only for manager */}
