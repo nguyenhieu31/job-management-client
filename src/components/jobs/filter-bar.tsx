@@ -36,6 +36,7 @@ interface FilterBarProps {
   onPageChange: (page: number) => void;
   employees?: EmployeeResponse[];
   customers?: CustomerInfo[];
+  salers?: EmployeeResponse[];
   onFiltersChange?: (filters: any) => void;
 }
 
@@ -44,6 +45,7 @@ export function FilterBar({
   onPageChange,
   employees,
   customers,
+  salers,
   onFiltersChange,
 }: FilterBarProps) {
   const dispatch = useAppDispatch();
@@ -100,10 +102,8 @@ export function FilterBar({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Salers extracted from employees list
-  const salers = employees
-    ? employees.filter((e) => e.role?.name === "SALER")
-    : [];
+  // Salers from prop
+  const salerOptions = salers || [];
 
   // Auto search when debounced term changes
   useEffect(() => {
@@ -317,7 +317,7 @@ export function FilterBar({
                   Sale phụ trách
                 </Label>
                 <MultiSelectDropdown
-                  options={salers.map((s) => ({ id: s.id, name: s.fullName }))}
+                  options={salerOptions.map((s) => ({ id: s.id, name: s.fullName }))}
                   placeholder="Chọn sale..."
                   onChange={(values) => setSelectedSaleIds(values)}
                   defaultValue={selectedSaleIds}

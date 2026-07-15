@@ -191,6 +191,11 @@ export default function JobsPage() {
     [employees]
   );
 
+  const salerList = useMemo(() => 
+    employees?.data.filter((e) => e.role.name.toLowerCase() === "saler") || [], 
+    [employees]
+  );
+
   const qaList = useMemo(() => 
     employees?.data.filter((e) => e.role.name.toLowerCase() === "qa") || [], 
     [employees]
@@ -280,6 +285,7 @@ export default function JobsPage() {
         employees={employeeList.filter((e) => e.isJobAccount === true)}
         customers={customerList.filter((c) => c.isJobAccount === true)}
         onFiltersChange={setActiveFilters}
+        salers={salerList}
       />
 
       {/* Table */}
