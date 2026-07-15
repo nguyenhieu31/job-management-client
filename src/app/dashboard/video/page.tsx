@@ -345,6 +345,7 @@ export default function VideosPage() {
       ]);
     }
   }, [dispatch, roleName]);
+  console.log("employeeList", employeeList);
 
   return (
     <div className="flex flex-col gap-6">
@@ -387,8 +388,8 @@ export default function VideosPage() {
         onPageChange={handlePageChange}
         employees={employeeList.filter((e) => e.isVideoAccount === true)}
         customers={customerList.filter((c) => c.isVideoAccount === true)}
-        onFiltersChange={setActiveFilters}
         salers={salerList}
+        onFiltersChange={setActiveFilters}
       />
 
       {/* Table */}
