@@ -29,7 +29,6 @@ import MultiSelectDropdown from "../ui/multi-select-dropdown";
 import { EmployeeResponse } from "@/types/employees";
 import { useDebounce } from "@/hooks/use-debounce";
 import { getFirstDayOfMonth } from "@/lib/utils";
-import { getAllSales } from "@/services/EmployeeApi";
 
 interface FilterBarProps {
   pagination: PaginationType;
@@ -64,8 +63,9 @@ export function VideoFilterBar({
   const [selectedCustomers, setSelectedCustomers] = useState<
     { id: number; name: string }[]
   >([]);
-  const [selectedSaleId, setSelectedSaleId] = useState<string>("");
-  const [salers, setSalers] = useState<EmployeeResponse[]>([]);
+  const [selectedSaleIds, setSelectedSaleIds] = useState<
+    { id: number; name: string }[]
+  >([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showSearchResults, setShowSearchResults] = useState(false);
 
@@ -99,14 +99,10 @@ export function VideoFilterBar({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Fetch salers for manager filter
-  useEffect(() => {
-    if (roleName === "MANAGER") {
-      getAllSales().then((res) => {
-        if (res.data) setSalers(res.data);
-      }).catch(() => {});
-    }
-  }, [roleName]);
+  // Salers extracted from employees list
+  const salers = employees
+    ? employees.filter((e) => e.role?.name === "SALER")
+    : [];
 
   // Auto search when debounced term changes
   useEffect(() => {
@@ -142,7 +138,7 @@ export function VideoFilterBar({
       selectedEmployeeIds: selectedEmployees ? selectedEmployees.map((e) => e.id) : undefined,
       selectedCustomerIds: selectedCustomers ? selectedCustomers.map((c) => c.id) : undefined,
       customerCode: filters.customerCode || null,
-      assignedSaleId: selectedSaleId ? Number(selectedSaleId) : null,
+      assignedSaleIds: selectedSaleIds.length > 0 ? selectedSaleIds.map((s) => s.id) : undefined,
     };
     
     // Save active filters for pagination
@@ -165,7 +161,7 @@ export function VideoFilterBar({
     setFilters(resetFilters);
     setSelectedEmployees([]);
     setSelectedCustomers([]);
-    setSelectedSaleId("");
+    setSelectedSaleIds([]);
     setSearchTerm("");
     setShowSearchResults(false);
     
@@ -336,28 +332,19 @@ export function VideoFilterBar({
               />
             </div>
 
-            {/* Sale Filter - Manager Only */}
+            {/* Sale Multi-Select - Manager Only */}
             {roleName === "MANAGER" && (
               <div className="space-y-2">
                 <Label htmlFor="saleFilter" className="text-sm font-medium">
                   Sale phụ trách
                 </Label>
-                <Select
-                  value={selectedSaleId}
-                  onValueChange={(value) => setSelectedSaleId(value)}
-                >
-                  <SelectTrigger id="saleFilter" className="w-full">
-                    <SelectValue placeholder="Tất cả sale" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">Tất cả sale</SelectItem>
-                    {salers.map((s) => (
-                      <SelectItem key={s.id} value={String(s.id)}>
-                        {s.fullName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <MultiSelectDropdown
+                  options={salers.map((s) => ({ id: s.id, name: s.fullName }))}
+                  placeholder="Chọn sale..."
+                  onChange={(values) => setSelectedSaleIds(values)}
+                  defaultValue={selectedSaleIds}
+                  className="w-full"
+                />
               </div>
             )}
 
