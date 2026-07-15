@@ -64,3 +64,12 @@ export const searchEmployees = async (data: PageRequest & { keyword?: string; ro
         throw new Error(err.message);
     }
 }
+
+export const getAllSales = async () => {
+    try {
+        const res = await axiosInstance.get(`/admin/employees/sales`);
+        return res as unknown as ApiResponse<EmployeeResponse[]>;
+    } catch (err: any) {
+        throw new Error(err.message);
+    }
+}
