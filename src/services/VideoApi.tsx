@@ -93,6 +93,7 @@ export const searchVideoByConditions = async (
     selectedEmployeeIds?: number[];
     selectedCustomerIds?: number[];
     customerCode?: string | null;
+    assignedSaleId?: number | null;
   }
 ) => {
   try {
@@ -113,6 +114,7 @@ export const searchVideoByConditions = async (
           ? data.selectedCustomerIds
           : undefined,
         customerCode: data.customerCode || undefined,
+        assignedSaleId: data.assignedSaleId ?? undefined,
       },
     });
     return res as unknown as ApiResponse<PageResponse<VideoResponse[]>>;
