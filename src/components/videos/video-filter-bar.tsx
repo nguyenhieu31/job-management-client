@@ -34,7 +34,6 @@ interface FilterBarProps {
   pagination: PaginationType;
   onPageChange: (page: number) => void;
   employees?: EmployeeResponse[];
-  salers?: EmployeeResponse[];
   customers?: CustomerInfo[];
   salers?: EmployeeResponse[];
   onFiltersChange?: (filters: any) => void;
@@ -44,7 +43,6 @@ export function VideoFilterBar({
   pagination,
   onPageChange,
   employees,
-  salers,
   customers,
   salers,
   onFiltersChange,

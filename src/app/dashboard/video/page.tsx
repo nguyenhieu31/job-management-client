@@ -285,12 +285,6 @@ export default function VideosPage() {
     [employees],
   );
 
-  const salerList = useMemo(
-    () =>
-      employees?.data.filter((e) => e.role.name.toLowerCase() === "saler") || [],
-    [employees],
-  );
-
   const customerList = useMemo(() => customers?.data || [], [customers]);
 
   const workRequestList = useMemo(
@@ -396,7 +390,6 @@ export default function VideosPage() {
         customers={customerList.filter((c) => c.isVideoAccount === true)}
         salers={salerList}
         onFiltersChange={setActiveFilters}
-        salers={salerList}
       />
 
       {/* Table */}
