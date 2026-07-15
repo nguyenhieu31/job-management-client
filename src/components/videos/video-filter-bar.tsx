@@ -34,6 +34,7 @@ interface FilterBarProps {
   pagination: PaginationType;
   onPageChange: (page: number) => void;
   employees?: EmployeeResponse[];
+  salers?: EmployeeResponse[];
   customers?: CustomerInfo[];
   salers?: EmployeeResponse[];
   onFiltersChange?: (filters: any) => void;
@@ -43,6 +44,7 @@ export function VideoFilterBar({
   pagination,
   onPageChange,
   employees,
+  salers,
   customers,
   salers,
   onFiltersChange,
@@ -50,6 +52,8 @@ export function VideoFilterBar({
   const dispatch = useAppDispatch();
   const { roleName } = useAppSelector((state) => state.authenticate);
   const searchBoxRef = useRef<HTMLDivElement>(null);
+  console.log("employees in filter bar", employees);
+  console.log("salers in filter bar", salers);
 
   const [filters, setFilters] = useState<VideoFilters>({
     fromDate: getFirstDayOfMonth(),

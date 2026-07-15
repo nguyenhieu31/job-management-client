@@ -285,6 +285,12 @@ export default function VideosPage() {
     [employees],
   );
 
+  const salerList = useMemo(
+    () =>
+      employees?.data.filter((e) => e.role.name.toLowerCase() === "saler") || [],
+    [employees],
+  );
+
   const customerList = useMemo(() => customers?.data || [], [customers]);
 
   const workRequestList = useMemo(
@@ -345,6 +351,7 @@ export default function VideosPage() {
       ]);
     }
   }, [dispatch, roleName]);
+  console.log("employeeList", employeeList);
 
   return (
     <div className="flex flex-col gap-6">
@@ -387,6 +394,7 @@ export default function VideosPage() {
         onPageChange={handlePageChange}
         employees={employeeList.filter((e) => e.isVideoAccount === true)}
         customers={customerList.filter((c) => c.isVideoAccount === true)}
+        salers={salerList}
         onFiltersChange={setActiveFilters}
         salers={salerList}
       />
