@@ -273,6 +273,12 @@ export default function VideosPage() {
     [employees],
   );
 
+  const salerList = useMemo(
+    () =>
+      employees?.data.filter((e) => e.role.name.toLowerCase() === "saler") || [],
+    [employees],
+  );
+
   const qaList = useMemo(
     () =>
       employees?.data.filter((e) => e.role.name.toLowerCase() === "qa") || [],
@@ -382,6 +388,7 @@ export default function VideosPage() {
         employees={employeeList.filter((e) => e.isVideoAccount === true)}
         customers={customerList.filter((c) => c.isVideoAccount === true)}
         onFiltersChange={setActiveFilters}
+        salers={salerList}
       />
 
       {/* Table */}
