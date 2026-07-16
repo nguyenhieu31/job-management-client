@@ -1,7 +1,9 @@
 "use client";
 
+import { useCallback } from "react";
 import { cn } from "@/lib/utils";
-import { Check } from "lucide-react";
+import { Check, ImageIcon } from "lucide-react";
+import { getServiceSampleImages } from "@/types/services";
 
 interface ServiceCardProps {
   id: string;
@@ -10,6 +12,18 @@ interface ServiceCardProps {
   checked: boolean;
   onChange: (id: string, checked: boolean) => void;
   disabled?: boolean;
+  samplesAvailable?: boolean;
+  onViewSamples?: (id: string) => void;
+}
+
+function preloadImages(serviceId: string) {
+  const samples = getServiceSampleImages(serviceId);
+  for (const pair of samples) {
+    const img = new Image();
+    img.src = pair.before;
+    const img2 = new Image();
+    img2.src = pair.after;
+  }
 }
 
 export function ServiceCard({
@@ -19,7 +33,19 @@ export function ServiceCard({
   checked,
   onChange,
   disabled = false,
+  samplesAvailable,
+  onViewSamples,
 }: ServiceCardProps) {
+  const handleViewSamples = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    onViewSamples?.(id);
+  };
+
+  const handleHover = useCallback(() => {
+    preloadImages(id);
+  }, [id]);
+
   return (
     <label
       htmlFor={`service-${id}`}
@@ -49,6 +75,17 @@ export function ServiceCard({
           {checked && <Check className="h-3.5 w-3.5" />}
         </div>
       </div>
+      {samplesAvailable && onViewSamples && (
+        <button
+          type="button"
+          onClick={handleViewSamples}
+          onMouseEnter={handleHover}
+          className="mt-1 flex items-center gap-1 text-xs text-primary underline-offset-4 hover:underline"
+        >
+          <ImageIcon className="h-3 w-3" />
+          Xem ảnh mẫu
+        </button>
+      )}
       <input
         type="checkbox"
         id={`service-${id}`}

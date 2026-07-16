@@ -1,9 +1,19 @@
+export interface SaleInfo {
+    id: number;
+    name: string;
+    code?: string;
+}
+
 export interface CustomerResponse {
     id: number;
     name: string;
     email: string;
     phone: string;
     company: string;
+    customerCode?: string;
+    primarySaleId?: number;
+    primarySaleName?: string;
+    sales?: SaleInfo[];
     isJobAccount: boolean;
     isVideoAccount: boolean;
 }
@@ -14,12 +24,16 @@ export interface CustomerRequest {
     email: string;
     phone: string;
     company: string;
+    customerCode?: string;
+    saleIds?: number[];
+    primarySaleId?: number;
     isJobAccount: boolean;
     isVideoAccount: boolean;
 }
 
 export interface CustomerFilters {
-    search: string; // Search by name, email, or phone number
+    search: string;
+    saleId?: number;
 }
 
 export interface CustomerPagination {

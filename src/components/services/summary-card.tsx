@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import { ChevronDown, ChevronUp, Package } from "lucide-react";
 import { useState } from "react";
 import {
@@ -19,9 +19,6 @@ import {
   isVideoServiceSelected,
   computeEstimatedPrice,
 } from "@/types/services";
-
-const formatPrice = (price: number) =>
-  `${price.toLocaleString("vi-VN")}₫`;
 
 interface SummaryCardProps {
   state: AddServiceFormState;
@@ -100,7 +97,7 @@ export function SummaryCard({ state, mobile = false }: SummaryCardProps) {
                   <span>{getServiceLabel(id)}</span>
                   {price != null && (
                     <span className="text-xs text-muted-foreground">
-                      +{formatPrice(price)}
+                      +{formatCurrency(price)}
                     </span>
                   )}
                 </li>
@@ -195,7 +192,7 @@ export function SummaryCard({ state, mobile = false }: SummaryCardProps) {
               Tạm tính
             </p>
             <p className="text-sm font-bold text-primary">
-              {formatPrice(estimatedPrice)}
+              {formatCurrency(estimatedPrice)}
             </p>
           </div>
           <p className="mt-1 text-[10px] text-muted-foreground">

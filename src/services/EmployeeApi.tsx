@@ -50,14 +50,25 @@ export const deleteEmployee = async (employeeId: number) => {
     }
 }
 
-export const searchEmployees = async (data: PageRequest & { keyword: string }) => {
+export const searchEmployees = async (data: PageRequest & { keyword?: string; roleId?: number }) => {
     try {
-        const res = await axiosInstance.get(`/admin/employees/search`, { params: {
+        const params: any = {
             pageNumber: data.pageNumber,
             pageSize: data.pageSize,
-            keyword: data.keyword
-        } });
+        };
+        if (data.keyword) params.keyword = data.keyword;
+        if (data.roleId) params.roleId = data.roleId;
+        const res = await axiosInstance.get(`/admin/employees/search`, { params });
         return res as unknown as ApiResponse<PageResponse<EmployeeResponse[]>>;
+    } catch (err: any) {
+        throw new Error(err.message);
+    }
+}
+
+export const getAllSales = async () => {
+    try {
+        const res = await axiosInstance.get(`/admin/employees/sales`);
+        return res as unknown as ApiResponse<EmployeeResponse[]>;
     } catch (err: any) {
         throw new Error(err.message);
     }

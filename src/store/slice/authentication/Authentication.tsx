@@ -33,6 +33,7 @@ interface InitialValuesStyle {
   fullName: string;
   roleName: string;
   email: string;
+  id: number | null;
   phoneNumber: string;
   featureAccountId: number[];
 }
@@ -161,6 +162,7 @@ const initialState: InitialValuesStyle = {
   featureAccountId: [],
   isLoginned: false,
   email: "",
+  id: null,
   phoneNumber: "",
   emailExist: false,
   updatePassword: false,
@@ -217,6 +219,7 @@ const AuthenticateSlice = createSlice({
           state.fullName = action.payload.fullName;
           state.roleName = action.payload.roleName;
           state.email = action.payload.email;
+          state.id = action.payload.id;
           state.phoneNumber = action.payload.phoneNumber;
           state.isLoginned = true;
         }
@@ -228,6 +231,7 @@ const AuthenticateSlice = createSlice({
           state.fullName = action.payload.fullName;
           state.roleName = action.payload.roleName;
           state.email = action.payload.email;
+          state.id = action.payload.id;
           state.phoneNumber = action.payload.phoneNumber;
           state.isLoginned = true;
         }
@@ -236,6 +240,7 @@ const AuthenticateSlice = createSlice({
         state.loading = false;
         state.fullName = "";
         state.roleName = "";
+        state.id = null;
         state.featureAccountId = [];
         state.isLoginned = false;
       })
@@ -254,6 +259,7 @@ const AuthenticateSlice = createSlice({
           state.fullName = action.payload.fullName;
           state.roleName = action.payload.roleName;
           state.email = action.payload.email;
+          state.id = action.payload.id;
           state.phoneNumber = action.payload.phoneNumber;
           state.isLoginned = true;
         }

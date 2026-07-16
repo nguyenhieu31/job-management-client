@@ -44,6 +44,19 @@ export const getAllJobsByQualifiedAssignee = async (data: PageRequest & { email:
     }
 }
 
+export const getAllJobsBySalerAssignee = async (data: PageRequest & { fromDate?: string | null }) => {
+    try {
+        const res = await axiosInstance.get(`/admin/jobs/saler-assignee`, { params: {
+            pageNumber: data.pageNumber,
+            pageSize: data.pageSize,
+            fromDate: data.fromDate
+        } });
+        return res as unknown as ApiResponse<PageResponse<JobResponse[]>>;
+    } catch (err: any) {
+        throw new Error(err.message);
+    }
+}
+
 export const updateJobStatus = async (data: {id: number; status: string; qaNote?: string; qaOutputNumber?: number | null;}) => {
     try {
         const res = await axiosInstance.put(`/admin/jobs/update/status/${data.id}?status=${data.status}&qaNote=${data.qaNote || ""}`);
@@ -72,6 +85,7 @@ export const searchJobByConditions = async (data: PageRequest & {
     endDate: string | null;
     selectedEmployeeIds?: number[];
     selectedCustomerIds?: number[];
+    assignedSaleIds?: number[];
 }) => {
     try {
         const res = await axiosInstance.get(`/admin/jobs/search-conditions`, { params: {
@@ -85,6 +99,7 @@ export const searchJobByConditions = async (data: PageRequest & {
             endDate: data.endDate,
             selectedEmployeeIds: data.selectedEmployeeIds ? data.selectedEmployeeIds : undefined,
             selectedCustomerIds: data.selectedCustomerIds ? data.selectedCustomerIds : undefined,
+            assignedSaleIds: data.assignedSaleIds && data.assignedSaleIds.length > 0 ? data.assignedSaleIds : undefined,
         } });
         return res as unknown as ApiResponse<PageResponse<JobResponse[]>>;
     } catch (err: any) {
@@ -117,6 +132,7 @@ export const updateGridViewJob = async (data: {
     employeeNote?: string | null;
     isDeleteAssignee?: boolean;
     isDeleteQualifiedAssignee?: boolean;
+    assignedSaleId?: number | null;
 }) => {
     try {
         const res = await axiosInstance.post(`/admin/jobs/update-grid-view`, data);
@@ -157,6 +173,7 @@ const buildJobFormData = (data: JobRequest, images?: File[], videos?: File[], im
     if (data.deadline != null) formData.append("deadline", data.deadline);
     if (data.isDeleteAssignee != null) formData.append("isDeleteAssignee", String(data.isDeleteAssignee));
     if (data.isDeleteQualifiedAssignee != null) formData.append("isDeleteQualifiedAssignee", String(data.isDeleteQualifiedAssignee));
+    if (data.assignedSaleId != null) formData.append("assignedSaleId", String(data.assignedSaleId));
     
     // Append fileStoragesNeedRemove as JSON string
     if (data.fileStoragesNeedRemove && data.fileStoragesNeedRemove.length > 0) {

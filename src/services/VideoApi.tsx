@@ -37,6 +37,21 @@ export const getAllVideosByAssignee = async (
   }
 };
 
+export const getAllVideosBySalerAssignee = async (data: PageRequest & { fromDate?: string | null }) => {
+  try {
+    const res = await axiosInstance.get(`/admin/videos/saler-assignee`, {
+      params: {
+        pageNumber: data.pageNumber,
+        pageSize: data.pageSize,
+        fromDate: data.fromDate,
+      },
+    });
+    return res as unknown as ApiResponse<PageResponse<VideoResponse[]>>;
+  } catch (err: any) {
+    throw new Error(err.message);
+  }
+};
+
 export const updateVideoStatus = async (data: {
   id: number;
   status: string;
@@ -49,6 +64,24 @@ export const updateVideoStatus = async (data: {
         data.qaNote || ""
       }`
     );
+    return res as unknown as ApiResponse<string>;
+  } catch (err: any) {
+    throw new Error(err.message);
+  }
+};
+
+export const transitionVideo = async (data: {
+  id: number;
+  event: string;
+  reason?: string;
+  linkDone?: string;
+}) => {
+  try {
+    const res = await axiosInstance.put(`/admin/videos/${data.id}/transition`, {
+      event: data.event,
+      reason: data.reason,
+      linkDone: data.linkDone,
+    });
     return res as unknown as ApiResponse<string>;
   } catch (err: any) {
     throw new Error(err.message);
@@ -74,6 +107,8 @@ export const searchVideoByConditions = async (
     endDate: string | null;
     selectedEmployeeIds?: number[];
     selectedCustomerIds?: number[];
+    customerCode?: string | null;
+    assignedSaleIds?: number[];
   }
 ) => {
   try {
@@ -92,6 +127,10 @@ export const searchVideoByConditions = async (
           : undefined,
         selectedCustomerIds: data.selectedCustomerIds
           ? data.selectedCustomerIds
+          : undefined,
+        customerCode: data.customerCode || undefined,
+        assignedSaleIds: data.assignedSaleIds && data.assignedSaleIds.length > 0
+          ? data.assignedSaleIds
           : undefined,
       },
     });
@@ -131,6 +170,7 @@ export const updateGridViewVideo = async (data: {
   doneLink?: string | null;
   payPerFile?: number | null;
   payPerFileQa?: number | null;
+  assignedSaleId?: number | null;
   isDeleteAssignee?: boolean;
   fileStoragesNeedRemove?: FileStorage[];
 }, images?: File[], videos?: File[], imageTempUrls?: string[], videoTempUrls?: string[]) => {
@@ -157,6 +197,7 @@ export const updateGridViewVideo = async (data: {
     if (data.payPerFile != null) formData.append("payPerFile", String(data.payPerFile));
     if (data.payPerFileQa != null) formData.append("payPerFileQa", String(data.payPerFileQa));
     if (data.isDeleteAssignee != null) formData.append("isDeleteAssignee", String(data.isDeleteAssignee));
+    if (data.assignedSaleId != null) formData.append("assignedSaleId", String(data.assignedSaleId));
 
     // Append fileStoragesNeedRemove as JSON string
     if (data.fileStoragesNeedRemove && data.fileStoragesNeedRemove.length > 0) {
@@ -232,6 +273,7 @@ const buildVideoFormData = (
   if (data.customerId != null) formData.append("customerId", String(data.customerId));
   if (data.workRequestId != null) formData.append("workRequestId", String(data.workRequestId));
   if (data.isDeleteAssignee != null) formData.append("isDeleteAssignee", String(data.isDeleteAssignee));
+  if (data.assignedSaleId != null) formData.append("assignedSaleId", String(data.assignedSaleId));
 
   if (data.fileStoragesNeedRemove && data.fileStoragesNeedRemove.length > 0) {
     formData.append(

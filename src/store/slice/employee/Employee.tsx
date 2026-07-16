@@ -29,8 +29,8 @@ export const GetAllEmployeesAction = createAsyncThunk<
 
 export const SearchEmployeesAction = createAsyncThunk<
   PageResponse<EmployeeResponse[]>,
-  PageRequest & { keyword: string }
->("SearchEmployeesAction", async (data: PageRequest & { keyword: string }) => {
+  PageRequest & { keyword?: string; roleId?: number }
+>("SearchEmployeesAction", async (data: PageRequest & { keyword?: string; roleId?: number }) => {
   try {
     const response = await searchEmployees(data);
     return response.data as PageResponse<EmployeeResponse[]>;
@@ -84,8 +84,10 @@ export const ResetPasswordEmployeeAction = createAsyncThunk<
 >("ResetPasswordEmployeeAction", async (id: number) => {
   try {
     const response = await resetPasswordEmployee(id);
+    toast.success("Mật khẩu nhân viên đã được đặt lại thành công");
     return response.data as string;
   } catch (err: any) {
+    toast.error("Có lỗi xảy ra khi đặt lại mật khẩu");
     throw new Error(err.message);
   }
 });

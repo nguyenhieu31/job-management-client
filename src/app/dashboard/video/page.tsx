@@ -21,11 +21,13 @@ import {
   CreateVideoAction,
   GetAllVideosAction,
   GetAllVideosByAssigneeAction,
-  GetVideoFromDropboxAction,
+  GetAllVideosBySalerAssigneeAction,
   SearchVideoByConditionsAction,
   updateVideo,
   UpdateVideoFullAction,
   UpdateVideoStatusAction,
+  GetVideoFromDropboxAction,
+  TransitionVideoAction,
 } from "@/store/slice/videos/Videos";
 import { PageResponse } from "@/components/types/Page";
 import { GetAllEmployeesAction } from "@/store/slice/employee/Employee";
@@ -53,7 +55,7 @@ export default function VideosPage() {
   const [activeFilters, setActiveFilters] = useState<any>(null);
 
   // Get user role from Redux store
-  const { roleName, email } = useAppSelector((state) => state.authenticate);
+  const { roleName, email, id } = useAppSelector((state) => state.authenticate);
   const {
     videos,
     loading,
@@ -149,46 +151,99 @@ export default function VideosPage() {
     [dispatch],
   );
 
-  const handleVideoAction = async (videoId: number, action: VideoAction) => {
+  const handleVideoAction = async (
+    videoId: number,
+    action: VideoAction,
+    payload?: { reason?: string; linkDone?: string },
+  ) => {
     const video = videos
       ? videos.data.find((v) => v.id === videoId)
       : undefined;
     if (!video) return;
 
-    let newStatus: VideoStatus = video.jobStatus;
+    const eventMap: Partial<Record<VideoAction, string>> = {
+      "take-video": "TAKE",
+      "done-video": "DONE",
+      "complete-video": "APPROVE",
+      "reject-video": "REJECT",
+      "mark-delivered": "MARK_DELIVERED",
+      "request-revision": "REQUEST_REVISION",
+      "start-revision": "START_REVISION",
+      "finish-revision": "FINISH_REVISION",
+      "re-request-revision": "RE_REQUEST_REVISION",
+      "accept-revision": "ACCEPT_REVISION",
+    };
 
-    switch (action) {
-      case "take-video":
-        // Employee takes video: pending -> in-progress
-        if (video.jobStatus === "PENDING") {
-          newStatus = "IN_PROGRESS";
-        }
-        break;
+    const event = eventMap[action];
+    if (!event) return;
 
-      case "done-video":
-        // Employee completes video: in-progress -> done
-        if (video.jobStatus === "IN_PROGRESS") {
-          newStatus = "DONE";
-        }
-        break;
-
-      case "complete-video":
-        // Manager completes video: done -> completed
-        if (video.jobStatus === "DONE") {
-          newStatus = "COMPLETED";
-        }
-        break;
-
-      default:
+    if (action === "reject-video") {
+      const reason = payload?.reason?.trim() || "";
+      if (reason.length < 5) {
+        toast.error("Lý do từ chối tối thiểu 5 ký tự");
         return;
+      }
     }
 
-    // Update video status
-    const updatedVideo = { ...video, jobStatus: newStatus };
-    await Promise.all([
-      dispatch(UpdateVideoStatusAction({ id: videoId, status: newStatus })),
-      dispatch(updateVideo(updatedVideo)),
-    ]);
+    try {
+      await dispatch(
+        TransitionVideoAction({
+          id: videoId,
+          event,
+          reason: payload?.reason,
+          linkDone: payload?.linkDone,
+        }),
+      ).unwrap();
+
+      // Optimistic local patch for common fields
+      let patch: Partial<typeof video> = {};
+      switch (action) {
+        case "take-video":
+          patch = { jobStatus: "IN_PROGRESS" };
+          break;
+        case "done-video":
+          patch = { jobStatus: "DONE" };
+          break;
+        case "complete-video":
+          patch = {
+            jobStatus: "COMPLETED",
+            deliveryStatus: "NOT_DELIVERED",
+            revisionStatus: "NONE",
+          };
+          break;
+        case "reject-video":
+          patch = {
+            jobStatus: "IN_PROGRESS",
+            rejectReason: payload?.reason,
+            deliveryStatus: "NONE",
+          };
+          break;
+        case "mark-delivered":
+          patch = { deliveryStatus: "DELIVERED" };
+          break;
+        case "request-revision":
+        case "re-request-revision":
+          patch = { revisionStatus: "REVISION_REQUESTED" };
+          break;
+        case "start-revision":
+          patch = { revisionStatus: "REVISION_IN_PROGRESS" };
+          break;
+        case "finish-revision":
+          patch = { revisionStatus: "REVISION_DONE" };
+          break;
+        case "accept-revision":
+          patch = {
+            revisionStatus: "NONE",
+            deliveryStatus: "DELIVERED",
+            rejectReason: null,
+          };
+          break;
+      }
+      dispatch(updateVideo({ ...video, ...patch }));
+      toast.success("Cập nhật trạng thái thành công");
+    } catch (err: any) {
+      toast.error(err?.message || "Không thể cập nhật trạng thái");
+    }
   };
 
   const handleFormClose = (open: boolean) => {
@@ -219,6 +274,12 @@ export default function VideosPage() {
     [employees],
   );
 
+  const salerList = useMemo(
+    () =>
+      employees?.data.filter((e) => e.role.name.toLowerCase() === "saler") || [],
+    [employees],
+  );
+
   const qaList = useMemo(
     () =>
       employees?.data.filter((e) => e.role.name.toLowerCase() === "qa") || [],
@@ -226,6 +287,13 @@ export default function VideosPage() {
   );
 
   const customerList = useMemo(() => customers?.data || [], [customers]);
+
+  const filteredCustomerList = useMemo(() =>
+    roleName === "SALER" && id != null
+      ? customerList.filter((c) => c.sales?.some((s) => s.id === id))
+      : customerList,
+    [customerList, roleName, id]
+  );
 
   const workRequestList = useMemo(
     () => workRequests?.data || [],
@@ -245,9 +313,17 @@ export default function VideosPage() {
       return;
     }
 
-    if (roleName === "MANAGER" || roleName === "SALER") {
+    if (roleName === "MANAGER") {
       dispatch(
         GetAllVideosAction({
+          pageNumber: pagination.currentPage - 1,
+          pageSize: pagination.pageSize,
+          fromDate: getFirstDayOfMonth(),
+        }),
+      );
+    } else if (roleName === "SALER") {
+      dispatch(
+        GetAllVideosBySalerAssigneeAction({
           pageNumber: pagination.currentPage - 1,
           pageSize: pagination.pageSize,
           fromDate: getFirstDayOfMonth(),
@@ -326,7 +402,8 @@ export default function VideosPage() {
         pagination={pagination}
         onPageChange={handlePageChange}
         employees={employeeList.filter((e) => e.isVideoAccount === true)}
-        customers={customerList.filter((c) => c.isVideoAccount === true)}
+        customers={filteredCustomerList.filter((c) => c.isVideoAccount === true)}
+        salers={salerList}
         onFiltersChange={setActiveFilters}
       />
 
@@ -337,12 +414,12 @@ export default function VideosPage() {
         </div>
       ) : (
         <>
-          <VideoTable
-            videos={videos ? videos.data : []}
-            userRole={userRole}
-            employees={employeeList.filter((e) => e.isVideoAccount === true)}
-            customers={customerList.filter((c) => c.isVideoAccount === true)}
-            onVideoAction={handleVideoAction}
+        <VideoTable
+          videos={videos ? videos.data : []}
+          userRole={userRole}
+          employees={employeeList.filter((e) => e.isVideoAccount === true)}
+          customers={filteredCustomerList.filter((c) => c.isVideoAccount === true)}
+          onVideoAction={handleVideoAction}
           />
 
           {/* Pagination */}
@@ -380,7 +457,7 @@ export default function VideosPage() {
           }
         }}
         editingVideo={editingVideo}
-        customers={customerList.filter((c) => c.isVideoAccount === true)}
+        customers={filteredCustomerList.filter((c) => c.isVideoAccount === true)}
         employees={employeeList.filter((e) => e.isVideoAccount === true)}
         qaList={qaList}
         workRequests={workRequestList}

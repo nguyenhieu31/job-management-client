@@ -2,6 +2,7 @@ import { ApiResponse } from "@/components/types/ApiResponse";
 import { PageRequest, PageResponse } from "@/components/types/Page";
 import { axiosInstance } from "@/lib/utils/axios-instance";
 import { CustomerResponse, CustomerRequest } from "@/types/customers";
+import { EmployeeResponse } from "@/types/employees";
 
 export const getAllCustomers = async (data: PageRequest) => {
     try {
@@ -42,14 +43,25 @@ export const deleteCustomer = async (customerId: number) => {
     }
 }
 
-export const searchCustomers = async (data: PageRequest & { keyword: string }) => {
+export const searchCustomers = async (data: PageRequest & { keyword: string } & { saleId?: number }) => {
     try {
-        const res = await axiosInstance.get(`/admin/customers/search`, { params: {
+        const params: any = {
             pageNumber: data.pageNumber,
             pageSize: data.pageSize,
-            keyword: data.keyword
-        } });
+        };
+        if (data.keyword) params.keyword = data.keyword;
+        if (data.saleId) params.saleId = data.saleId;
+        const res = await axiosInstance.get(`/admin/customers/search`, { params });
         return res as unknown as ApiResponse<PageResponse<CustomerResponse[]>>;
+    } catch (err: any) {
+        throw new Error(err.message);
+    }
+}
+
+export const getSalesForDropdown = async () => {
+    try {
+        const res = await axiosInstance.get(`/admin/employees/sales`);
+        return res as unknown as ApiResponse<EmployeeResponse[]>;
     } catch (err: any) {
         throw new Error(err.message);
     }

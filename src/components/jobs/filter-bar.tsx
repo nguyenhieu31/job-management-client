@@ -36,6 +36,7 @@ interface FilterBarProps {
   onPageChange: (page: number) => void;
   employees?: EmployeeResponse[];
   customers?: CustomerInfo[];
+  salers?: EmployeeResponse[];
   onFiltersChange?: (filters: any) => void;
 }
 
@@ -44,6 +45,7 @@ export function FilterBar({
   onPageChange,
   employees,
   customers,
+  salers,
   onFiltersChange,
 }: FilterBarProps) {
   const dispatch = useAppDispatch();
@@ -62,6 +64,9 @@ export function FilterBar({
     { id: number; name: string }[]
   >([]);
   const [selectedCustomers, setSelectedCustomers] = useState<
+    { id: number; name: string }[]
+  >([]);
+  const [selectedSaleIds, setSelectedSaleIds] = useState<
     { id: number; name: string }[]
   >([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -97,6 +102,9 @@ export function FilterBar({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Salers from prop
+  const salerOptions = salers || [];
+
   // Auto search when debounced term changes
   useEffect(() => {
     if (debouncedSearchTerm.trim()) {
@@ -130,6 +138,7 @@ export function FilterBar({
       endDate: filters.toDate || null,
       selectedEmployeeIds: selectedEmployees ? selectedEmployees.map((e) => e.id) : undefined,
       selectedCustomerIds: selectedCustomers ? selectedCustomers.map((c) => c.id) : undefined,
+      assignedSaleIds: selectedSaleIds.length > 0 ? selectedSaleIds.map((s) => s.id) : undefined,
     };
     onFiltersChange?.(payload);
     onPageChange(1);
@@ -148,6 +157,7 @@ export function FilterBar({
     setFilters(resetFilters);
     setSelectedEmployees([]);
     setSelectedCustomers([]);
+    setSelectedSaleIds([]);
     setSearchTerm("");
     setShowSearchResults(false);
     onFiltersChange?.(null);
@@ -231,6 +241,7 @@ export function FilterBar({
                   <SelectItem value="UNPAID">Chưa thanh toán</SelectItem>
                   <SelectItem value="INVOICE_SENT">Đã gửi hóa đơn</SelectItem>
                   <SelectItem value="PAID">Đã thanh toán</SelectItem>
+                  <SelectItem value="NOT_PAYABLE">KHÔNG THANH TOÁN</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -261,7 +272,7 @@ export function FilterBar({
 
         {/* Row 2: Multi-Select Filters & Search - Manager Only */}
         {(roleName === "MANAGER" || roleName === "SALER") && (
-          <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-4">
             {/* Customer Multi-Select */}
             <div className="space-y-2">
               <Label htmlFor="customer" className="text-sm font-medium">
@@ -298,6 +309,22 @@ export function FilterBar({
                 className="w-full"
               />
             </div>
+
+            {/* Sale Multi-Select - Manager Only */}
+            {roleName === "MANAGER" && (
+              <div className="space-y-2">
+                <Label htmlFor="saleFilter" className="text-sm font-medium">
+                  Sale phụ trách
+                </Label>
+                <MultiSelectDropdown
+                  options={salerOptions.map((s) => ({ id: s.id, name: s.fullName }))}
+                  placeholder="Chọn sale..."
+                  onChange={(values) => setSelectedSaleIds(values)}
+                  defaultValue={selectedSaleIds}
+                  className="w-full"
+                />
+              </div>
+            )}
 
             {/* Search with Debounce */}
             <div className="space-y-2" ref={searchBoxRef}>

@@ -17,7 +17,7 @@ import type {
 import { useAppDispatch, useAppSelector } from "@/store/store";
 import { toast } from "react-toastify";
 import Loader from "@/components/ui/loader";
-import { CreateJobAction, GetAllJobsAction, GetAllJobsByAssigneeAction, GetAllJobsByQualifiedAssigneeAction, GetJobFromDropboxAction, GetRandomJobAction, SearchJobByConditionsAction, updateJob, UpdateJobAction, UpdateJobStatusAction } from "@/store/slice/jobs/Jobs";
+import { CreateJobAction, GetAllJobsAction, GetAllJobsByAssigneeAction, GetAllJobsByQualifiedAssigneeAction, GetAllJobsBySalerAssigneeAction, GetJobFromDropboxAction, GetRandomJobAction, SearchJobByConditionsAction, updateJob, UpdateJobAction, UpdateJobStatusAction } from "@/store/slice/jobs/Jobs";
 import { PageResponse } from "@/components/types/Page";
 import { GetAllEmployeesAction } from "@/store/slice/employee/Employee";
 import { EmployeeResponse } from "@/types/employees";
@@ -44,7 +44,7 @@ export default function JobsPage() {
   const [activeFilters, setActiveFilters] = useState<any>(null);
 
   // Get user role from Redux store
-  const { roleName, email  } = useAppSelector((state) => state.authenticate);
+  const { roleName, email, id } = useAppSelector((state) => state.authenticate);
   const {jobs, loading} : {jobs: PageResponse<JobResponse[]> | undefined, loading: boolean} = useAppSelector((state) => state.job);
   const {employees} : {employees: PageResponse<EmployeeResponse[]> | undefined} = useAppSelector((state) => state.employee);
   const {workRequests} = useAppSelector((state) => state.workRequest);
@@ -191,6 +191,11 @@ export default function JobsPage() {
     [employees]
   );
 
+  const salerList = useMemo(() => 
+    employees?.data.filter((e) => e.role.name.toLowerCase() === "saler") || [], 
+    [employees]
+  );
+
   const qaList = useMemo(() => 
     employees?.data.filter((e) => e.role.name.toLowerCase() === "qa") || [], 
     [employees]
@@ -199,6 +204,13 @@ export default function JobsPage() {
   const customerList = useMemo(() => 
     customers?.data || [], 
     [customers]
+  );
+
+  const salerCustomerList = useMemo(() => 
+    roleName === "SALER" && id != null
+      ? customerList.filter((c) => c.sales?.some((s) => s.id === id))
+      : customerList,
+    [customerList, roleName, id]
   );
 
   const workRequestList = useMemo(() => 
@@ -219,8 +231,10 @@ export default function JobsPage() {
       return;
     }
 
-    if(roleName === "MANAGER" || roleName === "SALER"){
+    if(roleName === "MANAGER"){
       dispatch(GetAllJobsAction({pageNumber: pagination.currentPage - 1, pageSize: pagination.pageSize, fromDate: getFirstDayOfMonth()}));
+    }else if(roleName === "SALER"){
+      dispatch(GetAllJobsBySalerAssigneeAction({pageNumber: pagination.currentPage - 1, pageSize: pagination.pageSize, fromDate: getFirstDayOfMonth()}));
     }else if(roleName === "QA"){
       dispatch(GetAllJobsByQualifiedAssigneeAction({pageNumber: pagination.currentPage - 1, pageSize: pagination.pageSize, email: email || "", fromDate: getFirstDayOfMonth()}));
     }else if(roleName === "EMPLOYEE" || roleName === "SPECIAL"){
@@ -278,8 +292,9 @@ export default function JobsPage() {
         pagination={pagination}
         onPageChange={handlePageChange}
         employees={employeeList.filter((e) => e.isJobAccount === true)}
-        customers={customerList.filter((c) => c.isJobAccount === true)}
+        customers={salerCustomerList.filter((c) => c.isJobAccount === true)}
         onFiltersChange={setActiveFilters}
+        salers={salerList}
       />
 
       {/* Table */}
@@ -294,7 +309,7 @@ export default function JobsPage() {
             userRole={userRole}
             employees={employeeList.filter((e) => e.isJobAccount === true)}
             qaList={qaList}
-            customers={customerList.filter((c) => c.isJobAccount === true)}
+            customers={salerCustomerList.filter((c) => c.isJobAccount === true)}
             onEdit={(job) => {
               setEditingJob(job as unknown as JobResponse);
               setFormOpen(true);
@@ -325,7 +340,7 @@ export default function JobsPage() {
           }
         }}
         editingJob={editingJob}
-        customers={customerList.filter((c) => c.isJobAccount === true)}
+        customers={salerCustomerList.filter((c) => c.isJobAccount === true)}
         employees={employeeList.filter((e) => e.isJobAccount === true)}
         qaList={qaList}
         workRequests={workRequestList}

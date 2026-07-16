@@ -7,6 +7,7 @@ import {
   getAllJobs,
   getAllJobsByAssignee,
   getAllJobsByQualifiedAssignee,
+  getAllJobsBySalerAssignee,
   getRandomJob,
   searchJobByConditions,
   searchJobView,
@@ -68,6 +69,21 @@ export const GetAllJobsByQualifiedAssigneeAction = createAsyncThunk<
   async (data: PageRequest & { email: string; fromDate?: string | null }) => {
     try {
       const response = await getAllJobsByQualifiedAssignee(data);
+      return response.data as PageResponse<JobResponse[]>;
+    } catch (err: any) {
+      throw new Error(err.message);
+    }
+  }
+);
+
+export const GetAllJobsBySalerAssigneeAction = createAsyncThunk<
+  PageResponse<JobResponse[]>,
+  PageRequest & { fromDate?: string | null }
+>(
+  "GetAllJobsBySalerAssigneeAction",
+  async (data: PageRequest & { fromDate?: string | null }) => {
+    try {
+      const response = await getAllJobsBySalerAssignee(data);
       return response.data as PageResponse<JobResponse[]>;
     } catch (err: any) {
       throw new Error(err.message);
@@ -363,6 +379,9 @@ const JobSlice = createSlice({
       .addCase(GetAllJobsByQualifiedAssigneeAction.pending, (state) => {
         state.loading = true;
       })
+      .addCase(GetAllJobsBySalerAssigneeAction.pending, (state) => {
+        state.loading = true;
+      })
       .addCase(UpdateJobStatusAction.pending, (state) => {
         state.loading = true;
       })
@@ -415,6 +434,13 @@ const JobSlice = createSlice({
       )
       .addCase(
         GetAllJobsByQualifiedAssigneeAction.fulfilled,
+        (state, action: PayloadAction<PageResponse<JobResponse[]>>) => {
+          state.loading = false;
+          state.jobs = action.payload;
+        }
+      )
+      .addCase(
+        GetAllJobsBySalerAssigneeAction.fulfilled,
         (state, action: PayloadAction<PageResponse<JobResponse[]>>) => {
           state.loading = false;
           state.jobs = action.payload;
@@ -564,6 +590,10 @@ const JobSlice = createSlice({
             action.error.message || "Get all jobs by qualified assignee failed";
         }
       )
+      .addCase(GetAllJobsBySalerAssigneeAction.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || "Get all jobs by saler assignee failed";
+      })
       .addCase(UpdateJobStatusAction.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || "Update job status failed";

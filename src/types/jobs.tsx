@@ -1,4 +1,5 @@
 import { WorkRequestResponse } from "./work-requests";
+import type { SaleInfo } from "./customers";
 
 export interface Job {
   id: number;
@@ -35,6 +36,7 @@ export interface CustomerInfo {
   email: string;
   phone: string;
   company: string;
+  sales?: SaleInfo[];
 }
 
 export interface JobViewResponse {
@@ -87,6 +89,7 @@ export interface JobResponse {
   assignee: AssigneeInfo;
   qualifiedAssignee: AssigneeInfo;
   customer: CustomerInfo;
+  assignedSale?: SaleInfo | null;
   workRequest: WorkRequestResponse;
   payPerFile: number;
   payPerFileQa: number;
@@ -123,6 +126,7 @@ export interface JobRequest {
   customerId: number | null;
   workRequestId: number | null;
   deadline?: string | null;
+  assignedSaleId?: number | null;
   isDeleteAssignee?: boolean;
   isDeleteQualifiedAssignee?: boolean;
   fileStoragesNeedRemove?: FileStorage[];
@@ -140,7 +144,8 @@ export type PaymentStatus =
   | "INVOICE_SENT"
   | "PAID"
   | "INVOICE_DRAFT"
-  | "CANCELLED";
+  | "CANCELLED"
+  | "NOT_PAYABLE";
 export type EmployeePaymentStatus =
   | "UNPAID"
   | "PAID";
@@ -207,6 +212,7 @@ export const ROLE_COLUMNS = {
     // "totalPayPerFile",
     // "employeeNote",
     // "paymentEmployee",
+    // "assignedSale",
     "assignedEmployee",
     "qa",
     // "note",
@@ -278,8 +284,9 @@ export const ROLE_COLUMNS = {
     "outputCount",
     "jobStatus",
     "linkDone",
-    "assignedEmployee",
-    "qa"
+    "assignedSale",
+    // "assignedEmployee",
+    // "qa"
   ]
 } as const;
 

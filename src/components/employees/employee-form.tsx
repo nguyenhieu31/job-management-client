@@ -147,7 +147,6 @@ export function EmployeeForm({
     onSubmit(employee);
     onOpenChange(false);
   };
-  console.log("formData: ", formData)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

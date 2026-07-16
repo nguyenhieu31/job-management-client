@@ -66,6 +66,7 @@ const paymentStatusColors = {
   PAID: "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20",
   INVOICE_DRAFT: "bg-gray-500/10 text-gray-700 dark:text-gray-400 border-gray-500/20",
   CANCELLED: "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20",
+  NOT_PAYABLE: "bg-slate-500/10 text-slate-700 dark:text-slate-400 border-slate-500/20",
 };
 
 const paymentStatusLabels: Record<string, string> = {
@@ -74,6 +75,7 @@ const paymentStatusLabels: Record<string, string> = {
   PAID: "Đã thanh toán",
   INVOICE_DRAFT: "Đã tạo hóa đơn",
   CANCELLED: "Đã hủy",
+  NOT_PAYABLE: "KHÔNG THANH TOÁN",
 };
 
 export function JobDetailDialog({
@@ -255,7 +257,7 @@ export function JobDetailDialog({
             </div>
 
             {/* Customer Information - Hidden for Employee & QA */}
-            {userRole === "manager" && (
+            {(userRole === "manager" || userRole === "saler") && (
               <div className="space-y-4">
                 <h3 className="font-semibold text-lg flex items-center gap-2">
                   <Users className="h-5 w-5" />
@@ -288,6 +290,15 @@ export function JobDetailDialog({
                         Công Ty
                       </label>
                       <p className="font-medium">{job.customer.company}</p>
+                    </div>
+                  )}
+
+                  {job.assignedSale && (
+                    <div>
+                      <label className="text-sm text-muted-foreground">
+                        Sale phụ trách
+                      </label>
+                      <p className="font-medium">{job.assignedSale.name}</p>
                     </div>
                   )}
                 </div>

@@ -21,10 +21,19 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import {
   Eye,
   Trash2,
   Save,
   X,
+  XCircle,
   PlayCircle,
   CheckCircle,
   Check,
@@ -65,7 +74,11 @@ interface VideoTableProps {
   userRole: UserRole;
   employees?: EmployeeResponse[];
   customers?: CustomerInfo[];
-  onVideoAction: (videoId: number, action: VideoAction) => void;
+  onVideoAction: (
+    videoId: number,
+    action: VideoAction,
+    payload?: { reason?: string; linkDone?: string },
+  ) => void;
 }
 
 const videoStatusColors: Record<string, string> = {
@@ -85,10 +98,24 @@ const videoStatusLabels: Record<string, string> = {
   COMPLETED: "Đã hoàn thành",
 };
 
+const deliveryStatusLabels: Record<string, string> = {
+  NONE: "",
+  NOT_DELIVERED: "Chưa giao hàng",
+  DELIVERED: "Đã giao hàng",
+};
+
+const revisionStatusLabels: Record<string, string> = {
+  NONE: "",
+  REVISION_REQUESTED: "Cần sửa",
+  REVISION_IN_PROGRESS: "Đang sửa",
+  REVISION_DONE: "Đã sửa",
+};
+
 const paymentStatusOptions = [
   { value: "UNPAID", label: "Chưa thanh toán" },
   { value: "INVOICE_SENT", label: "Đã gửi hóa đơn" },
   { value: "PAID", label: "Đã thanh toán" },
+  { value: "NOT_PAYABLE", label: "KHÔNG THANH TOÁN" },
 ];
 
 const paymentEmployeeOptions = [
@@ -126,6 +153,7 @@ const columnLabels: Record<string, string> = {
   qaNote: "Ghi Chú QA",
   employeeNote: "Thuê ngoài",
   assignedEmployee: "Người Được Giao",
+  assignedSale: "Saler",
   qa: "QA",
   editedNumber: "Số Lần Chỉnh Sửa",
   editedFee: "Phí Chỉnh Sửa",
@@ -185,6 +213,16 @@ export function VideoTable({
   const [bulkMarkAsPaidDialogOpen, setBulkMarkAsPaidDialogOpen] =
     useState(false);
   const [jobToDelete, setJobToDelete] = useState<number | null>(null);
+  const [rejectDialog, setRejectDialog] = useState<{ open: boolean; videoId: number | null }>({
+    open: false,
+    videoId: null,
+  });
+  const [rejectNote, setRejectNote] = useState("");
+  const [revisionDialog, setRevisionDialog] = useState<{ open: boolean; videoId: number | null }>({
+    open: false,
+    videoId: null,
+  });
+  const [revisionNote, setRevisionNote] = useState("");
   const [selectedJobIds, setSelectedJobIds] = useState<Set<number>>(new Set());
   const [totalSelectedPrice, setTotalSelectedPrice] = useState<number>(0);
   const [totalSelectedPriceCustomer, setTotalSelectedPriceCustomer] =
@@ -337,6 +375,7 @@ console.log("editValue: ", editValue)
             editedNumber:
               changes?.editedNumber !== undefined ? changes.editedNumber : null,
             isDeleteAssignee: isDeleteAssignee || undefined,
+            assignedSaleId: changes?.assignedSale?.id || null,
             fileStoragesNeedRemove: removedFiles && removedFiles.length > 0 ? removedFiles : undefined,
           },
           images: filteredImages,
@@ -1071,15 +1110,32 @@ console.log("editValue: ", editValue)
         return <span className="font-medium">{formatCurrencyVND(fee)}</span>;
 
       case "jobStatus":
-        // All roles (including Manager) see status as read-only badge
-        // Status can only be changed through action buttons
         return (
-          <Badge
-            variant="outline"
-            className={videoStatusColors[video.jobStatus]}
-          >
-            {videoStatusLabels[video.jobStatus] || video.jobStatus}
-          </Badge>
+          <div className="flex flex-col gap-1">
+            <Badge
+              variant="outline"
+              className={videoStatusColors[video.jobStatus]}
+            >
+              {videoStatusLabels[video.jobStatus] || video.jobStatus}
+            </Badge>
+            {video.deliveryStatus &&
+              video.deliveryStatus !== "NONE" &&
+              deliveryStatusLabels[video.deliveryStatus] && (
+                <Badge variant="secondary" className="text-xs">
+                  {deliveryStatusLabels[video.deliveryStatus]}
+                </Badge>
+              )}
+            {video.revisionStatus &&
+              video.revisionStatus !== "NONE" &&
+              revisionStatusLabels[video.revisionStatus] && (
+                <Badge
+                  variant="outline"
+                  className="text-xs border-orange-400 text-orange-600"
+                >
+                  {revisionStatusLabels[video.revisionStatus]}
+                </Badge>
+              )}
+          </div>
         );
 
       case "paymentStatus":
@@ -1236,6 +1292,39 @@ console.log("editValue: ", editValue)
           </span>
         );
 
+      case "assignedSale":
+        if (userRole === "manager" && video.customer?.sales && video.customer.sales.length > 0) {
+          return (
+            <SearchableDropdown
+              options={video.customer.sales.map((s) => ({
+                id: s.id,
+                name: s.name,
+              }))}
+              placeholder="Chọn sale..."
+              onChange={(value: any) => {
+                if (value === null) {
+                  handleFieldChange(video.id, "assignedSale", null);
+                } else {
+                  const sale = video.customer?.sales?.find((s) => s.id === value.id);
+                  handleFieldChange(video.id, "assignedSale", sale || null);
+                }
+              }}
+              defaultValue={
+                video.assignedSale?.id
+                  ? { id: video.assignedSale.id, name: video.assignedSale.name }
+                  : null
+              }
+              className="w-[150px]"
+              type="text"
+            />
+          );
+        }
+        return (
+          <span className="text-sm">
+            {video.assignedSale?.name || "—"}
+          </span>
+        );
+
       case "actions":
         return (
           <div className="flex items-center justify-end gap-2">
@@ -1301,15 +1390,117 @@ console.log("editValue: ", editValue)
             {userRole === "manager" &&
               video.jobStatus === "DONE" &&
               !pendingChangesRef.current[video.id] && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onVideoAction(video.id, "complete-video")}
+                    className="h-8 gap-1 border-emerald-500 text-emerald-600 hover:bg-emerald-50"
+                  >
+                    <CheckCircle className="h-3 w-3" />
+                    Duyệt
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setRejectDialog({ open: true, videoId: video.id });
+                      setRejectNote("");
+                    }}
+                    className="h-8 gap-1 border-red-500 text-red-600 hover:bg-red-50"
+                  >
+                    <XCircle className="h-3 w-3" />
+                    Từ chối
+                  </Button>
+                </>
+              )}
+
+            {/* Delivery + revision actions */}
+            {(userRole === "manager" || userRole === "saler") &&
+              video.jobStatus === "COMPLETED" &&
+              video.deliveryStatus !== "DELIVERED" &&
+              (!video.revisionStatus || video.revisionStatus === "NONE") &&
+              !pendingChangesRef.current[video.id] && (
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => onVideoAction(video.id, "complete-video")}
-                  className="h-8 gap-1 border-emerald-500 text-emerald-600 hover:bg-emerald-50"
+                  onClick={() => onVideoAction(video.id, "mark-delivered")}
+                  className="h-8 gap-1 border-blue-500 text-blue-600 hover:bg-blue-50"
                 >
-                  <CheckCircle className="h-3 w-3" />
-                  Duyệt
+                  Đã giao hàng
                 </Button>
+              )}
+
+            {(userRole === "manager" || userRole === "saler") &&
+              video.jobStatus === "COMPLETED" &&
+              (!video.revisionStatus || video.revisionStatus === "NONE") &&
+              !pendingChangesRef.current[video.id] && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setRevisionDialog({ open: true, videoId: video.id });
+                    setRevisionNote("");
+                  }}
+                  className="h-8 gap-1 border-orange-500 text-orange-600 hover:bg-orange-50"
+                >
+                  Cần sửa đổi
+                </Button>
+              )}
+
+            {(userRole === "employee" || userRole === "special") &&
+              video.jobStatus === "COMPLETED" &&
+              video.revisionStatus === "REVISION_REQUESTED" &&
+              !pendingChangesRef.current[video.id] && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onVideoAction(video.id, "start-revision")}
+                  className="h-8 gap-1 border-orange-500 text-orange-600 hover:bg-orange-50"
+                >
+                  Sửa
+                </Button>
+              )}
+
+            {(userRole === "employee" || userRole === "special") &&
+              video.jobStatus === "COMPLETED" &&
+              video.revisionStatus === "REVISION_IN_PROGRESS" &&
+              !pendingChangesRef.current[video.id] && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onVideoAction(video.id, "finish-revision")}
+                  className="h-8 gap-1 border-green-500 text-green-600 hover:bg-green-50"
+                >
+                  Đã sửa
+                </Button>
+              )}
+
+            {(userRole === "manager" || userRole === "saler") &&
+              video.jobStatus === "COMPLETED" &&
+              video.revisionStatus === "REVISION_DONE" &&
+              !pendingChangesRef.current[video.id] && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onVideoAction(video.id, "accept-revision")}
+                    className="h-8 gap-1 border-emerald-500 text-emerald-600 hover:bg-emerald-50"
+                  >
+                    Duyệt bản sửa
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const reason = window.prompt("Lý do sửa lại (tuỳ chọn):") || undefined;
+                      onVideoAction(video.id, "re-request-revision", { reason });
+                    }}
+                    className="h-8 gap-1 border-orange-500 text-orange-600 hover:bg-orange-50"
+                  >
+                    Sửa lại
+                  </Button>
+                </>
               )}
 
             {/* Delete button - only for manager */}
@@ -1630,6 +1821,101 @@ console.log("editValue: ", editValue)
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Revision Reason Dialog */}
+      <Dialog
+        open={revisionDialog.open}
+        onOpenChange={(open) => setRevisionDialog({ ...revisionDialog, open })}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Yêu Cầu Sửa Đổi Video</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Textarea
+              placeholder="Nhập lý do yêu cầu sửa (tuỳ chọn)..."
+              value={revisionNote}
+              onChange={(e) => setRevisionNote(e.target.value)}
+              className="min-h-[120px]"
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setRevisionDialog({ open: false, videoId: null });
+                setRevisionNote("");
+              }}
+            >
+              Hủy
+            </Button>
+            <Button
+              variant="default"
+              className="bg-orange-500 hover:bg-orange-600"
+              onClick={() => {
+                if (revisionDialog.videoId != null) {
+                  onVideoAction(revisionDialog.videoId, "request-revision", {
+                    reason: revisionNote.trim() || undefined,
+                  });
+                }
+                setRevisionDialog({ open: false, videoId: null });
+                setRevisionNote("");
+              }}
+            >
+              Xác Nhận
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reject Reason Dialog */}
+      <Dialog
+        open={rejectDialog.open}
+        onOpenChange={(open) => setRejectDialog({ ...rejectDialog, open })}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Từ Chối Duyệt Video</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Textarea
+              placeholder="Nhập lý do từ chối (tối thiểu 5 ký tự)..."
+              value={rejectNote}
+              onChange={(e) => setRejectNote(e.target.value)}
+              className="min-h-[120px]"
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setRejectDialog({ open: false, videoId: null });
+                setRejectNote("");
+              }}
+            >
+              Hủy
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (!rejectNote.trim() || rejectNote.trim().length < 5) {
+                  toast.warning("Vui lòng nhập lý do từ chối (tối thiểu 5 ký tự)");
+                  return;
+                }
+                if (rejectDialog.videoId != null) {
+                  onVideoAction(rejectDialog.videoId, "reject-video", {
+                    reason: rejectNote.trim(),
+                  });
+                }
+                setRejectDialog({ open: false, videoId: null });
+                setRejectNote("");
+              }}
+            >
+              Từ Chối
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
