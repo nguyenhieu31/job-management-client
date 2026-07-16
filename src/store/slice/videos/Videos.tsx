@@ -41,6 +41,14 @@ export const GetAllVideosByAssigneeAction = createAsyncThunk(
   }
 );
 
+export const GetAllVideosBySalerAssigneeAction = createAsyncThunk(
+  "video/getAllVideosBySalerAssignee",
+  async (data: { pageNumber: number; pageSize: number } & { fromDate?: string | null }) => {
+    const res = await VideoApi.getAllVideosBySalerAssignee(data);
+    return res.data;
+  }
+);
+
 export const UpdateVideoStatusAction = createAsyncThunk(
   "video/updateVideoStatus",
   async (data: {
@@ -325,6 +333,20 @@ const videoSlice = createSlice({
     builder.addCase(GetAllVideosByAssigneeAction.rejected, (state, action) => {
       state.loading = false;
       state.error = action.error.message || "Failed to get videos by assignee";
+    });
+
+    // Get All Videos By Saler Assignee
+    builder.addCase(GetAllVideosBySalerAssigneeAction.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(GetAllVideosBySalerAssigneeAction.fulfilled, (state, action) => {
+      state.loading = false;
+      state.videos = action.payload;
+    });
+    builder.addCase(GetAllVideosBySalerAssigneeAction.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.error.message || "Failed to get videos by saler assignee";
     });
 
     // Update Video Status

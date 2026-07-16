@@ -37,7 +37,7 @@ export default function CustomersPage() {
     totalPages: 0,
   });
 
-  const { roleName } = useAppSelector((state) => state.authenticate);
+  const { roleName, id } = useAppSelector((state) => state.authenticate);
   const {
     customers,
     loading,
@@ -115,11 +115,13 @@ export default function CustomersPage() {
   };
 
   const handleEditCustomer = (customer: CustomerResponse) => {
+    if (roleName === "SALER") return;
     setEditingCustomer(customer);
     setFormOpen(true);
   };
 
   const handleDeleteCustomer = async (id: number) => {
+    if (roleName === "SALER") return;
     if(!id) return
     await dispatch(DeleteCustomerAction(id));
     fetchCustomers();
@@ -135,10 +137,13 @@ export default function CustomersPage() {
   const fetchCustomers = useCallback(() => {
     if (roleName === undefined) return;
 
-    if (activeFilters) {
+    const isSaler = roleName === "SALER";
+    const effectiveSaleId = isSaler ? id : activeFilters?.saleId;
+
+    if (activeFilters || isSaler) {
       dispatch(SearchCustomersAction({
-        keyword: activeFilters.keyword,
-        saleId: activeFilters.saleId,
+        keyword: activeFilters?.keyword || "",
+        saleId: effectiveSaleId ?? undefined,
         pageNumber: pagination.currentPage - 1,
         pageSize: pagination.pageSize,
       }));
@@ -150,7 +155,7 @@ export default function CustomersPage() {
         })
       );
     }
-  }, [dispatch, pagination.currentPage, pagination.pageSize, roleName, activeFilters]);
+  }, [dispatch, pagination.currentPage, pagination.pageSize, roleName, id, activeFilters]);
 
   useEffect(() => {
     fetchCustomers();

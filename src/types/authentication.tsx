@@ -10,6 +10,7 @@ export type LoginRequest = {
     password: string;
 }
 export type LoginResponse = {
+    id: number;
     fullName: string;
     roleName: string;
     email: string;

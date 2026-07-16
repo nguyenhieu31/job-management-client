@@ -69,8 +69,8 @@ export function CustomerTable({
             customers.map((customer, index) => (
               <TableRow
                 key={customer.id}
-                className="cursor-pointer"
-                onClick={() => onEdit(customer)}
+                className={roleName === "MANAGER" ? "cursor-pointer" : ""}
+                onClick={() => roleName === "MANAGER" && onEdit(customer)}
               >
                 <TableCell className="text-muted-foreground">
                   {(currentPage - 1) * pageSize + index + 1}

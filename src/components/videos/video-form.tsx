@@ -430,7 +430,8 @@ export function VideoForm({
                     placeholder="Tìm kiếm khách hàng..."
                     onChange={(option) => {
                       formRef.current.customerId = option?.id.toString();
-                      formRef.current.assignedSale = undefined;
+                      const selectedCustomer = customers.find((c: any) => c.id === option?.id);
+                      formRef.current.assignedSale = selectedCustomer?.sales?.[0]?.id.toString() || undefined;
                       forceUpdate();
                     }}
                     defaultValue={

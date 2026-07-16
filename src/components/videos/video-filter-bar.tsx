@@ -139,7 +139,6 @@ export function VideoFilterBar({
       endDate: filters.toDate || null,
       selectedEmployeeIds: selectedEmployees ? selectedEmployees.map((e) => e.id) : undefined,
       selectedCustomerIds: selectedCustomers ? selectedCustomers.map((c) => c.id) : undefined,
-      customerCode: filters.customerCode || null,
       assignedSaleIds: selectedSaleIds.length > 0 ? selectedSaleIds.map((s) => s.id) : undefined,
     };
     
@@ -158,7 +157,6 @@ export function VideoFilterBar({
       paymentStatus: "",
       paymentEmployee: "",
       keyword: "",
-      customerCode: "",
     };
     setFilters(resetFilters);
     setSelectedEmployees([]);
@@ -296,23 +294,6 @@ export function VideoFilterBar({
                 defaultValue={selectedCustomers}
                 className="w-full"
                 title="Khách hàng"
-              />
-            </div>
-
-            {/* Customer Code Filter */}
-            <div className="space-y-2">
-              <Label htmlFor="customerCode" className="text-sm font-medium">
-                Mã Khách Hàng
-              </Label>
-              <Input
-                id="customerCode"
-                type="text"
-                placeholder="VD: ACME-001"
-                value={filters.customerCode || ""}
-                onChange={(e) =>
-                  handleChange("customerCode", e.target.value)
-                }
-                className="w-full"
               />
             </div>
 

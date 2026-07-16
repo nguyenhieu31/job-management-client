@@ -44,6 +44,19 @@ export const getAllJobsByQualifiedAssignee = async (data: PageRequest & { email:
     }
 }
 
+export const getAllJobsBySalerAssignee = async (data: PageRequest & { fromDate?: string | null }) => {
+    try {
+        const res = await axiosInstance.get(`/admin/jobs/saler-assignee`, { params: {
+            pageNumber: data.pageNumber,
+            pageSize: data.pageSize,
+            fromDate: data.fromDate
+        } });
+        return res as unknown as ApiResponse<PageResponse<JobResponse[]>>;
+    } catch (err: any) {
+        throw new Error(err.message);
+    }
+}
+
 export const updateJobStatus = async (data: {id: number; status: string; qaNote?: string; qaOutputNumber?: number | null;}) => {
     try {
         const res = await axiosInstance.put(`/admin/jobs/update/status/${data.id}?status=${data.status}&qaNote=${data.qaNote || ""}`);

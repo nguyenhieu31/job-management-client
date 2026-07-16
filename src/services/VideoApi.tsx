@@ -37,6 +37,21 @@ export const getAllVideosByAssignee = async (
   }
 };
 
+export const getAllVideosBySalerAssignee = async (data: PageRequest & { fromDate?: string | null }) => {
+  try {
+    const res = await axiosInstance.get(`/admin/videos/saler-assignee`, {
+      params: {
+        pageNumber: data.pageNumber,
+        pageSize: data.pageSize,
+        fromDate: data.fromDate,
+      },
+    });
+    return res as unknown as ApiResponse<PageResponse<VideoResponse[]>>;
+  } catch (err: any) {
+    throw new Error(err.message);
+  }
+};
+
 export const updateVideoStatus = async (data: {
   id: number;
   status: string;

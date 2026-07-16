@@ -151,7 +151,6 @@ export interface VideoFilters {
   paymentStatus: PaymentStatus | "";
   paymentEmployee: string;
   keyword: string;
-  customerCode?: string;
 }
 
 // Pagination interface
@@ -221,9 +220,9 @@ export const ROLE_COLUMNS = {
     "jobStatus",
     "linkDone",
     "assignedSale",
-    "assignedEmployee",
+    // "assignedEmployee",
     "note",
-    "paymentStatus",
+    // "paymentStatus",
     "actions",
   ],
 } as const;

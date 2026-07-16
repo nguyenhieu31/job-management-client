@@ -21,11 +21,12 @@ import {
   CreateVideoAction,
   GetAllVideosAction,
   GetAllVideosByAssigneeAction,
-  GetVideoFromDropboxAction,
+  GetAllVideosBySalerAssigneeAction,
   SearchVideoByConditionsAction,
   updateVideo,
   UpdateVideoFullAction,
   UpdateVideoStatusAction,
+  GetVideoFromDropboxAction,
   TransitionVideoAction,
 } from "@/store/slice/videos/Videos";
 import { PageResponse } from "@/components/types/Page";
@@ -54,7 +55,7 @@ export default function VideosPage() {
   const [activeFilters, setActiveFilters] = useState<any>(null);
 
   // Get user role from Redux store
-  const { roleName, email } = useAppSelector((state) => state.authenticate);
+  const { roleName, email, id } = useAppSelector((state) => state.authenticate);
   const {
     videos,
     loading,
@@ -287,6 +288,13 @@ export default function VideosPage() {
 
   const customerList = useMemo(() => customers?.data || [], [customers]);
 
+  const filteredCustomerList = useMemo(() =>
+    roleName === "SALER" && id != null
+      ? customerList.filter((c) => c.sales?.some((s) => s.id === id))
+      : customerList,
+    [customerList, roleName, id]
+  );
+
   const workRequestList = useMemo(
     () => workRequests?.data || [],
     [workRequests],
@@ -305,9 +313,17 @@ export default function VideosPage() {
       return;
     }
 
-    if (roleName === "MANAGER" || roleName === "SALER") {
+    if (roleName === "MANAGER") {
       dispatch(
         GetAllVideosAction({
+          pageNumber: pagination.currentPage - 1,
+          pageSize: pagination.pageSize,
+          fromDate: getFirstDayOfMonth(),
+        }),
+      );
+    } else if (roleName === "SALER") {
+      dispatch(
+        GetAllVideosBySalerAssigneeAction({
           pageNumber: pagination.currentPage - 1,
           pageSize: pagination.pageSize,
           fromDate: getFirstDayOfMonth(),
@@ -345,7 +361,6 @@ export default function VideosPage() {
       ]);
     }
   }, [dispatch, roleName]);
-  console.log("employeeList", employeeList);
 
   return (
     <div className="flex flex-col gap-6">
@@ -387,7 +402,7 @@ export default function VideosPage() {
         pagination={pagination}
         onPageChange={handlePageChange}
         employees={employeeList.filter((e) => e.isVideoAccount === true)}
-        customers={customerList.filter((c) => c.isVideoAccount === true)}
+        customers={filteredCustomerList.filter((c) => c.isVideoAccount === true)}
         salers={salerList}
         onFiltersChange={setActiveFilters}
       />
@@ -399,12 +414,12 @@ export default function VideosPage() {
         </div>
       ) : (
         <>
-          <VideoTable
-            videos={videos ? videos.data : []}
-            userRole={userRole}
-            employees={employeeList.filter((e) => e.isVideoAccount === true)}
-            customers={customerList.filter((c) => c.isVideoAccount === true)}
-            onVideoAction={handleVideoAction}
+        <VideoTable
+          videos={videos ? videos.data : []}
+          userRole={userRole}
+          employees={employeeList.filter((e) => e.isVideoAccount === true)}
+          customers={filteredCustomerList.filter((c) => c.isVideoAccount === true)}
+          onVideoAction={handleVideoAction}
           />
 
           {/* Pagination */}
@@ -442,7 +457,7 @@ export default function VideosPage() {
           }
         }}
         editingVideo={editingVideo}
-        customers={customerList.filter((c) => c.isVideoAccount === true)}
+        customers={filteredCustomerList.filter((c) => c.isVideoAccount === true)}
         employees={employeeList.filter((e) => e.isVideoAccount === true)}
         qaList={qaList}
         workRequests={workRequestList}

@@ -6,6 +6,7 @@ import { Search, RotateCcw } from "lucide-react";
 import type { CustomerFilters } from "@/types/customers";
 import type { EmployeeResponse } from "@/types/employees";
 import SearchableDropdown from "@/components/ui/search-able-dropdown";
+import { useAppSelector } from "@/store/store";
 
 interface CustomerFilterBarProps {
   filters: CustomerFilters;
@@ -22,6 +23,7 @@ export function CustomerFilterBar({
   onReset,
   sales,
 }: CustomerFilterBarProps) {
+  const { roleName } = useAppSelector((state) => state.authenticate);
   const saleOptions = sales.map((s) => ({
     id: s.id,
     name: s.fullName + (s.code ? ` (${s.code})` : ""),
@@ -50,19 +52,21 @@ export function CustomerFilterBar({
           </div>
         </div>
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Sale Phụ Trách</label>
-          <SearchableDropdown
-            key={filters.saleId ?? "all-sales"}
-            options={saleOptions}
-            defaultValue={selectedSale}
-            onChange={(option) =>
-              onFilterChange({ ...filters, saleId: option ? option.id : undefined })
-            }
-            placeholder="Tất cả sale"
-            type="text"
-          />
-        </div>
+        {roleName !== "SALER" && (
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Sale Phụ Trách</label>
+            <SearchableDropdown
+              key={filters.saleId ?? "all-sales"}
+              options={saleOptions}
+              defaultValue={selectedSale}
+              onChange={(option) =>
+                onFilterChange({ ...filters, saleId: option ? option.id : undefined })
+              }
+              placeholder="Tất cả sale"
+              type="text"
+            />
+          </div>
+        )}
 
         <div className="flex gap-2 md:col-span-2 lg:col-span-1">
           <Button onClick={onApply} className="flex-1">

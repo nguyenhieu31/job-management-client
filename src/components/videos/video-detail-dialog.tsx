@@ -267,7 +267,7 @@ export function VideoDetailDialog({
             </div>
 
             {/* Customer Information - Hidden for Employee & QA */}
-            {userRole === "manager" && (
+            {(userRole === "manager" || userRole === "saler") && (
               <div className="space-y-4">
                 <h3 className="font-semibold text-lg flex items-center gap-2">
                   <Users className="h-5 w-5" />
@@ -300,6 +300,15 @@ export function VideoDetailDialog({
                         Công Ty
                       </label>
                       <p className="font-medium">{video.customer.company}</p>
+                    </div>
+                  )}
+
+                  {video.assignedSale && (
+                    <div>
+                      <label className="text-sm text-muted-foreground">
+                        Sale phụ trách
+                      </label>
+                      <p className="font-medium">{video.assignedSale.name}</p>
                     </div>
                   )}
                 </div>
