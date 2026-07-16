@@ -218,6 +218,11 @@ export function VideoTable({
     videoId: null,
   });
   const [rejectNote, setRejectNote] = useState("");
+  const [revisionDialog, setRevisionDialog] = useState<{ open: boolean; videoId: number | null }>({
+    open: false,
+    videoId: null,
+  });
+  const [revisionNote, setRevisionNote] = useState("");
   const [selectedJobIds, setSelectedJobIds] = useState<Set<number>>(new Set());
   const [totalSelectedPrice, setTotalSelectedPrice] = useState<number>(0);
   const [totalSelectedPriceCustomer, setTotalSelectedPriceCustomer] =
@@ -1434,8 +1439,8 @@ console.log("editValue: ", editValue)
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    const reason = window.prompt("Lý do cần sửa (tuỳ chọn):") || undefined;
-                    onVideoAction(video.id, "request-revision", { reason });
+                    setRevisionDialog({ open: true, videoId: video.id });
+                    setRevisionNote("");
                   }}
                   className="h-8 gap-1 border-orange-500 text-orange-600 hover:bg-orange-50"
                 >
@@ -1816,6 +1821,52 @@ console.log("editValue: ", editValue)
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Revision Reason Dialog */}
+      <Dialog
+        open={revisionDialog.open}
+        onOpenChange={(open) => setRevisionDialog({ ...revisionDialog, open })}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Yêu Cầu Sửa Đổi Video</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Textarea
+              placeholder="Nhập lý do yêu cầu sửa (tuỳ chọn)..."
+              value={revisionNote}
+              onChange={(e) => setRevisionNote(e.target.value)}
+              className="min-h-[120px]"
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setRevisionDialog({ open: false, videoId: null });
+                setRevisionNote("");
+              }}
+            >
+              Hủy
+            </Button>
+            <Button
+              variant="default"
+              className="bg-orange-500 hover:bg-orange-600"
+              onClick={() => {
+                if (revisionDialog.videoId != null) {
+                  onVideoAction(revisionDialog.videoId, "request-revision", {
+                    reason: revisionNote.trim() || undefined,
+                  });
+                }
+                setRevisionDialog({ open: false, videoId: null });
+                setRevisionNote("");
+              }}
+            >
+              Xác Nhận
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Reject Reason Dialog */}
       <Dialog
