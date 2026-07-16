@@ -338,7 +338,7 @@ export function VideoFilterBar({
             {roleName === "MANAGER" && (
               <div className="space-y-2">
                 <Label htmlFor="saleFilter" className="text-sm font-medium">
-                  Sale phụ trách7
+                  Sale phụ trách
                 </Label>
                 <MultiSelectDropdown
                   options={salerOptions.map((s) => ({ id: s.id, name: s.fullName }))}
