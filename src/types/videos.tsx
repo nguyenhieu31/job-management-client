@@ -217,10 +217,10 @@ export const ROLE_COLUMNS = {
     "totalPrice",
     "jobStatus",
     "linkDone",
-    "assignedSale",
+    // "assignedSale",
     "assignedEmployee",
     "note",
-    "paymentStatus",
+    // "paymentStatus",
     // "actions",
   ],
 } as const;
