@@ -241,10 +241,17 @@ export function VideoTable({
   const [editVideoId, setEditVideoId] = useState<number | null>(null);
   const [editValue, setEditValue] = useState<string>("");
 console.log("editValue: ", editValue)
-  // Track formatted values for payPerFile inputs
+  // Track formatted values for payPerFile / totalPayPerFile inputs
   const [payPerFileInputs, setPayPerFileInputs] = useState<
     Record<number, string>
   >({});
+  const [totalPayPerFileInputs, setTotalPayPerFileInputs] = useState<
+    Record<number, string>
+  >({});
+
+  const canEditTotalPayPerFile =
+    userRole === "manager" ||
+    (userRole === "saler" && email === "vanedit027@gmail.com");
 
   // Track pending changes for Manager role using useRef to avoid re-renders
   const pendingChangesRef = useRef<Record<number, Partial<VideoResponse>>>({}); 
@@ -270,9 +277,32 @@ console.log("editValue: ", editValue)
   // Ref to track action cell components
 
   // Get visible columns based on role
-  const visibleColumns =
-    ROLE_COLUMNS[userRole as keyof typeof ROLE_COLUMNS] ||
-    ROLE_COLUMNS.employee;
+  const visibleColumns = useMemo(() => {
+    const baseColumns = [
+      ...(ROLE_COLUMNS[userRole as keyof typeof ROLE_COLUMNS] ||
+        ROLE_COLUMNS.employee),
+    ] as string[];
+    if (canEditTotalPayPerFile && !baseColumns.includes("totalPayPerFile")) {
+      const jobStatusIdx = baseColumns.indexOf("jobStatus");
+      if (jobStatusIdx >= 0) {
+        baseColumns.splice(jobStatusIdx + 1, 0, "totalPayPerFile");
+      } else {
+        baseColumns.push("totalPayPerFile");
+      }
+    }
+    if (!canEditTotalPayPerFile) {
+      return baseColumns.filter((col) => col !== "totalPayPerFile");
+    }
+    // Special saler needs actions column to save totalPayPerFile edits
+    if (
+      userRole === "saler" &&
+      canEditTotalPayPerFile &&
+      !baseColumns.includes("actions")
+    ) {
+      baseColumns.push("actions");
+    }
+    return baseColumns;
+  }, [userRole, canEditTotalPayPerFile]);
 
   // All roles can edit fields inline (except STT, code, date)
 
@@ -372,6 +402,8 @@ console.log("editValue: ", editValue)
             doneLink: changes?.doneLink || "",
             inputLink: changes?.inputLink || null,
             payPerFile: changes?.payPerFile || null,
+            totalPayPerFile:
+              changes?.totalPayPerFile !== undefined ? changes.totalPayPerFile : null,
             editedNumber:
               changes?.editedNumber !== undefined ? changes.editedNumber : null,
             isDeleteAssignee: isDeleteAssignee || undefined,
@@ -396,7 +428,12 @@ console.log("editValue: ", editValue)
           // Clear formatted input values
           setPayPerFileInputs((prev) => {
             const newInputs = { ...prev };
-            delete newInputs    [videoId];
+            delete newInputs[videoId];
+            return newInputs;
+          });
+          setTotalPayPerFileInputs((prev) => {
+            const newInputs = { ...prev };
+            delete newInputs[videoId];
             return newInputs;
           });
           // Trigger re-render to show updated values from API
@@ -419,6 +456,11 @@ console.log("editValue: ", editValue)
     delete mediaTempUrlsRef.current[videoId];
     // Clear formatted input values
     setPayPerFileInputs((prev) => {
+      const newInputs = { ...prev };
+      delete newInputs[videoId];
+      return newInputs;
+    });
+    setTotalPayPerFileInputs((prev) => {
       const newInputs = { ...prev };
       delete newInputs[videoId];
       return newInputs;
@@ -1059,15 +1101,51 @@ console.log("editValue: ", editValue)
           <span>{formatVNDInput(currentPayPerFile?.toString() || "0")}</span>
         );
 
-      case "totalPayPerFile":
-        const totalPayPerFile = video.totalPayPerFile || 0;
-        const editedNumber = (getCurrentValue(video, "editedNumber") as number) || 0;
-        const feeEdited = editedNumber > 3 ? (editedNumber - 3) * 20000 : 0;
+      case "totalPayPerFile": {
+        const currentTotalPayPerFile = (getCurrentValue(
+          video,
+          "totalPayPerFile",
+        ) as number) || 0;
+        if (canEditTotalPayPerFile) {
+          const displayValue =
+            totalPayPerFileInputs[video.id] !== undefined
+              ? totalPayPerFileInputs[video.id]
+              : formatVNDInput(currentTotalPayPerFile?.toString() || "0");
+
+          return (
+            <input
+              type="text"
+              value={displayValue}
+              onChange={(e) => {
+                const formatted = formatVNDInput(e.target.value);
+                setTotalPayPerFileInputs((prev) => ({
+                  ...prev,
+                  [video.id]: formatted,
+                }));
+                const numericValue = parseVNDInput(formatted);
+                handleFieldChange(video.id, "totalPayPerFile", numericValue);
+              }}
+              onBlur={() => {
+                const currentValue = getCurrentValue(
+                  video,
+                  "totalPayPerFile",
+                ) as number;
+                setTotalPayPerFileInputs((prev) => ({
+                  ...prev,
+                  [video.id]: formatVNDInput(currentValue?.toString() || "0"),
+                }));
+              }}
+              placeholder="0"
+              className="w-[110px] px-2 py-1 text-sm border rounded-md focus:outline-none focus:ring-1 focus:border-blue-400"
+            />
+          );
+        }
         return (
           <span className="font-medium">
-            {formatCurrencyVND(totalPayPerFile + feeEdited)}
+            {formatCurrencyVND(currentTotalPayPerFile)}
           </span>
         );
+      }
 
       case "editedNumber":
         const currentEditedNumber = (getCurrentValue(video, "editedNumber") as number) || 0;
@@ -1118,7 +1196,7 @@ console.log("editValue: ", editValue)
             >
               {videoStatusLabels[video.jobStatus] || video.jobStatus}
             </Badge>
-            {video.deliveryStatus &&
+            {/* {video.deliveryStatus &&
               video.deliveryStatus !== "NONE" &&
               deliveryStatusLabels[video.deliveryStatus] && (
                 <Badge variant="secondary" className="text-xs">
@@ -1134,7 +1212,7 @@ console.log("editValue: ", editValue)
                 >
                   {revisionStatusLabels[video.revisionStatus]}
                 </Badge>
-              )}
+              )} */}
           </div>
         );
 
@@ -1328,8 +1406,9 @@ console.log("editValue: ", editValue)
       case "actions":
         return (
           <div className="flex items-center justify-end gap-2">
-            {/* Save button - show for manager OR employee/special with pending changes */}
+            {/* Save button - show for manager OR special saler OR employee/special with pending changes */}
             {((userRole === "manager" && (pendingChangesRef.current[video.id] || uploadedFilesRef.current[video.id] || removedFileStoragesRef.current[video.id])) ||
+              (canEditTotalPayPerFile && userRole === "saler" && pendingChangesRef.current[video.id]) ||
               ((userRole === "employee" || userRole === "special") &&
                 video.jobStatus === "IN_PROGRESS" &&
                 pendingChangesRef.current[video.id]) ||
@@ -1415,93 +1494,98 @@ console.log("editValue: ", editValue)
                 </>
               )}
 
-            {/* Delivery + revision actions */}
-            {(userRole === "manager" || userRole === "saler") &&
-              video.jobStatus === "COMPLETED" &&
-              video.deliveryStatus !== "DELIVERED" &&
-              (!video.revisionStatus || video.revisionStatus === "NONE") &&
-              !pendingChangesRef.current[video.id] && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onVideoAction(video.id, "mark-delivered")}
-                  className="h-8 gap-1 border-blue-500 text-blue-600 hover:bg-blue-50"
-                >
-                  Đã giao hàng
-                </Button>
-              )}
+            {/* Temporary: hide delivery + revision actions on UI only */}
+            {false && (
+              <>
+                {/* Delivery + revision actions */}
+                {(userRole === "manager" || userRole === "saler") &&
+                  video.jobStatus === "COMPLETED" &&
+                  video.deliveryStatus !== "DELIVERED" &&
+                  (!video.revisionStatus || video.revisionStatus === "NONE") &&
+                  !pendingChangesRef.current[video.id] && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onVideoAction(video.id, "mark-delivered")}
+                      className="h-8 gap-1 border-blue-500 text-blue-600 hover:bg-blue-50"
+                    >
+                      Đã giao hàng
+                    </Button>
+                  )}
 
-            {(userRole === "manager" || userRole === "saler") &&
-              video.jobStatus === "COMPLETED" &&
-              (!video.revisionStatus || video.revisionStatus === "NONE") &&
-              !pendingChangesRef.current[video.id] && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setRevisionDialog({ open: true, videoId: video.id });
-                    setRevisionNote("");
-                  }}
-                  className="h-8 gap-1 border-orange-500 text-orange-600 hover:bg-orange-50"
-                >
-                  Cần sửa đổi
-                </Button>
-              )}
+                {(userRole === "manager" || userRole === "saler") &&
+                  video.jobStatus === "COMPLETED" &&
+                  (!video.revisionStatus || video.revisionStatus === "NONE") &&
+                  !pendingChangesRef.current[video.id] && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setRevisionDialog({ open: true, videoId: video.id });
+                        setRevisionNote("");
+                      }}
+                      className="h-8 gap-1 border-orange-500 text-orange-600 hover:bg-orange-50"
+                    >
+                      Cần sửa đổi
+                    </Button>
+                  )}
 
-            {(userRole === "employee" || userRole === "special") &&
-              video.jobStatus === "COMPLETED" &&
-              video.revisionStatus === "REVISION_REQUESTED" &&
-              !pendingChangesRef.current[video.id] && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onVideoAction(video.id, "start-revision")}
-                  className="h-8 gap-1 border-orange-500 text-orange-600 hover:bg-orange-50"
-                >
-                  Sửa
-                </Button>
-              )}
+                {(userRole === "employee" || userRole === "special") &&
+                  video.jobStatus === "COMPLETED" &&
+                  video.revisionStatus === "REVISION_REQUESTED" &&
+                  !pendingChangesRef.current[video.id] && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onVideoAction(video.id, "start-revision")}
+                      className="h-8 gap-1 border-orange-500 text-orange-600 hover:bg-orange-50"
+                    >
+                      Sửa
+                    </Button>
+                  )}
 
-            {(userRole === "employee" || userRole === "special") &&
-              video.jobStatus === "COMPLETED" &&
-              video.revisionStatus === "REVISION_IN_PROGRESS" &&
-              !pendingChangesRef.current[video.id] && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onVideoAction(video.id, "finish-revision")}
-                  className="h-8 gap-1 border-green-500 text-green-600 hover:bg-green-50"
-                >
-                  Đã sửa
-                </Button>
-              )}
+                {(userRole === "employee" || userRole === "special") &&
+                  video.jobStatus === "COMPLETED" &&
+                  video.revisionStatus === "REVISION_IN_PROGRESS" &&
+                  !pendingChangesRef.current[video.id] && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onVideoAction(video.id, "finish-revision")}
+                      className="h-8 gap-1 border-green-500 text-green-600 hover:bg-green-50"
+                    >
+                      Đã sửa
+                    </Button>
+                  )}
 
-            {(userRole === "manager" || userRole === "saler") &&
-              video.jobStatus === "COMPLETED" &&
-              video.revisionStatus === "REVISION_DONE" &&
-              !pendingChangesRef.current[video.id] && (
-                <>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onVideoAction(video.id, "accept-revision")}
-                    className="h-8 gap-1 border-emerald-500 text-emerald-600 hover:bg-emerald-50"
-                  >
-                    Duyệt bản sửa
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      const reason = window.prompt("Lý do sửa lại (tuỳ chọn):") || undefined;
-                      onVideoAction(video.id, "re-request-revision", { reason });
-                    }}
-                    className="h-8 gap-1 border-orange-500 text-orange-600 hover:bg-orange-50"
-                  >
-                    Sửa lại
-                  </Button>
-                </>
-              )}
+                {(userRole === "manager" || userRole === "saler") &&
+                  video.jobStatus === "COMPLETED" &&
+                  video.revisionStatus === "REVISION_DONE" &&
+                  !pendingChangesRef.current[video.id] && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onVideoAction(video.id, "accept-revision")}
+                        className="h-8 gap-1 border-emerald-500 text-emerald-600 hover:bg-emerald-50"
+                      >
+                        Duyệt bản sửa
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const reason = window.prompt("Lý do sửa lại (tuỳ chọn):") || undefined;
+                          onVideoAction(video.id, "re-request-revision", { reason });
+                        }}
+                        className="h-8 gap-1 border-orange-500 text-orange-600 hover:bg-orange-50"
+                      >
+                        Sửa lại
+                      </Button>
+                    </>
+                  )}
+              </>
+            )}
 
             {/* Delete button - only for manager */}
             {userRole === "manager" && !pendingChangesRef.current[video.id] && (

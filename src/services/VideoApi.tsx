@@ -169,6 +169,7 @@ export const updateGridViewVideo = async (data: {
   paymentEmployee?: string | null;
   doneLink?: string | null;
   payPerFile?: number | null;
+  totalPayPerFile?: number | null;
   payPerFileQa?: number | null;
   assignedSaleId?: number | null;
   isDeleteAssignee?: boolean;
@@ -195,6 +196,7 @@ export const updateGridViewVideo = async (data: {
     if (data.paymentEmployee != null) formData.append("paymentEmployee", data.paymentEmployee);
     if (data.doneLink != null) formData.append("doneLink", data.doneLink);
     if (data.payPerFile != null) formData.append("payPerFile", String(data.payPerFile));
+    if (data.totalPayPerFile != null) formData.append("totalPayPerFile", String(data.totalPayPerFile));
     if (data.payPerFileQa != null) formData.append("payPerFileQa", String(data.payPerFileQa));
     if (data.isDeleteAssignee != null) formData.append("isDeleteAssignee", String(data.isDeleteAssignee));
     if (data.assignedSaleId != null) formData.append("assignedSaleId", String(data.assignedSaleId));
