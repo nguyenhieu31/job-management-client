@@ -85,6 +85,7 @@ export const searchJobByConditions = async (data: PageRequest & {
     endDate: string | null;
     selectedEmployeeIds?: number[];
     selectedCustomerIds?: number[];
+    customerCode?: string | null;
     assignedSaleIds?: number[];
 }) => {
     try {
@@ -99,6 +100,7 @@ export const searchJobByConditions = async (data: PageRequest & {
             endDate: data.endDate,
             selectedEmployeeIds: data.selectedEmployeeIds ? data.selectedEmployeeIds : undefined,
             selectedCustomerIds: data.selectedCustomerIds ? data.selectedCustomerIds : undefined,
+            customerCode: data.customerCode || undefined,
             assignedSaleIds: data.assignedSaleIds && data.assignedSaleIds.length > 0 ? data.assignedSaleIds : undefined,
         } });
         return res as unknown as ApiResponse<PageResponse<JobResponse[]>>;

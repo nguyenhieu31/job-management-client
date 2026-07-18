@@ -36,6 +36,7 @@ export interface CustomerInfo {
   email: string;
   phone: string;
   company: string;
+  customerCode?: string;
   sales?: SaleInfo[];
 }
 
