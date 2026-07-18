@@ -42,6 +42,63 @@ export const searchMyOrdersByConditions = async (
   }
 };
 
+export const getAllOrders = async (data: PageRequest) => {
+  try {
+    const res = await axiosInstance.get("/admin/orders", {
+      params: {
+        pageNumber: data.pageNumber,
+        pageSize: data.pageSize,
+      },
+    });
+    return res as unknown as ApiResponse<PageResponse<OrderResponse[]>>;
+  } catch (err: any) {
+    throw new Error(err.message);
+  }
+};
+
+export const searchAdminOrdersByConditions = async (
+  data: PageRequest & {
+    keyword: string | null;
+    status: OrderStatus | null;
+  },
+) => {
+  try {
+    const res = await axiosInstance.get("/admin/orders/search-conditions", {
+      params: {
+        pageNumber: data.pageNumber,
+        pageSize: data.pageSize,
+        keyword: data.keyword,
+        status: data.status,
+      },
+    });
+    return res as unknown as ApiResponse<PageResponse<OrderResponse[]>>;
+  } catch (err: any) {
+    throw new Error(err.message);
+  }
+};
+
+export const updateOrderStatus = async (data: {
+  id: number;
+  status: OrderStatus;
+  rejectNote?: string | null;
+}) => {
+  try {
+    const res = await axiosInstance.put(
+      `/admin/orders/update/status/${data.id}`,
+      null,
+      {
+        params: {
+          status: data.status,
+          rejectNote: data.rejectNote || undefined,
+        },
+      },
+    );
+    return res as unknown as ApiResponse<OrderResponse>;
+  } catch (err: any) {
+    throw new Error(err.message);
+  }
+};
+
 export const submitOrder = async (
   data: { body: CreateOrderRequestBody },
   files: File[] = [],

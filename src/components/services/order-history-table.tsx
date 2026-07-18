@@ -12,10 +12,12 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import Image from "next/image";
 import {
   Select,
@@ -195,6 +197,33 @@ const STATUS_FILTER_OPTIONS: { value: OrderStatus | "ALL"; label: string }[] = [
     Object.entries(ORDER_STATUS_LABELS) as [OrderStatus, string][]
   ).map(([value, label]) => ({ value, label })),
 ];
+
+/** Primary forward action for manager multi-step pipeline */
+export function getPrimaryOrderAction(
+  status: OrderStatus,
+): { next: OrderStatus; label: string } | null {
+  switch (status) {
+    case "PENDING":
+      return { next: "REVIEWED", label: "Đã xem" };
+    case "REVIEWED":
+      return { next: "CONFIRMED", label: "Xác nhận" };
+    case "CONFIRMED":
+      return { next: "IN_PROGRESS", label: "Nhận việc" };
+    case "IN_PROGRESS":
+      return { next: "COMPLETED", label: "Hoàn thành" };
+    default:
+      return null;
+  }
+}
+
+export function canTerminalOrderAction(status: OrderStatus): boolean {
+  return (
+    status === "PENDING" ||
+    status === "REVIEWED" ||
+    status === "CONFIRMED" ||
+    status === "IN_PROGRESS"
+  );
+}
 
 function formatCreatedAt(createdAt: string): string {
   const parsed = new Date(createdAt);
@@ -483,6 +512,24 @@ export function OrderDetailDialog({
             </div>
           )}
 
+          {order.managerRejectNote && (
+            <div className="space-y-2">
+              <h3 className="font-semibold text-red-700">Lý do từ chối (Manager)</h3>
+              <p className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm whitespace-pre-wrap text-red-800">
+                {order.managerRejectNote}
+              </p>
+            </div>
+          )}
+
+          {order.customerRejectNote && (
+            <div className="space-y-2">
+              <h3 className="font-semibold text-red-700">Lý do từ chối (Khách hàng)</h3>
+              <p className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm whitespace-pre-wrap text-red-800">
+                {order.customerRejectNote}
+              </p>
+            </div>
+          )}
+
           {order.attachments && order.attachments.length > 0 && (
             <div className="space-y-2">
               <h3 className="font-semibold">
@@ -588,6 +635,13 @@ interface OrderHistoryTableProps {
   error?: string;
   totalPages?: number;
   totalItems?: number;
+  mode?: "customer" | "manager";
+  actionLoading?: boolean;
+  onStatusChange?: (
+    orderId: number,
+    status: OrderStatus,
+    rejectNote?: string,
+  ) => void | Promise<void>;
   onApply: (filters: {
     keyword: string;
     status: OrderStatus | null;
@@ -604,6 +658,9 @@ export function OrderHistoryTable({
   error = "",
   totalPages: serverTotalPages,
   totalItems: serverTotalItems,
+  mode = "customer",
+  actionLoading = false,
+  onStatusChange,
   onApply,
   onReset,
 }: OrderHistoryTableProps) {
@@ -612,8 +669,15 @@ export function OrderHistoryTable({
   const [pageNumber, setPageNumber] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [previewing, setPreviewing] = useState<OrderResponse | null>(null);
+  const [rejectDialog, setRejectDialog] = useState<{
+    open: boolean;
+    orderId: number | null;
+    status: OrderStatus | null;
+  }>({ open: false, orderId: null, status: null });
+  const [rejectNote, setRejectNote] = useState("");
 
-  const isBusy = loading || searching;
+  const isBusy = loading || searching || actionLoading;
+  const isManager = mode === "manager";
 
   const handleApply = () => {
     setPageNumber(0);
@@ -684,7 +748,9 @@ export function OrderHistoryTable({
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle>Lịch sử đơn hàng</CardTitle>
+          <CardTitle>
+            {isManager ? "Quản lý đơn hàng" : "Lịch sử đơn hàng"}
+          </CardTitle>
           <CardDescription>
             Tìm kiếm theo mã đơn, tên, email, số điện thoại hoặc lọc theo
             trạng thái rồi nhấn &ldquo;Áp dụng&rdquo;.
@@ -770,12 +836,16 @@ export function OrderHistoryTable({
               ) : (
                 <>
                   <p className="text-sm font-medium">
-                    Bạn chưa có đơn hàng nào.
+                    {isManager
+                      ? "Chưa có đơn hàng nào."
+                      : "Bạn chưa có đơn hàng nào."}
                   </p>
-                  <p className="text-xs text-muted-foreground">
-                    Nhấn &ldquo;Đặt dịch vụ mới&rdquo; phía dưới để bắt
-                    đầu.
-                  </p>
+                  {!isManager && (
+                    <p className="text-xs text-muted-foreground">
+                      Nhấn &ldquo;Đặt dịch vụ mới&rdquo; phía dưới để bắt
+                      đầu.
+                    </p>
+                  )}
                 </>
               )}
             </div>
@@ -791,6 +861,9 @@ export function OrderHistoryTable({
                     <TableHead>Ngày tạo</TableHead>
                     <TableHead>Trạng thái</TableHead>
                     <TableHead className="text-right">Giá ước tính</TableHead>
+                    {isManager && (
+                      <TableHead className="text-right">Thao tác</TableHead>
+                    )}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -798,6 +871,8 @@ export function OrderHistoryTable({
                     const variant = ORDER_STATUS_BADGE_VARIANT[order.status];
                     const variantClass =
                       ORDER_STATUS_BADGE_CLASS[order.status];
+                    const primary = getPrimaryOrderAction(order.status);
+                    const canTerminal = canTerminalOrderAction(order.status);
                     return (
                       <TableRow
                         key={order.id}
@@ -831,6 +906,64 @@ export function OrderHistoryTable({
                             ? `${VND_FORMATTER.format(order.estimatedPrice)}`
                             : "—"}
                         </TableCell>
+                        {isManager && (
+                          <TableCell
+                            className="text-right"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <div className="flex flex-wrap justify-end gap-1">
+                              {primary && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  disabled={actionLoading}
+                                  className="h-8 border-emerald-500 text-emerald-700 hover:bg-emerald-50"
+                                  onClick={() =>
+                                    onStatusChange?.(order.id, primary.next)
+                                  }
+                                >
+                                  {primary.label}
+                                </Button>
+                              )}
+                              {canTerminal && (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    disabled={actionLoading}
+                                    className="h-8 border-orange-500 text-orange-700 hover:bg-orange-50"
+                                    onClick={() => {
+                                      setRejectDialog({
+                                        open: true,
+                                        orderId: order.id,
+                                        status: "CANCELLED",
+                                      });
+                                      setRejectNote("");
+                                    }}
+                                  >
+                                    Hủy
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    disabled={actionLoading}
+                                    className="h-8 border-red-500 text-red-700 hover:bg-red-50"
+                                    onClick={() => {
+                                      setRejectDialog({
+                                        open: true,
+                                        orderId: order.id,
+                                        status: "REJECTED",
+                                      });
+                                      setRejectNote("");
+                                    }}
+                                  >
+                                    Từ chối
+                                  </Button>
+                                </>
+                              )}
+                            </div>
+                          </TableCell>
+                        )}
                       </TableRow>
                     );
                   })}
@@ -859,6 +992,61 @@ export function OrderHistoryTable({
           if (!open) setPreviewing(null);
         }}
       />
+
+      <Dialog
+        open={rejectDialog.open}
+        onOpenChange={(open) => {
+          if (!open) {
+            setRejectDialog({ open: false, orderId: null, status: null });
+            setRejectNote("");
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {rejectDialog.status === "CANCELLED"
+                ? "Hủy đơn hàng"
+                : "Từ chối đơn hàng"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Textarea
+              placeholder="Nhập lý do (tuỳ chọn)..."
+              value={rejectNote}
+              onChange={(e) => setRejectNote(e.target.value)}
+              className="min-h-[120px]"
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setRejectDialog({ open: false, orderId: null, status: null });
+                setRejectNote("");
+              }}
+            >
+              Đóng
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={actionLoading || rejectDialog.orderId == null}
+              onClick={async () => {
+                if (rejectDialog.orderId == null || !rejectDialog.status) return;
+                await onStatusChange?.(
+                  rejectDialog.orderId,
+                  rejectDialog.status,
+                  rejectNote.trim() || undefined,
+                );
+                setRejectDialog({ open: false, orderId: null, status: null });
+                setRejectNote("");
+              }}
+            >
+              Xác nhận
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {isBusy && orders.length > 0 && (
         <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
