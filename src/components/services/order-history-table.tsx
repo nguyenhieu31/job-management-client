@@ -220,8 +220,7 @@ export function canTerminalOrderAction(status: OrderStatus): boolean {
   return (
     status === "PENDING" ||
     status === "REVIEWED" ||
-    status === "CONFIRMED" ||
-    status === "IN_PROGRESS"
+    status === "CONFIRMED"
   );
 }
 
@@ -514,7 +513,7 @@ export function OrderDetailDialog({
 
           {order.managerRejectNote && (
             <div className="space-y-2">
-              <h3 className="font-semibold text-red-700">Lý do từ chối (Manager)</h3>
+              <h3 className="font-semibold text-red-700">Lý do từ chối (Hệ thống)</h3>
               <p className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm whitespace-pre-wrap text-red-800">
                 {order.managerRejectNote}
               </p>
