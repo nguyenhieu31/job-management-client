@@ -117,7 +117,7 @@ const paymentEmployeeColors = {
 
 const columnLabels: Record<string, string> = {
   code: "Mã Công Việc",
-  date: "Ngày",
+  date: "Ngày/Giờ",
   customerName: "Tên Khách Hàng",
   caseName: "Tên Job",
   workRequest: "Style hàng",

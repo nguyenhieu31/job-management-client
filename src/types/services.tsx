@@ -53,11 +53,11 @@ export const PHOTO_SERVICES: ServiceOption[] = [
 ];
 
 export const VIDEO_SERVICES: ServiceOption[] = [
-  { id: "property-tour-video", label: "Property Tour Video", subtitle: "Video tham quan bất động sản", price: 5 },
-  { id: "social-media-reel", label: "Social Media Reel", subtitle: "Video ngắn cho mạng xã hội", price: 3 },
-  { id: "luxury-cinematic-video", label: "Luxury Cinematic Video", subtitle: "Video điện ảnh cao cấp", price: 15 },
+  { id: "property-tour-video", label: "Property Tour Video", subtitle: "Video tham quan bất động sản", price: 40 },
+  { id: "social-media-reel", label: "Social Media Reel", subtitle: "Video ngắn cho mạng xã hội", price: 40 },
+  { id: "luxury-cinematic-video", label: "Luxury Cinematic Video", subtitle: "Video điện ảnh cao cấp", price: 45 },
   // { id: "marketing-video", label: "Marketing Video", subtitle: "Video tiếp thị", price: 8 },
-  { id: "agent-introduction-video", label: "Agent Introduction Video", subtitle: "Video giới thiệu môi giới", price: 4 },
+  { id: "agent-introduction-video", label: "Agent Introduction Video", subtitle: "Video giới thiệu môi giới", price: 60 },
   // { id: "community-video", label: "Community Video", subtitle: "Video cộng đồng", price: 6 },
   // { id: "before-after-video", label: "Before & After Video", subtitle: "Video trước và sau", price: 4 },
 ];
