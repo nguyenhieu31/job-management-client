@@ -31,7 +31,6 @@ import {
   XCircle,
   ImageIcon,
   Film,
-  Pencil,
 } from "lucide-react";
 
 // Helper function to render text with clickable links
@@ -92,7 +91,6 @@ interface VideoDetailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   video: VideoResponse | null;
-  onEdit?: (video: VideoResponse) => void;
 }
 
 const videoStatusColors: Record<string, string> = {
@@ -141,7 +139,6 @@ export function VideoDetailDialog({
   open,
   onOpenChange,
   video,
-  onEdit,
 }: VideoDetailDialogProps) {
   const { roleName } = useAppSelector((state) => state.authenticate);
   const [previewMedia, setPreviewMedia] = useState<FileStorage | null>(null);
@@ -183,18 +180,6 @@ export function VideoDetailDialog({
           <DialogDescription>
             Thông tin chi tiết về công việc và trạng thái hiện tại
           </DialogDescription>
-          {(userRole === "manager") && onEdit && (
-            <div className="absolute right-12 top-4">
-              <button
-                type="button"
-                onClick={() => onEdit(video)}
-                className="p-2 text-muted-foreground hover:text-primary transition-colors rounded-md hover:bg-muted cursor-pointer"
-                title="Chỉnh sửa"
-              >
-                <Pencil className="h-4 w-4" />
-              </button>
-            </div>
-          )}
         </DialogHeader>
 
         <div className="space-y-6 mt-4">

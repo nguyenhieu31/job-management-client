@@ -40,6 +40,7 @@ import {
   ExternalLink,
   Minus,
   Plus,
+  Pencil,
 } from "lucide-react";
 import { useState, useMemo, useCallback, useRef, Fragment } from "react";
 import type {
@@ -1410,6 +1411,19 @@ console.log("editValue: ", editValue)
       case "actions":
         return (
           <div className="flex items-center justify-end gap-2">
+            {/* Edit button for manager */}
+            {userRole === "manager" && onEdit && !pendingChangesRef.current[video.id] && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onEdit(video)}
+                className="h-8 w-8 p-0"
+                title="Chỉnh sửa"
+              >
+                <Pencil className="h-3 w-3" />
+              </Button>
+            )}
+
             {/* Save button - show for manager OR special saler OR employee/special with pending changes */}
             {((userRole === "manager" && (pendingChangesRef.current[video.id] || uploadedFilesRef.current[video.id] || removedFileStoragesRef.current[video.id])) ||
               (canEditTotalPayPerFile && userRole === "saler" && pendingChangesRef.current[video.id]) ||
@@ -1816,7 +1830,6 @@ console.log("editValue: ", editValue)
         open={previewDialogOpen}
         onOpenChange={setPreviewDialogOpen}
         video={previewJob}
-        onEdit={onEdit}
       />
 
       {/* Edit Dialog for CaseName and Note */}
