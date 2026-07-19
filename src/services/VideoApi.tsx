@@ -116,12 +116,12 @@ export const searchVideoByConditions = async (
       params: {
         pageNumber: data.pageNumber,
         pageSize: data.pageSize,
-        keyword: data.keyword,
-        videoStatus: data.videoStatus,
-        paymentStatus: data.paymentStatus,
-        paymentEmployee: data.paymentEmployee,
-        startDate: data.startDate,
-        endDate: data.endDate,
+        keyword: data.keyword ?? undefined,
+        videoStatus: data.videoStatus ?? undefined,
+        paymentStatus: data.paymentStatus ?? undefined,
+        paymentEmployee: data.paymentEmployee ?? undefined,
+        startDate: data.startDate ?? undefined,
+        endDate: data.endDate ?? undefined,
         selectedEmployeeIds: data.selectedEmployeeIds
           ? data.selectedEmployeeIds
           : undefined,
