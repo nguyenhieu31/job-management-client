@@ -97,8 +97,8 @@ export function RelatedWorkSection({
     setError(null);
 
     const baseParams = {
-      pageNumber: 1,
-      pageSize: 10,
+      pageNumber: 0,
+      pageSize: 5,
       keyword: null as string | null,
       startDate: null as string | null,
       endDate: null as string | null,
@@ -244,9 +244,7 @@ export function RelatedWorkSection({
                     <span>{formatDate(item.createdAt)}</span>
                   </div>
                   {item.note && (
-                    <p className="text-xs text-muted-foreground mt-1 truncate max-w-md">
-                      {item.note}
-                    </p>
+                    <div className="mt-1.5 rounded border border-amber-200/50 bg-amber-50/60 p-1.5 text-xs text-amber-800 dark:border-amber-800/30 dark:bg-amber-950/20 dark:text-amber-200 truncate max-w-md" dangerouslySetInnerHTML={{ __html: item.note }} />
                   )}
                 </div>
 
