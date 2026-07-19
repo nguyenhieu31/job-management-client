@@ -108,43 +108,40 @@ export function RelatedWorkSection({
     const results: RelatedItem[] = [];
     let hasError = false;
 
-    try {
-      const videoRes = await searchVideoByConditions({
-        ...baseParams,
-        videoStatus: null as string | null,
-        paymentStatus: null as string | null,
-      });
-      const videoData = videoRes.data?.data || [];
-      for (const v of videoData) {
-        if (!(currentItemType === "video" && v.id === currentItemId)) {
-          results.push(mapVideoToItem(v));
+    if (currentItemType === "video") {
+      try {
+        const res = await searchVideoByConditions({
+          ...baseParams,
+          videoStatus: null as string | null,
+          paymentStatus: null as string | null,
+        });
+        const data = res.data?.data || [];
+        for (const v of data) {
+          if (v.id !== currentItemId) {
+            results.push(mapVideoToItem(v));
+          }
         }
+      } catch {
+        hasError = true;
       }
-    } catch {
-      hasError = true;
-    }
-
-    try {
-      const jobRes = await searchJobByConditions({
-        ...baseParams,
-        jobStatus: null as string | null,
-        paymentStatus: null as string | null,
-        paymentEmployee: null as string | null,
-      });
-      const jobData = jobRes.data?.data || [];
-      for (const j of jobData) {
-        if (!(currentItemType === "job" && j.id === currentItemId)) {
-          results.push(mapJobToItem(j));
+    } else {
+      try {
+        const res = await searchJobByConditions({
+          ...baseParams,
+          jobStatus: null as string | null,
+          paymentStatus: null as string | null,
+          paymentEmployee: null as string | null,
+        });
+        const data = res.data?.data || [];
+        for (const j of data) {
+          if (j.id !== currentItemId) {
+            results.push(mapJobToItem(j));
+          }
         }
+      } catch {
+        hasError = true;
       }
-    } catch {
-      hasError = true;
     }
-
-    results.sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-    );
 
     setItems(results);
     if (hasError) {
@@ -168,8 +165,8 @@ export function RelatedWorkSection({
       <Separator />
       <div className="space-y-3">
         <h3 className="font-semibold text-lg flex items-center gap-2">
-          <Briefcase className="h-5 w-5" />
-          Video / Job cùng khách hàng
+          {currentItemType === "video" ? <Film className="h-5 w-5" /> : <Briefcase className="h-5 w-5" />}
+          {currentItemType === "video" ? "Video" : "Photo"} cùng khách hàng
           <span className="text-xs text-muted-foreground font-normal">
             (mã KH: {customerCode})
           </span>
