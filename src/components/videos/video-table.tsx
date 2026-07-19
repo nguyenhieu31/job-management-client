@@ -79,6 +79,7 @@ interface VideoTableProps {
     action: VideoAction,
     payload?: { reason?: string; linkDone?: string },
   ) => void;
+  onEdit?: (video: VideoResponse) => void;
 }
 
 const videoStatusColors: Record<string, string> = {
@@ -206,6 +207,7 @@ export function VideoTable({
   employees,
   customers = [],
   onVideoAction,
+  onEdit,
 }: VideoTableProps) {
   const dispatch = useAppDispatch();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -613,12 +615,14 @@ console.log("editValue: ", editValue)
     // Update total selected price
     const total = Array.from(newSelected).reduce((sum, id) => {
       const job = videos.find((j) => j.id === id);
-      return sum + (job?.payPerFile || 0) * (job?.outputNumber || 0);
+      // return sum + (job?.payPerFile || 0) * (job?.outputNumber || 0);
+      return sum + (job?.payPerFile || 0);
     }, 0);
     setTotalSelectedPrice(total);
     const totalCustomer = Array.from(newSelected).reduce((sum, id) => {
       const video = videos.find((j) => j.id === id);
-      return sum + (video?.filePrice || 0) * (video?.outputNumber || 0);
+      // return sum + (video?.filePrice || 0) * (video?.outputNumber || 0);
+      return sum + (video?.filePrice || 0);
     }, 0);
     setTotalSelectedPriceCustomer(totalCustomer);
   };
@@ -1812,6 +1816,7 @@ console.log("editValue: ", editValue)
         open={previewDialogOpen}
         onOpenChange={setPreviewDialogOpen}
         video={previewJob}
+        onEdit={onEdit}
       />
 
       {/* Edit Dialog for CaseName and Note */}
