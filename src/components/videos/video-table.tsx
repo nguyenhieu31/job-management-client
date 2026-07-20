@@ -40,6 +40,7 @@ import {
   ExternalLink,
   Minus,
   Plus,
+  Pencil,
 } from "lucide-react";
 import { useState, useMemo, useCallback, useRef, Fragment } from "react";
 import type {
@@ -79,6 +80,7 @@ interface VideoTableProps {
     action: VideoAction,
     payload?: { reason?: string; linkDone?: string },
   ) => void;
+  onEdit?: (video: VideoResponse) => void;
 }
 
 const videoStatusColors: Record<string, string> = {
@@ -206,6 +208,7 @@ export function VideoTable({
   employees,
   customers = [],
   onVideoAction,
+  onEdit,
 }: VideoTableProps) {
   const dispatch = useAppDispatch();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -613,12 +616,14 @@ console.log("editValue: ", editValue)
     // Update total selected price
     const total = Array.from(newSelected).reduce((sum, id) => {
       const job = videos.find((j) => j.id === id);
-      return sum + (job?.payPerFile || 0) * (job?.outputNumber || 0);
+      // return sum + (job?.payPerFile || 0) * (job?.outputNumber || 0);
+      return sum + (job?.totalPayPerFile || 0);
     }, 0);
     setTotalSelectedPrice(total);
     const totalCustomer = Array.from(newSelected).reduce((sum, id) => {
       const video = videos.find((j) => j.id === id);
-      return sum + (video?.filePrice || 0) * (video?.outputNumber || 0);
+      // return sum + (video?.filePrice || 0) * (video?.outputNumber || 0);
+      return sum + (video?.filePrice || 0);
     }, 0);
     setTotalSelectedPriceCustomer(totalCustomer);
   };
@@ -631,11 +636,11 @@ console.log("editValue: ", editValue)
     } else {
       setSelectedJobIds(new Set(videos.map((j) => j.id)));
       const total = videos.reduce((sum, video) => {
-        return sum + (video.payPerFile || 0) * (video.outputNumber || 0);
+        return sum + (video.totalPayPerFile || 0);
       }, 0);
       setTotalSelectedPrice(total);
       const totalCustomer = videos.reduce((sum, video) => {
-        return sum + (video.filePrice || 0) * (video.outputNumber || 0);
+        return sum + (video.filePrice || 0) ;
       }, 0);
       setTotalSelectedPriceCustomer(totalCustomer);
     }
@@ -1406,6 +1411,19 @@ console.log("editValue: ", editValue)
       case "actions":
         return (
           <div className="flex items-center justify-end gap-2">
+            {/* Edit button for manager */}
+            {userRole === "manager" && onEdit && !pendingChangesRef.current[video.id] && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onEdit(video)}
+                className="h-8 w-8 p-0"
+                title="Chỉnh sửa"
+              >
+                <Pencil className="h-3 w-3" />
+              </Button>
+            )}
+
             {/* Save button - show for manager OR special saler OR employee/special with pending changes */}
             {((userRole === "manager" && (pendingChangesRef.current[video.id] || uploadedFilesRef.current[video.id] || removedFileStoragesRef.current[video.id])) ||
               (canEditTotalPayPerFile && userRole === "saler" && pendingChangesRef.current[video.id]) ||

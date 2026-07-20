@@ -14,15 +14,21 @@ interface ServiceCardProps {
   disabled?: boolean;
   samplesAvailable?: boolean;
   onViewSamples?: (id: string) => void;
+  isVideo?: boolean;
 }
 
 function preloadImages(serviceId: string) {
   const samples = getServiceSampleImages(serviceId);
   for (const pair of samples) {
-    const img = new Image();
-    img.src = pair.before;
-    const img2 = new Image();
-    img2.src = pair.after;
+    if (pair.video) {
+      const video = document.createElement('video');
+      video.src = pair.video;
+    } else {
+      const img = new Image();
+      img.src = pair.before ? pair.before : '';
+      const img2 = new Image();
+      img2.src = pair.after ? pair.after : '';
+    }
   }
 }
 
@@ -35,6 +41,7 @@ export function ServiceCard({
   disabled = false,
   samplesAvailable,
   onViewSamples,
+  isVideo = false,
 }: ServiceCardProps) {
   const handleViewSamples = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -83,7 +90,7 @@ export function ServiceCard({
           className="mt-1 flex items-center gap-1 text-xs text-primary underline-offset-4 hover:underline"
         >
           <ImageIcon className="h-3 w-3" />
-          Xem ảnh mẫu
+          {isVideo ? "View Video Sample" : "View Image Sample"}
         </button>
       )}
       <input

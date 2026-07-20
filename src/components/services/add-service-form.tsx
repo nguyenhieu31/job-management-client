@@ -15,8 +15,8 @@ import {
 import type { UploadedFile } from "@/components/ui/file-upload";
 
 const STEPS = [
-  { number: 1, label: "Chọn dịch vụ" },
-  { number: 2, label: "Chi tiết dịch vụ" },
+  { number: 1, label: "Choose Service" },
+  { number: 2, label: "Service Details" },
 ];
 
 interface AddServiceFormProps {
@@ -68,7 +68,7 @@ export function AddServiceForm({
 
   const validateStep1 = (): boolean => {
     if (formRef.current.selectedServices.length === 0) {
-      setErrors({ selectedServices: "Vui lòng chọn ít nhất một dịch vụ." });
+      setErrors({ selectedServices: "Please select at least one service." });
       return false;
     }
     return true;
@@ -78,18 +78,18 @@ export function AddServiceForm({
     const newErrors: Partial<Record<keyof AddServiceFormState, string>> = {};
 
     if (!formRef.current.customerName.trim()) {
-      newErrors.customerName = "Vui lòng nhập họ và tên.";
+      newErrors.customerName = "Please enter your full name.";
     }
 
     if (!formRef.current.customerEmail.trim()) {
-      newErrors.customerEmail = "Vui lòng nhập email.";
+      newErrors.customerEmail = "Please enter your email.";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formRef.current.customerEmail)) {
-      newErrors.customerEmail = "Email không hợp lệ.";
+      newErrors.customerEmail = "Invalid email format.";
     }
 
     if (!formRef.current.confirmRequirements) {
       newErrors.confirmRequirements =
-        "Vui lòng xác nhận bạn đã cung cấp đầy đủ yêu cầu.";
+        "Please confirm you have provided all requirements.";
     }
 
     setErrors(newErrors);
@@ -165,13 +165,13 @@ export function AddServiceForm({
         </div>
         <h2 className="text-xl font-semibold">
           {submitting
-            ? "Đơn hàng đang được xử lý..."
-            : "Đơn hàng đã được gửi!"}
+            ? "Processing your order..."
+            : "Order submitted!"}
         </h2>
         <p className="text-sm text-muted-foreground max-w-md">
           {submitting
-            ? "Chúng tôi đang tải lên các tệp đính kèm và lưu đơn hàng của bạn. Vui lòng giữ nguyên trang này cho đến khi quá trình hoàn tất."
-            : "Cảm ơn bạn đã đặt dịch vụ. Chúng tôi sẽ liên hệ với bạn trong thời gian sớm nhất để xác nhận đơn hàng."}
+            ? "We are uploading your attachments and saving your order. Please keep this page open until the process is complete."
+            : "Thank you for your order. We will contact you as soon as possible to confirm."}
         </p>
         {submitting && (
           <div
@@ -183,7 +183,7 @@ export function AddServiceForm({
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
             </span>
-            Đang tải lên tệp và gửi đến hệ thống...
+            Uploading files and sending to the system...
           </div>
         )}
         <Button
@@ -192,7 +192,7 @@ export function AddServiceForm({
           className="mt-4"
           disabled={submitting}
         >
-          Đặt dịch vụ mới
+          Book New Service
         </Button>
       </div>
     );
@@ -253,8 +253,7 @@ export function AddServiceForm({
             >
               <Loader2 className="h-4 w-4 animate-spin text-primary" />
               <span>
-                Đang tải lên tệp đính kèm và gửi đơn hàng của bạn, vui lòng đợi
-                trong giây lát...
+                Uploading attachments and sending your order, please wait a moment...
               </span>
             </div>
           )}
@@ -267,22 +266,22 @@ export function AddServiceForm({
               onClick={handlePrevious}
               disabled={currentStep === 1 || submitting}
             >
-              Quay lại
+              Back
             </Button>
 
             {currentStep === 1 ? (
               <Button onClick={handleNext} disabled={nextDisabled}>
-                Tiếp theo
+                Next
               </Button>
             ) : (
               <Button onClick={handleSubmit} disabled={submitDisabled}>
                 {submitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Đang gửi đơn hàng...
+                    Sending order...
                   </>
                 ) : (
-                  "Gửi đơn hàng"
+                  "Send Order"
                 )}
               </Button>
             )}

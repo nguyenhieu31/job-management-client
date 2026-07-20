@@ -84,9 +84,9 @@ export default function ManagerOrdersPage() {
           rejectNote: rejectNote ?? null,
         }),
       ).unwrap();
-      toast.success("Cập nhật trạng thái đơn hàng thành công");
+      toast.success("Order status updated successfully");
     } catch (err: any) {
-      toast.error(err?.message || "Không thể cập nhật trạng thái đơn hàng");
+      toast.error(err?.message || "Cannot update order status");
     } finally {
       setActionLoading(false);
     }
@@ -95,7 +95,7 @@ export default function ManagerOrdersPage() {
   if (roleName && roleName !== "MANAGER") {
     return (
       <div className="rounded-lg border bg-muted/30 p-8 text-center text-sm text-muted-foreground">
-        Bạn không có quyền truy cập trang này.
+        You do not have permission to access this page.
       </div>
     );
   }
@@ -104,11 +104,11 @@ export default function ManagerOrdersPage() {
     <div className="space-y-6">
       <div className="space-y-2">
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-          Quản lý đơn hàng
+          Order Management
         </h1>
         <p className="text-sm text-muted-foreground max-w-2xl">
-          Xem toàn bộ đơn khách hàng đã đặt, lọc theo trạng thái và cập nhật
-          tiến trình theo từng bước (xem → xác nhận → nhận việc → hoàn thành).
+          View all customer orders, filter by status, and update progress step by step
+          (View → Confirm → Accept → Complete).
         </p>
       </div>
 

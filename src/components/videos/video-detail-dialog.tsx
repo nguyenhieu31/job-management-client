@@ -16,6 +16,7 @@ import type { UserRole } from "@/types/videos";
 import type { FileStorage } from "@/types/jobs";
 import { formatCurrency, formatCurrencyVND, formatDate } from "@/lib/utils";
 import { useAppSelector } from "@/store/store";
+import { RelatedWorkSection } from "@/components/shared/related-work-section";
 import {
   ExternalLink,
   User,
@@ -688,6 +689,16 @@ export function VideoDetailDialog({
               ) : null}
             </div>
           </div>
+
+          {/* Related Work Section */}
+          {video.customer?.customerCode && (
+            <RelatedWorkSection
+              customerCode={video.customer.customerCode}
+              currentItemId={video.id}
+              currentItemType="video"
+              onViewItem={() => {}}
+            />
+          )}
         </div>
       </DialogContent>
     </Dialog>

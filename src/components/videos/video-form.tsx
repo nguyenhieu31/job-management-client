@@ -31,7 +31,6 @@ import type { WorkRequestResponse } from "@/types/work-requests";
 import { EmployeeResponse } from "@/types/employees";
 import { CustomerResponse } from "@/types/customers";
 import type { FileStorage } from "@/types/jobs";
-import { formatCurrency, formatCurrencyVND } from "@/lib/utils";
 import SearchableDropdown from "../ui/search-able-dropdown";
 import { filePriceOptions } from "./video-table";
 
@@ -95,6 +94,7 @@ export function VideoForm({
     customerId: undefined as string | undefined,
     workRequestId: undefined as string | undefined,
     payPerFile: "",
+    totalPayPerFile: "",
     images: [] as Array<{ file: File; tempUrl: string }>,
     videos: [] as Array<{ file: File; tempUrl: string }>,
   });
@@ -193,6 +193,9 @@ export function VideoForm({
         payPerFile: editingVideo.payPerFile
           ? formatVNDInput(String(editingVideo.payPerFile))
           : "",
+        totalPayPerFile: editingVideo.totalPayPerFile
+          ? formatVNDInput(String(editingVideo.totalPayPerFile))
+          : "",
         images: [],
         videos: [],
       };
@@ -226,6 +229,7 @@ export function VideoForm({
         assignedSale: undefined,
         workRequestId: undefined,
         payPerFile: "",
+        totalPayPerFile: "",
         images: [],
         videos: [],
       };
@@ -248,6 +252,7 @@ export function VideoForm({
       inputNumber,
       filePrice,
       payPerFile,
+      totalPayPerFile,
       fileCount,
       outputNumber,
       paymentStatus,
@@ -262,8 +267,8 @@ export function VideoForm({
 
     const inputCount = parseInt(inputNumber) || 0;
     const price = parseFloat(filePrice) || 0;
-    // Parse VND formatted strings back to numbers
     const payPerFileNum = parseVNDInput(payPerFile);
+    const totalPayPerFileNum = parseVNDInput(totalPayPerFile);
     const fileCountNum = parseInt(fileCount) || 0;
     const outputNum = parseInt(outputNumber) || 0;
     const customerId_ = customerId ? parseInt(customerId) : null;
@@ -310,9 +315,9 @@ export function VideoForm({
         code: editingVideo.code,
         caseName,
         inputNumber: inputCount,
-        outputNumber: outputNum,
         filePrice: price,
         payPerFile: payPerFileNum,
+        totalPayPerFile: totalPayPerFileNum,
         fileCount: fileCountNum,
         paymentStatus,
         paymentEmployee,
@@ -335,13 +340,14 @@ export function VideoForm({
       videoTempUrls,
       );
     } else {
-      // Create: send only required fields, skip id, code, outputNumber, doneLink
+      // Create: send only required fields, skip id, code, doneLink
       onSubmit(
         {
           caseName,
           inputNumber: inputCount,
           filePrice: price,
           payPerFile: payPerFileNum,
+          totalPayPerFile: totalPayPerFileNum,
           fileCount: fileCountNum,
           paymentStatus,
           paymentEmployee,
@@ -353,7 +359,7 @@ export function VideoForm({
           customerId: customerId_,
           workRequestId: workReqId_,
           assignedSaleId: assignedSaleId_,
-        } as Omit<VideoRequest, "id" | "code" | "outputNumber" | "doneLink">,
+        } as Omit<VideoRequest, "id" | "code" | "doneLink">,
         imageFiles,
         videoFiles,
         imageTempUrls,
@@ -380,6 +386,7 @@ export function VideoForm({
       assignedSale: undefined,
       workRequestId: undefined,
       payPerFile: "",
+      totalPayPerFile: "",
       images: [],
       videos: [],
     };
@@ -590,22 +597,6 @@ export function VideoForm({
                     placeholder="Nhập số lượng input"
                   />
                 </div>
-                {/* Output Number - Only show when editing */}
-                {editingVideo && (
-                  <div className="grid gap-2">
-                    <Label htmlFor="outputNumber">Số lượng output</Label>
-                    <Input
-                      id="outputNumber"
-                      type="number"
-                      min="0"
-                      defaultValue={formRef.current.outputNumber}
-                      onChange={(e) =>
-                        (formRef.current.outputNumber = e.target.value)
-                      }
-                      placeholder="Nhập số lượng output"
-                    />
-                  </div>
-                )}
               </div>
 
               {/* File Price */}
@@ -624,51 +615,24 @@ export function VideoForm({
                 />
               </div>
 
-              {/* Total Price Display */}
-              {formRef.current.outputNumber && formRef.current.filePrice && (
-                <div className="grid gap-2">
-                  <Label>Tổng giá (Tính toán)</Label>
-                  <div className="text-lg font-semibold text-primary">
-                    {formatCurrency(
-                      parseFloat(formRef.current.outputNumber) *
-                        parseFloat(formRef.current.filePrice) || 0
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Pay Per File */}
+              {/* Total Pay Per File (editable) */}
               <div className="grid gap-2">
-                <Label htmlFor="payPerFile">
-                  Giá trả nhân viên/file{" "}
-                  <span className="text-red-500">(VNĐ)</span>
+                <Label htmlFor="totalPayPerFile">
+                  Tổng tiền trả nhân viên <span className="text-red-500">(VNĐ)</span>
                 </Label>
                 <Input
-                  id="payPerFile"
+                  id="totalPayPerFile"
                   type="text"
-                  defaultValue={formRef.current.payPerFile}
+                  defaultValue={formRef.current.totalPayPerFile}
                   onChange={(e) => {
                     const formatted = formatVNDInput(e.target.value);
-                    formRef.current.payPerFile = formatted;
+                    formRef.current.totalPayPerFile = formatted;
                     e.target.value = formatted;
                     forceUpdate();
                   }}
-                  placeholder="Nhập giá trả nhân viên cho mỗi file (VD: 1.000)"
+                  placeholder="Nhập tổng tiền trả nhân viên (VD: 1.000.000)"
                 />
               </div>
-
-              {/* Total Pay Per File Display */}
-              {formRef.current.payPerFile && formRef.current.outputNumber && (
-                <div className="grid gap-2">
-                  <Label>Tổng tiền trả nhân viên (VNĐ) (Tính toán)</Label>
-                  <div className="text-lg font-semibold text-green-600">
-                    {formatCurrencyVND(
-                      parseVNDInput(formRef.current.payPerFile) *
-                        parseFloat(formRef.current.outputNumber)
-                    )}
-                  </div>
-                </div>
-              )}
 
               {/* Job Status and Payment Status in one row */}
               <div className="grid grid-cols-2 gap-4">

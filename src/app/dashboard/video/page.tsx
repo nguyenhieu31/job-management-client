@@ -422,6 +422,10 @@ export default function VideosPage() {
           employees={employeeList.filter((e) => e.isVideoAccount === true)}
           customers={customerList.filter((c) => c.isVideoAccount === true)}
           onVideoAction={handleVideoAction}
+          onEdit={(video) => {
+            setEditingJob(video);
+            setFormOpen(true);
+          }}
           />
 
           {/* Pagination */}

@@ -13,6 +13,7 @@ import { JobResponse } from "@/types/jobs";
 import type { UserRole, FileStorage } from "@/types/jobs";
 import { formatCurrency, formatCurrencyVND, formatDate } from "@/lib/utils";
 import { useAppSelector } from "@/store/store";
+import { RelatedWorkSection } from "@/components/shared/related-work-section";
 import {
   ExternalLink,
   User,
@@ -730,6 +731,16 @@ export function JobDetailDialog({
               ) : null}
             </div>
           </div>
+
+          {/* Related Work Section */}
+          {job.customer?.customerCode && (
+            <RelatedWorkSection
+              customerCode={job.customer.customerCode}
+              currentItemId={job.id}
+              currentItemType="job"
+              onViewItem={() => {}}
+            />
+          )}
         </div>
       </DialogContent>
     </Dialog>

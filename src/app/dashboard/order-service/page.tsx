@@ -23,12 +23,15 @@ import {
   type AddServiceFormState,
 } from "@/types/services";
 import { toast } from "react-toastify";
+import useRouter from "@/hooks/use-router";
+import Loader from "@/components/ui/loader";
 
 const DEFAULT_PAGE_NUMBER = 0;
 const DEFAULT_PAGE_SIZE = 16;
 
 export default function OrderServicePage() {
   const dispatch = useAppDispatch();
+  const router = useRouter();
   const { fullName, email, phoneNumber, roleName } = useAppSelector(
     (state) => state.authenticate,
   );
@@ -41,13 +44,19 @@ export default function OrderServicePage() {
   const [openForm, setOpenForm] = useState(false);
 
   useEffect(() => {
-    dispatch(
-      getMyOrdersAction({
-        pageNumber: DEFAULT_PAGE_NUMBER,
-        pageSize: DEFAULT_PAGE_SIZE,
-      }),
-    );
-  }, [dispatch]);
+    if (roleName === "MANAGER") {
+      router.replace("/dashboard/orders");
+      return;
+    }
+    if (roleName === "CUSTOMER") {
+      dispatch(
+        getMyOrdersAction({
+          pageNumber: DEFAULT_PAGE_NUMBER,
+          pageSize: DEFAULT_PAGE_SIZE,
+        }),
+      );
+    }
+  }, [dispatch, roleName, router]);
 
   const initialValues = useMemo<
     Partial<AddServiceFormState> | undefined
@@ -56,23 +65,17 @@ export default function OrderServicePage() {
     return {
       customerName: fullName,
       customerEmail: email,
-      customerPhone: phoneNumber ?? "",
     };
-  }, [fullName, email, phoneNumber]);
+  }, [fullName, email]);
 
   const handleFormSubmit = async (
     state: AddServiceFormState,
     attachments: { file: File; type: "image" | "video" }[] = [],
   ) => {
-    const customerPhone =
-      state.customerPhone?.trim() ||
-      phoneNumber?.trim() ||
-      "unspecified";
-
     const body: CreateOrderRequestBody = {
       customerName: state.customerName,
       customerEmail: state.customerEmail,
-      customerPhone,
+      customerPhone: "specified",
       orderNotes: state.orderNotes,
       configuration: JSON.parse(JSON.stringify(state)),
       estimatedPrice: computeEstimatedPrice(state),
@@ -86,7 +89,7 @@ export default function OrderServicePage() {
         }),
       ).unwrap();
       setOpenForm(false);
-      toast.success("Đơn hàng đã được gửi thành công!");
+      toast.success("Order submitted successfully!");
       dispatch(
         getMyOrdersAction({
           pageNumber: DEFAULT_PAGE_NUMBER,
@@ -97,7 +100,7 @@ export default function OrderServicePage() {
       toast.error(
         err?.message ||
           submitError ||
-          "Không thể gửi đơn hàng. Vui lòng thử lại.",
+          "Cannot submit order. Please try again.",
       );
     }
   };
@@ -137,65 +140,87 @@ export default function OrderServicePage() {
     );
   };
 
+  if (!roleName) {
+    return (
+      <div className="flex justify-center items-center h-40">
+        <Loader width={50} height={50} />
+      </div>
+    );
+  }
+
+  if (roleName === "MANAGER") {
+    return (
+        <div className="flex justify-center items-center h-40 text-sm text-muted-foreground">
+          Redirecting to order management…
+        </div>
+    );
+  }
+
+  if (roleName !== "CUSTOMER") {
+    return (
+      <div className="rounded-lg border bg-muted/30 p-8 text-center text-sm text-muted-foreground">
+        This page is for customer accounts only.
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-          Đặt Dịch Vụ
-        </h1>
-        <p className="text-sm text-muted-foreground max-w-lg">
-          Chọn dịch vụ chỉnh sửa ảnh và video phù hợp với nhu cầu của bạn.
-          Điền thông tin chi tiết và chúng tôi sẽ liên hệ xác nhận trong thời
-          gian sớm nhất.
-        </p>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            Book Service
+          </h1>
+          <p className="text-sm text-muted-foreground max-w-lg">
+            Choose the photo and video editing service that fits your needs.
+            Fill in the details and we will contact you to confirm as soon as possible.
+          </p>
       </div>
 
-      {roleName === "CUSTOMER" && (
-        <div className="space-y-6">
-          <div className="flex justify-end">
-            <Button
-              onClick={() => setOpenForm(true)}
-              disabled={submitting}
-              size="lg"
-            >
-              Đặt dịch vụ mới
-            </Button>
-          </div>
-
-          <OrderHistoryTable
-            orders={orders}
-            loading={loading}
-            searching={searching}
-            error={error}
-            totalPages={totalPages}
-            totalItems={totalItems}
-            onApply={handleApplyFilters}
-            onReset={handleResetFilters}
-          />
-
-          <Dialog
-            open={openForm}
-            onOpenChange={(open) => {
-              if (!submitting) setOpenForm(open);
-            }}
+      <div className="space-y-6">
+        <div className="flex justify-end">
+          <Button
+            onClick={() => setOpenForm(true)}
+            disabled={submitting}
+            size="lg"
           >
-            <DialogContent className="sm:max-w-[1100px] max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Đặt dịch vụ mới</DialogTitle>
-                <DialogDescription>
-                  Thông tin cá nhân được điền tự động từ tài khoản của bạn.
-                </DialogDescription>
-              </DialogHeader>
-              <AddServiceForm
-                initial={initialValues}
-                disableCustomerFields
-                submitting={submitting}
-                onSubmit={handleFormSubmit}
-              />
-            </DialogContent>
-          </Dialog>
+            Book New Service
+          </Button>
         </div>
-      )}
+
+        <OrderHistoryTable
+          mode="customer"
+          orders={orders}
+          loading={loading}
+          searching={searching}
+          error={error}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          onApply={handleApplyFilters}
+          onReset={handleResetFilters}
+        />
+
+        <Dialog
+          open={openForm}
+          onOpenChange={(open) => {
+            if (!submitting) setOpenForm(open);
+          }}
+        >
+          <DialogContent className="sm:max-w-[1100px] max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+                <DialogTitle>Book New Service</DialogTitle>
+                <DialogDescription>
+                  Your personal information is auto-filled from your account.
+                </DialogDescription>
+            </DialogHeader>
+            <AddServiceForm
+              initial={initialValues}
+              disableCustomerFields
+              submitting={submitting}
+              onSubmit={handleFormSubmit}
+            />
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   );
 }
