@@ -199,7 +199,8 @@ export const updateGridViewVideo = async (data: {
     if (data.totalPayPerFile != null) formData.append("totalPayPerFile", String(data.totalPayPerFile));
     if (data.payPerFileQa != null) formData.append("payPerFileQa", String(data.payPerFileQa));
     if (data.isDeleteAssignee != null) formData.append("isDeleteAssignee", String(data.isDeleteAssignee));
-    if (data.assignedSaleId != null) formData.append("assignedSaleId", String(data.assignedSaleId));
+  if (data.assignedSaleId != null) formData.append("assignedSaleId", String(data.assignedSaleId));
+  if (data.totalPayPerFile != null) formData.append("totalPayPerFile", String(data.totalPayPerFile));
 
     // Append fileStoragesNeedRemove as JSON string
     if (data.fileStoragesNeedRemove && data.fileStoragesNeedRemove.length > 0) {
