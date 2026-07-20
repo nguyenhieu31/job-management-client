@@ -39,6 +39,8 @@ import {
   ASPECT_RATIO_OPTIONS,
   MUSIC_OPTIONS,
   PHOTO_SERVICES,
+  PHOTO_QUANTITY_FIELDS,
+  PHOTO_ADDON_OPTIONS,
   TEXT_CAPTIONS_OPTIONS,
   TRANSITIONS_OPTIONS,
   UPLOAD_METHOD_OPTIONS,
@@ -47,6 +49,7 @@ import {
   VIDEO_STYLE_OPTIONS,
   VIRTUAL_STAGING_ROOMS,
   VIRTUAL_STAGING_STYLES,
+  VIRTUAL_STAGING_LEGACY_ROOM_LABELS,
 } from "@/types/services";
 import {
   ChevronLeft,
@@ -303,9 +306,6 @@ function ConfigurationDetails({ config }: { config: unknown }) {
   const uploadMethodLabels = Array.isArray(obj.uploadMethods)
     ? (obj.uploadMethods as string[]).map((v) => lookupLabel(UPLOAD_METHOD_OPTIONS, v) ?? v)
     : [];
-  const virtualStagingRoomLabels = Array.isArray(obj.virtualStagingRooms)
-    ? (obj.virtualStagingRooms as string[]).map((v) => lookupLabel(VIRTUAL_STAGING_ROOMS, v) ?? v)
-    : [];
 
   const customerName = obj.customerName as string | undefined;
   const customerEmail = obj.customerEmail as string | undefined;
@@ -334,27 +334,121 @@ function ConfigurationDetails({ config }: { config: unknown }) {
   const confirmRequirements = !!obj.confirmRequirements;
   const confirmExtraCharges = !!obj.confirmExtraCharges;
   const virtualStagingStyle = isFilledString(obj.virtualStagingStyle)
-    ? (lookupLabel(VIRTUAL_STAGING_STYLES, obj.virtualStagingStyle) ?? obj.virtualStagingStyle)
+    ? (lookupLabel(VIRTUAL_STAGING_STYLES, obj.virtualStagingStyle) ??
+        lookupLabel(
+          [
+            { value: "contemporary", label: "Contemporary" },
+            { value: "farmhouse", label: "Farmhouse" },
+            { value: "coastal", label: "Coastal" },
+            { value: "custom", label: "Custom based on client request" },
+            ...VIRTUAL_STAGING_STYLES,
+          ],
+          obj.virtualStagingStyle,
+        ) ??
+        obj.virtualStagingStyle)
     : null;
   const dropboxLink = obj.dropboxLink as string | undefined;
   const googleDriveLink = obj.googleDriveLink as string | undefined;
   const wetransferLink = obj.wetransferLink as string | undefined;
 
-  // Note fields
   const configOrderNotes = obj.orderNotes as string | undefined;
   const aiNote = obj.aiNote as string | undefined;
   const musicNote = obj.musicNote as string | undefined;
   const textCaptionsNote = obj.textCaptionsNote as string | undefined;
   const transitionsNote = obj.transitionsNote as string | undefined;
   const boundaryDrawNote = obj.boundaryDrawNote as string | undefined;
+  const photoServiceNote = obj.photoServiceNote as string | undefined;
+  const vsStyleNote = obj.virtualStagingStyleNote as string | undefined;
+  const vsRoomsNote = obj.virtualStagingRoomsNote as string | undefined;
 
-  const hasNotes = configOrderNotes || aiNote || musicNote || textCaptionsNote || transitionsNote || boundaryDrawNote;
-  const hasVirtualStaging = virtualStagingRoomLabels.length > 0 || !!virtualStagingStyle;
-  const hasUpload = uploadMethodLabels.length > 0 || dropboxLink || googleDriveLink || wetransferLink;
+  const photoQuantities =
+    obj.photoQuantities && typeof obj.photoQuantities === "object"
+      ? (obj.photoQuantities as Record<string, number>)
+      : null;
+  const photoQtyLines = photoQuantities
+    ? PHOTO_QUANTITY_FIELDS.map((f) => {
+        const n = Number(photoQuantities[f.key]) || 0;
+        return n > 0 ? `${f.label}: ${n}` : null;
+      }).filter(Boolean) as string[]
+    : [];
+  const photoQtyTotal = photoQuantities
+    ? PHOTO_QUANTITY_FIELDS.reduce(
+        (s, f) => s + (Number(photoQuantities[f.key]) || 0),
+        0,
+      )
+    : 0;
+
+  const photoAddOns =
+    obj.photoAddOns && typeof obj.photoAddOns === "object"
+      ? (obj.photoAddOns as Record<string, unknown>)
+      : null;
+  const addonLines: string[] = [];
+  const addonNotes: { label: string; note: string }[] = [];
+  if (photoAddOns) {
+    for (const opt of PHOTO_ADDON_OPTIONS) {
+      if (photoAddOns[opt.key]) {
+        addonLines.push(opt.label);
+        const note = photoAddOns[opt.noteKey];
+        if (isFilledString(note)) {
+          addonNotes.push({ label: `${opt.label} note`, note: String(note) });
+        }
+      }
+    }
+  }
+
+  const roomCounts =
+    obj.virtualStagingRoomCounts &&
+    typeof obj.virtualStagingRoomCounts === "object" &&
+    !Array.isArray(obj.virtualStagingRoomCounts)
+      ? (obj.virtualStagingRoomCounts as Record<string, number>)
+      : null;
+  const roomCountLines = roomCounts
+    ? Object.entries(roomCounts)
+        .filter(([, n]) => Number(n) > 0)
+        .map(([k, n]) => {
+          const label =
+            lookupLabel(VIRTUAL_STAGING_ROOMS, k) ??
+            VIRTUAL_STAGING_LEGACY_ROOM_LABELS[k] ??
+            k;
+          return `${label} — ${n} photos`;
+        })
+    : [];
+
+  const legacyRoomLabels = Array.isArray(obj.virtualStagingRooms)
+    ? (obj.virtualStagingRooms as string[]).map((v) => {
+        const label =
+          lookupLabel(VIRTUAL_STAGING_ROOMS, v) ??
+          VIRTUAL_STAGING_LEGACY_ROOM_LABELS[v] ??
+          v;
+        return `${label} (legacy) · 1 photo`;
+      })
+    : [];
+
+  const hasPhotoQty = photoQtyTotal > 0 || photoQtyLines.length > 0;
+  const hasAddons = addonLines.length > 0;
+  const hasVS =
+    !!virtualStagingStyle ||
+    roomCountLines.length > 0 ||
+    legacyRoomLabels.length > 0 ||
+    isFilledString(vsStyleNote) ||
+    isFilledString(vsRoomsNote);
+
+  const hasNotes =
+    configOrderNotes ||
+    aiNote ||
+    musicNote ||
+    textCaptionsNote ||
+    transitionsNote ||
+    boundaryDrawNote ||
+    photoServiceNote ||
+    vsStyleNote ||
+    vsRoomsNote ||
+    addonNotes.length > 0;
+  const hasUpload =
+    uploadMethodLabels.length > 0 || dropboxLink || googleDriveLink || wetransferLink;
 
   return (
     <div className="space-y-5">
-      {/* Customer & Property */}
       {(customerName || customerEmail || realEstateAddress || instagramHandle || websiteUrl) && (
         <ConfigSection title="Customer & Property">
           <ConfigRow label="Customer Name" value={customerName} />
@@ -365,16 +459,29 @@ function ConfigurationDetails({ config }: { config: unknown }) {
         </ConfigSection>
       )}
 
-      {/* Services & Video Config */}
-      {(serviceLabels.length > 0 || videoDuration || videoStyle || aspectRatios || music || textCaptionLabels.length > 0 || transitions || customVideoDuration || (videoDurationExtended != null && videoDurationExtended > 0)) && (
+      {(serviceLabels.length > 0 ||
+        videoDuration ||
+        videoStyle ||
+        aspectRatios ||
+        music ||
+        textCaptionLabels.length > 0 ||
+        transitions ||
+        customVideoDuration ||
+        (videoDurationExtended != null && videoDurationExtended > 0)) && (
         <ConfigSection title="Services & Configuration">
           <ConfigListRow label="Selected Services" values={serviceLabels} />
           <ConfigRow label="Video Duration" value={videoDuration} />
           {videoDuration === "Custom" || videoDuration === "custom" ? (
-            <ConfigRow label="Custom Duration" value={customVideoDuration ? `${customVideoDuration}s` : undefined} />
+            <ConfigRow
+              label="Custom Duration"
+              value={customVideoDuration ? `${customVideoDuration}s` : undefined}
+            />
           ) : null}
           {videoDurationExtended != null && videoDurationExtended > 0 ? (
-            <ConfigRow label="Extended Duration" value={`+${videoDurationExtended} × 15s`} />
+            <ConfigRow
+              label="Extended Duration"
+              value={`+${videoDurationExtended} × 15s`}
+            />
           ) : null}
           <ConfigRow label="Editing Style" value={videoStyle} />
           <ConfigRow label="Aspect Ratio" value={aspectRatios} />
@@ -382,21 +489,50 @@ function ConfigurationDetails({ config }: { config: unknown }) {
           <ConfigListRow label="Text & Captions" values={textCaptionLabels} />
           <ConfigRow label="Transitions" value={transitions} />
           {aiOption && <ConfigRow label="AI Voiceover (+$20)" value="Yes" />}
-          {boundaryDrawOption && <ConfigRow label="Boundary Draw (+$10)" value="Yes" />}
-          {confirmRequirements && <ConfigRow label="Requirements Confirmed" value="Yes" />}
-          {confirmExtraCharges && <ConfigRow label="Extra Charges Confirmed" value="Yes" />}
+          {boundaryDrawOption && (
+            <ConfigRow label="Boundary Draw (+$10)" value="Yes" />
+          )}
+          {confirmRequirements && (
+            <ConfigRow label="Requirements Confirmed" value="Yes" />
+          )}
+          {confirmExtraCharges && (
+            <ConfigRow label="Extra Charges Confirmed" value="Yes" />
+          )}
         </ConfigSection>
       )}
 
-      {/* Virtual Staging */}
-      {hasVirtualStaging && (
+      {hasPhotoQty && (
+        <ConfigSection title="Photo Quantities">
+          <ConfigListRow label="By exposure type" values={photoQtyLines} />
+          {photoQtyTotal > 0 && (
+            <ConfigRow label="Total photos" value={String(photoQtyTotal)} />
+          )}
+        </ConfigSection>
+      )}
+
+      {hasAddons && (
+        <ConfigSection title="Replacement Add-ons">
+          <ConfigListRow label="Enabled" values={addonLines} />
+          {addonNotes.map((n) => (
+            <ConfigRow key={n.label} label={n.label} value={n.note} highlight />
+          ))}
+        </ConfigSection>
+      )}
+
+      {hasVS && (
         <ConfigSection title="Virtual Staging">
-          <ConfigListRow label="Room Type" values={virtualStagingRoomLabels} />
           <ConfigRow label="Style" value={virtualStagingStyle} />
+          <ConfigListRow
+            label="Rooms"
+            values={
+              roomCountLines.length > 0 ? roomCountLines : legacyRoomLabels
+            }
+          />
+          <ConfigRow label="Style notes" value={vsStyleNote} highlight />
+          <ConfigRow label="Room notes" value={vsRoomsNote} highlight />
         </ConfigSection>
       )}
 
-      {/* Upload Methods */}
       {hasUpload && (
         <ConfigSection title="Upload Methods">
           <ConfigListRow label="Upload Method" values={uploadMethodLabels} />
@@ -406,10 +542,10 @@ function ConfigurationDetails({ config }: { config: unknown }) {
         </ConfigSection>
       )}
 
-      {/* Notes - highlighted */}
       {hasNotes && (
         <ConfigSection title="Notes & Instructions">
           <ConfigRow label="Order Notes" value={configOrderNotes} highlight />
+          <ConfigRow label="Photo service notes" value={photoServiceNote} highlight />
           <ConfigRow label="AI Voiceover Note" value={aiNote} highlight />
           <ConfigRow label="Music Note" value={musicNote} highlight />
           <ConfigRow label="Text Captions Note" value={textCaptionsNote} highlight />

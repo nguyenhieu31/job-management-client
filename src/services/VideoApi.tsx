@@ -199,7 +199,8 @@ export const updateGridViewVideo = async (data: {
     if (data.totalPayPerFile != null) formData.append("totalPayPerFile", String(data.totalPayPerFile));
     if (data.payPerFileQa != null) formData.append("payPerFileQa", String(data.payPerFileQa));
     if (data.isDeleteAssignee != null) formData.append("isDeleteAssignee", String(data.isDeleteAssignee));
-    if (data.assignedSaleId != null) formData.append("assignedSaleId", String(data.assignedSaleId));
+  if (data.assignedSaleId != null) formData.append("assignedSaleId", String(data.assignedSaleId));
+  if (data.totalPayPerFile != null) formData.append("totalPayPerFile", String(data.totalPayPerFile));
 
     // Append fileStoragesNeedRemove as JSON string
     if (data.fileStoragesNeedRemove && data.fileStoragesNeedRemove.length > 0) {
@@ -261,6 +262,7 @@ const buildVideoFormData = (
   if (data.fileCount != null) formData.append("fileCount", String(data.fileCount));
   if (data.filePrice != null) formData.append("filePrice", String(data.filePrice));
   if (data.payPerFile != null) formData.append("payPerFile", String(data.payPerFile));
+  if (data.totalPayPerFile != null) formData.append("totalPayPerFile", String(data.totalPayPerFile));
   if (data.inputNumber != null) formData.append("inputNumber", String(data.inputNumber));
   if (data.outputNumber != null) formData.append("outputNumber", String(data.outputNumber));
   if (data.editedNumber != null) formData.append("editedNumber", String(data.editedNumber));
