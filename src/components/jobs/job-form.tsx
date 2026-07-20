@@ -100,6 +100,8 @@ export function JobForm({
     inputNumber: "",
     outputNumber: "",
     qaOutputNumber: "",
+    totalPayPerFile: "",
+    totalPayPerFileQa: "",
     paymentStatus: "UNPAID" as PaymentStatus,
     paymentEmployee: "UNPAID" as EmployeePaymentStatus,
     paymentEmployeeQa: "UNPAID" as EmployeePaymentStatus,
@@ -142,6 +144,12 @@ export function JobForm({
         inputNumber: String(editingJob.inputNumber),
         outputNumber: String(editingJob.outputNumber || ""),
         qaOutputNumber: String(editingJob.qaOutputNumber || ""),
+        totalPayPerFile: editingJob.totalPayPerFile
+          ? formatVND(String(editingJob.totalPayPerFile))
+          : "",
+        totalPayPerFileQa: editingJob.totalPayPerFileQa
+          ? formatVND(String(editingJob.totalPayPerFileQa))
+          : "",
         doneLink: editingJob.doneLink || "",
         paymentStatus: editingJob.paymentStatus,
         paymentEmployee: editingJob.paymentEmployee,
@@ -215,6 +223,8 @@ export function JobForm({
         inputNumber: "",
         outputNumber: "",
         qaOutputNumber: "",
+        totalPayPerFile: "",
+        totalPayPerFileQa: "",
         doneLink: "",
         paymentStatus: "UNPAID",
         paymentEmployee: "UNPAID",
@@ -308,6 +318,8 @@ export function JobForm({
       filePrice,
       payPerFile,
       payPerFileQa,
+      totalPayPerFile,
+      totalPayPerFileQa,
       fileCount,
       outputNumber,
       qaOutputNumber,
@@ -329,6 +341,8 @@ export function JobForm({
     // Parse VND formatted strings back to numbers (remove dots)
     const payPerFileNum = parseVND(payPerFile);
     const payPerFileQaNum = parseVND(payPerFileQa);
+    const totalPayPerFileNum = parseVND(totalPayPerFile);
+    const totalPayPerFileQaNum = parseVND(totalPayPerFileQa);
     const fileCountNum = parseInt(fileCount) || 0;
     const outputNum = parseInt(outputNumber) || 0;
     const qaOutputNum = parseInt(qaOutputNumber) || 0;
@@ -401,6 +415,8 @@ export function JobForm({
           filePrice: price,
           payPerFile: payPerFileNum,
           payPerFileQa: payPerFileQaNum,
+          totalPayPerFile: totalPayPerFileNum !== 0 ? totalPayPerFileNum : null,
+          totalPayPerFileQa: totalPayPerFileQaNum !== 0 ? totalPayPerFileQaNum : null,
           inputNumber: inputCount,
           outputNumber: outputNum !== 0 ? outputNum : null,
           qaOutputNumber: qaOutputNum !== 0 ? qaOutputNum : null,
@@ -435,6 +451,7 @@ export function JobForm({
           inputNumber: inputCount,
           filePrice: price,
           payPerFile: payPerFileNum,
+          totalPayPerFile: totalPayPerFileNum !== 0 ? totalPayPerFileNum : null,
           fileCount: fileCountNum,
           paymentStatus,
           paymentEmployee,
@@ -463,6 +480,8 @@ export function JobForm({
       fileCount: "",
       inputNumber: "",
       outputNumber: "",
+      totalPayPerFile: "",
+      totalPayPerFileQa: "",
       doneLink: "",
       paymentStatus: "UNPAID",
       paymentEmployee: "UNPAID",
@@ -706,154 +725,74 @@ export function JobForm({
                 />
               </div>
 
-              {/* Input Number and File Price in one row */}
-              <div
-                className={`grid ${
-                  editingJob ? "grid-cols-3" : "grid-cols-1"
-                } gap-4`}
-              >
-                {/* Input Number */}
-                <div className="grid gap-2">
-                  <Label htmlFor="inputNumber">Số lượng input</Label>
-                  <Input
-                    id="inputNumber"
-                    type="number"
-                    min="0"
-                    defaultValue={formRef.current.inputNumber}
-                    onChange={(e) =>
-                      (formRef.current.inputNumber = e.target.value)
-                    }
-                    placeholder="Nhập số lượng input"
-                  />
-                </div>
-                {/* Output Number - Only show when editing */}
-                {editingJob && (
-                  <div className="grid gap-2">
-                    <Label htmlFor="outputNumber">Số lượng output</Label>
-                    <Input
-                      id="outputNumber"
-                      type="number"
-                      min="0"
-                      defaultValue={formRef.current.outputNumber}
-                      onChange={(e) =>
-                        (formRef.current.outputNumber = e.target.value)
-                      }
-                      placeholder="Nhập số lượng output"
-                    />
-                  </div>
-                )}
-                {editingJob && (
-                  <div className="grid gap-2">
-                    <Label htmlFor="outputNumber">Số lượng output QA</Label>
-                    <Input
-                      id="outputNumber"
-                      type="number"
-                      min="0"
-                      defaultValue={formRef.current.qaOutputNumber}
-                      onChange={(e) =>
-                        (formRef.current.qaOutputNumber = e.target.value)
-                      }
-                      placeholder="Nhập số lượng output QA"
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* File Price */}
+              {/* Input Number */}
               <div className="grid gap-2">
-                <Label htmlFor="filePrice">
-                  Giá mỗi file <span className="text-red-500">($)</span>
-                </Label>
-                <SearchableDropdown
-                  options={filePriceOptions}
-                  placeholder="Nhập giá mỗi file"
-                  onChange={(e) =>
-                    (formRef.current.filePrice = e?.name.toString() || "")
-                  }
-                  defaultValue={{ id: 0, name: formRef.current.filePrice }}
+                <Label htmlFor="inputNumber">Số lượng input</Label>
+                <Input
+                  id="inputNumber"
                   type="number"
-                />
-              </div>
-
-              {/* Total Price Display */}
-              {formRef.current.outputNumber && formRef.current.filePrice && (
-                <div className="grid gap-2">
-                  <Label>Tổng giá (Tính toán)</Label>
-                  <div className="text-lg font-semibold text-primary">
-                    {formatCurrency(
-                      parseFloat(formRef.current.outputNumber) *
-                        parseFloat(formRef.current.filePrice) || 0,
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Pay Per File */}
-              <div className="grid gap-2">
-                <Label htmlFor="payPerFile">
-                  Giá trả nhân viên/file{" "}
-                  <span className="text-red-500">(VNĐ)</span>
-                </Label>
-                <SearchableDropdown
-                  options={filePriceEmployeeOptions.map((option) => ({
-                    id: option.id,
-                    name: formatVND(option.name.toString()),
-                  }))}
-                  placeholder="Nhập giá trả nhân viên cho mỗi file"
+                  min="0"
+                  defaultValue={formRef.current.inputNumber}
                   onChange={(e) =>
-                    (formRef.current.payPerFile = e?.name.toString() || "")
+                    (formRef.current.inputNumber = e.target.value)
                   }
-                  defaultValue={{ id: 0, name: formRef.current.payPerFile }}
-                  type="vnd"
+                  placeholder="Nhập số lượng input"
                 />
               </div>
 
-              {/* Pay Per File QA */}
-              <div className="grid gap-2">
-                <Label htmlFor="payPerFileQa">
-                  Giá trả nhân viên/file QA{" "}
-                  <span className="text-red-500">(VNĐ)</span>
-                </Label>
-                <SearchableDropdown
-                  options={filePriceQaOptions.map((option) => ({
-                    id: option.id,
-                    name: formatVND(option.name.toString()),
-                  }))}
-                  placeholder="Nhập giá trả nhân viên cho mỗi file QA"
-                  onChange={(e) =>
-                    (formRef.current.payPerFileQa = e?.name.toString() || "")
-                  }
-                  defaultValue={{ id: 0, name: formRef.current.payPerFileQa }}
-                  type="vnd"
-                />
-              </div>
+            {/* File Price */}
+            <div className="grid gap-2">
+              <Label htmlFor="filePrice">
+                Giá mỗi file <span className="text-red-500">($)</span>
+              </Label>
+              <SearchableDropdown
+                options={filePriceOptions}
+                placeholder="Nhập giá mỗi file"
+                onChange={(e) =>
+                  (formRef.current.filePrice = e?.name.toString() || "")
+                }
+                defaultValue={{ id: 0, name: formRef.current.filePrice }}
+                type="number"
+              />
+            </div>
 
-              {/* Total Pay Per File Display */}
-              {formRef.current.payPerFile && formRef.current.outputNumber && (
-                <div className="grid gap-2">
-                  <Label>Tổng tiền trả nhân viên (VNĐ) (Tính toán)</Label>
-                  <div className="text-lg font-semibold text-green-600">
-                    {formatCurrencyVND(
-                      parseVND(formRef.current.payPerFile) *
-                        parseFloat(formRef.current.outputNumber),
-                    )}
-                  </div>
-                </div>
-              )}
+            {/* Total Pay Per File (Employee) */}
+            <div className="grid gap-2">
+              <Label htmlFor="totalPayPerFile">
+                Tổng tiền trả nhân viên <span className="text-red-500">(VNĐ)</span>
+              </Label>
+              <SearchableDropdown
+                options={filePriceEmployeeOptions.map((option) => ({
+                  id: option.id,
+                  name: formatVND(option.name.toString()),
+                }))}
+                placeholder="Nhập tổng tiền trả nhân viên"
+                onChange={(e) =>
+                  (formRef.current.totalPayPerFile = e?.name.toString() || "")
+                }
+                defaultValue={{ id: 0, name: formRef.current.totalPayPerFile }}
+                type="vnd"
+              />
+            </div>
 
-              {/* Total Pay Per File QA Display */}
-              {formRef.current.payPerFileQa &&
-                formRef.current.qaOutputNumber && (
-                  <div className="grid gap-2">
-                    <Label>Tổng tiền trả nhân viên QA (VNĐ) (Tính toán)</Label>
-                    <div className="text-lg font-semibold text-green-600">
-                      {formatCurrencyVND(
-                        parseVND(formRef.current.payPerFileQa) *
-                          parseFloat(formRef.current.qaOutputNumber),
-                      )}
-                    </div>
-                  </div>
-                )}
+            {/* Total Pay Per File QA */}
+            <div className="grid gap-2">
+              <Label htmlFor="totalPayPerFileQa">
+                Tổng tiền trả nhân viên QA <span className="text-red-500">(VNĐ)</span>
+              </Label>
+              <SearchableDropdown
+                options={filePriceQaOptions.map((option) => ({
+                  id: option.id,
+                  name: formatVND(option.name.toString()),
+                }))}
+                placeholder="Nhập tổng tiền trả nhân viên QA"
+                onChange={(e) =>
+                  (formRef.current.totalPayPerFileQa = e?.name.toString() || "")
+                }
+                defaultValue={{ id: 0, name: formRef.current.totalPayPerFileQa }}
+                type="vnd"
+              />
+            </div>
 
               {/* Job Status and Payment Status in one row */}
               <div className="grid grid-cols-2 gap-4">

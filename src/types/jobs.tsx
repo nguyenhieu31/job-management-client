@@ -111,6 +111,8 @@ export interface JobRequest {
   filePrice: number;
   payPerFile: number;
   payPerFileQa: number;
+  totalPayPerFile?: number | null;
+  totalPayPerFileQa?: number | null;
   inputNumber: number;
   outputNumber?: number | null;
   qaOutputNumber?: number | null;

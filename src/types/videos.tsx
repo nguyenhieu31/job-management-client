@@ -176,10 +176,10 @@ export const ROLE_COLUMNS = {
     "jobStatus",
     "linkDone",
     "totalPayPerFile",
-    "assignedSale",
+    // "assignedSale",
     "assignedEmployee",
     "note",
-    "paymentStatus",
+    // "paymentStatus",
     "actions",
   ],
   employee: [

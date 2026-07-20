@@ -617,7 +617,7 @@ console.log("editValue: ", editValue)
     const total = Array.from(newSelected).reduce((sum, id) => {
       const job = videos.find((j) => j.id === id);
       // return sum + (job?.payPerFile || 0) * (job?.outputNumber || 0);
-      return sum + (job?.payPerFile || 0);
+      return sum + (job?.totalPayPerFile || 0);
     }, 0);
     setTotalSelectedPrice(total);
     const totalCustomer = Array.from(newSelected).reduce((sum, id) => {
@@ -636,11 +636,11 @@ console.log("editValue: ", editValue)
     } else {
       setSelectedJobIds(new Set(videos.map((j) => j.id)));
       const total = videos.reduce((sum, video) => {
-        return sum + (video.payPerFile || 0) * (video.outputNumber || 0);
+        return sum + (video.totalPayPerFile || 0);
       }, 0);
       setTotalSelectedPrice(total);
       const totalCustomer = videos.reduce((sum, video) => {
-        return sum + (video.filePrice || 0) * (video.outputNumber || 0);
+        return sum + (video.filePrice || 0) ;
       }, 0);
       setTotalSelectedPriceCustomer(totalCustomer);
     }

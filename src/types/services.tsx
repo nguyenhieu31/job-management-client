@@ -9,8 +9,7 @@ export interface ServiceOption {
 export interface AddServiceFormState {
   customerName: string;
   customerEmail: string;
-  customerPhone: string;
-  zaloId: string;
+  realEstateAddress: string;
   instagramHandle: string;
   websiteUrl: string;
   orderNotes: string;
@@ -18,15 +17,18 @@ export interface AddServiceFormState {
   videoStyle: string;
   videoDuration: string;
   customVideoDuration: string;
-  aspectRatios: string[];
+  videoDurationExtended: number;
+  aspectRatios: string;
   music: string;
-  realtorAgent: string[];
+  musicNote: string;
   textCaptions: string[];
+  textCaptionsNote: string;
   transitions: string;
-  requiredShots: string;
-  excludedShots: string;
-  referenceVideos: string;
-  creativeFreedom: string;
+  transitionsNote: string;
+  aiOption: boolean;
+  aiNote: string;
+  boundaryDrawOption: boolean;
+  boundaryDrawNote: string;
   uploadMethods: string[];
   dropboxLink: string;
   googleDriveLink: string;
@@ -53,44 +55,42 @@ export const PHOTO_SERVICES: ServiceOption[] = [
 ];
 
 export const VIDEO_SERVICES: ServiceOption[] = [
-  { id: "property-tour-video", label: "Property Tour Video", subtitle: "Video tham quan bất động sản", price: 40 },
-  { id: "social-media-reel", label: "Social Media Reel", subtitle: "Video ngắn cho mạng xã hội", price: 40 },
-  { id: "luxury-cinematic-video", label: "Luxury Cinematic Video", subtitle: "Video điện ảnh cao cấp", price: 45 },
-  // { id: "marketing-video", label: "Marketing Video", subtitle: "Video tiếp thị", price: 8 },
-  { id: "agent-introduction-video", label: "Agent Introduction Video", subtitle: "Video giới thiệu môi giới", price: 60 },
-  // { id: "community-video", label: "Community Video", subtitle: "Video cộng đồng", price: 6 },
-  // { id: "before-after-video", label: "Before & After Video", subtitle: "Video trước và sau", price: 4 },
+  { id: "property-tour-video", label: "Property Tour Video", subtitle: "Video tham quan bất động sản", price: 40, samplesAvailable: true },
+  { id: "social-media-reel", label: "Social Media Reel", subtitle: "Video ngắn cho mạng xã hội", price: 40, samplesAvailable: true },
+  { id: "luxury-cinematic-video", label: "Luxury Cinematic Video", subtitle: "Video điện ảnh cao cấp", price: 45, samplesAvailable: true },
+  { id: "agent-introduction-video", label: "Agent Introduction Video", subtitle: "Video giới thiệu môi giới", price: 60, samplesAvailable: true },
 ];
 
 export const PHOTO_SERVICE_IDS = PHOTO_SERVICES.map((s) => s.id);
 export const VIDEO_SERVICE_IDS = VIDEO_SERVICES.map((s) => s.id);
 
 export const VIDEO_DURATION_OPTIONS = [
-  { value: "15s", label: "15 giây" },
-  { value: "30s", label: "30 giây" },
-  { value: "60s", label: "60 giây" },
-  { value: "custom", label: "Tùy chỉnh" },
+  { value: "15s", label: "15 seconds" },
+  { value: "30s", label: "30 seconds" },
+  { value: "60s", label: "60 seconds" },
 ];
 
+export const DURATION_EXTEND_PRICE = 10;
+export const DURATION_EXTEND_UNIT_SECONDS = 15;
+
 export const VIDEO_STYLE_OPTIONS = [
-  { value: "clean-simple", label: "Clean & Simple", price: 2 },
-  { value: "luxury-cinematic", label: "Luxury & Cinematic", price: 5 },
-  { value: "fast-paced-social", label: "Fast-paced Social Media", price: 3 },
-  { value: "advertising-marketing", label: "Advertising / Marketing", price: 4 },
-  { value: "editor-decides", label: "Để editor tự quyết định" },
+  { value: "clean-simple", label: "Clean & Simple" },
+  { value: "luxury-cinematic", label: "Luxury & Cinematic" },
+  { value: "fast-paced-social", label: "Fast-paced Social Media"},
+  { value: "advertising-marketing", label: "Advertising / Marketing" },
+  { value: "editor-decides", label: "Let the editor decide for himself" },
 ];
 
 export const ASPECT_RATIO_OPTIONS = [
-  { value: "9:16", label: "Dọc 9:16 (Instagram Reels / TikTok)", price: 0.5 },
-  { value: "16:9", label: "Ngang 16:9 (YouTube)" },
-  { value: "1:1", label: "Vuông 1:1", price: 0.5 },
-  { value: "both", label: "Cả hai", price: 1 },
+  { value: "9:16", label: "Vertical 9:16 (Instagram Reels / TikTok)" },
+  { value: "16:9", label: "Horizontal 16:9 (YouTube)" },
+  { value: "both", label: "Both", price: 15 },
 ];
 
 export const MUSIC_OPTIONS = [
-  { value: "i-will-provide", label: "Tôi sẽ cung cấp nhạc" },
-  { value: "editor-chooses", label: "Để editor chọn nhạc" },
-  { value: "no-music", label: "Không có nhạc" },
+  { value: "i-will-provide", label: "I will provide music" },
+  { value: "editor-chooses", label: "Let editor choose" },
+  { value: "no-music", label: "No music" },
 ];
 
 export const REALTOR_AGENT_OPTIONS = [
@@ -102,20 +102,21 @@ export const REALTOR_AGENT_OPTIONS = [
 ];
 
 export const TEXT_CAPTIONS_OPTIONS = [
-  { value: "captions", label: "Captions", price: 1 },
-  { value: "property-info", label: "Property information", price: 0.5 },
-  { value: "agent-info", label: "Agent information", price: 0.5 },
-  { value: "logo", label: "Logo", price: 1 },
-  { value: "contact-info", label: "Contact information", price: 0.5 },
-  { value: "social-media", label: "Social media handles", price: 0.5 },
+  { value: "captions", label: "Captions"},
+  { value: "property-info", label: "Property information" },
+  { value: "agent-info", label: "Agent information"},
+  { value: "logo", label: "Logo"},
+  { value: "contact-info", label: "Contact information" },
+  { value: "social-media", label: "Social media handles"},
+  { value: "3d-2d-text", label: "3D/2D Text"},
 ];
 
 export const TRANSITIONS_OPTIONS = [
   { value: "minimal", label: "Minimal" },
-  { value: "smooth", label: "Smooth", price: 1 },
-  { value: "advanced", label: "Advanced", price: 2 },
-  { value: "speed-ramp", label: "Speed Ramp", price: 2 },
-  { value: "cinematic", label: "Cinematic effects", price: 3 },
+  { value: "smooth", label: "Smooth" },
+  { value: "advanced", label: "Advanced"},
+  { value: "speed-ramp", label: "Speed Ramp"},
+  { value: "cinematic", label: "Cinematic effects" },
 ];
 
 export const CREATIVE_FREEDOM_OPTIONS = [
@@ -172,8 +173,9 @@ export function isVirtualStagingSelected(selectedServices: string[]): boolean {
 type PriceLookupOption = { price?: number } & ({ value: string } | { id: string });
 
 export interface SampleImagePair {
-  before: string;
-  after: string;
+  before?: string;
+  after?: string;
+  video?: string;
 }
 
 export const SERVICE_SAMPLE_IMAGES: Record<string, SampleImagePair[]> = {
@@ -252,7 +254,51 @@ export const SERVICE_SAMPLE_IMAGES: Record<string, SampleImagePair[]> = {
       before: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783934895/DJI_0278_ugmj7z.jpg",
       after: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783935060/DJI_0278_1_loqqyg.jpg",
     },
-  ]
+  ],
+  "property-tour-video": [
+    {
+      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1784429627/Property_Tour_Video_3_gnej5s.mp4",
+    },
+    {
+      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1784429499/Property_Tour_Video_1_sjuev8.mp4",
+    },
+    {
+      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1784390083/reelsvideo.io_1784389957436_mmpl5x.mp4",
+    },
+  ],
+  "social-media-reel": [
+    {
+      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1784388671/VIDEO_Social_Media_Reel_ygwyqk.mp4",
+    },
+    {
+      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1784388101/reelsvideo.io_1784388074006_gc66xl.mp4",
+    },
+    {
+      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1784387918/reelsvideo.io_1784387884458_dvurmj.mp4",
+    },
+  ],
+  "luxury-cinematic-video": [
+    {
+      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1784389024/reelsvideo.io_1784388910644_jxuos7.mp4",
+    },
+    {
+      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1784388033/reelsvideo.io_1784388008169_kawu0l.mp4",
+    },
+    {
+      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1784387976/reelsvideo.io_1784387876267_qpieh6.mp4",
+    },
+  ],
+  "agent-introduction-video": [
+    {
+      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1784387691/1234543453355335_it30gq.mp4",
+    },
+    {
+      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1784387422/2_fctfwq.mp4",
+    },
+    {
+      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1784386923/Agent_Introduction_Video_c1hult.mp4",
+    },
+  ],
 };
 
 export const SERVICE_SAMPLE_ALT: Record<string, { before: string; after: string }> = {
@@ -304,21 +350,23 @@ export function computeEstimatedPrice(state: AddServiceFormState): number {
     total += getOptionPrice(VIDEO_DURATION_OPTIONS, state.videoDuration);
   }
 
-  total += sumArrayPrices(ASPECT_RATIO_OPTIONS, state.aspectRatios);
+  if (state.videoDurationExtended > 0) {
+    total += state.videoDurationExtended * DURATION_EXTEND_PRICE;
+  }
+
+  total += getOptionPrice(ASPECT_RATIO_OPTIONS, state.aspectRatios);
 
   if (state.music) {
     total += getOptionPrice(MUSIC_OPTIONS, state.music);
   }
 
-  total += sumArrayPrices(REALTOR_AGENT_OPTIONS, state.realtorAgent);
+  if (state.aiOption) total += 20;
+  if (state.boundaryDrawOption) total += 10;
+
   total += sumArrayPrices(TEXT_CAPTIONS_OPTIONS, state.textCaptions);
 
   if (state.transitions) {
     total += getOptionPrice(TRANSITIONS_OPTIONS, state.transitions);
-  }
-
-  if (state.creativeFreedom) {
-    total += getOptionPrice(CREATIVE_FREEDOM_OPTIONS, state.creativeFreedom);
   }
 
   total += sumArrayPrices(VIRTUAL_STAGING_ROOMS, state.virtualStagingRooms);
@@ -334,8 +382,7 @@ export function getInitialFormState(): AddServiceFormState {
   return {
     customerName: "",
     customerEmail: "",
-    customerPhone: "",
-    zaloId: "",
+    realEstateAddress: "",
     instagramHandle: "",
     websiteUrl: "",
     orderNotes: "",
@@ -343,15 +390,18 @@ export function getInitialFormState(): AddServiceFormState {
     videoStyle: "",
     videoDuration: "",
     customVideoDuration: "",
-    aspectRatios: [],
+    videoDurationExtended: 0,
+    aspectRatios: "",
     music: "",
-    realtorAgent: [],
+    musicNote: "",
     textCaptions: [],
+    textCaptionsNote: "",
     transitions: "",
-    requiredShots: "",
-    excludedShots: "",
-    referenceVideos: "",
-    creativeFreedom: "",
+    transitionsNote: "",
+    aiOption: false,
+    aiNote: "",
+    boundaryDrawOption: false,
+    boundaryDrawNote: "",
     uploadMethods: [],
     dropboxLink: "",
     googleDriveLink: "",

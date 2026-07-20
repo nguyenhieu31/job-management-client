@@ -12,10 +12,8 @@ import {
   VIDEO_STYLE_OPTIONS,
   ASPECT_RATIO_OPTIONS,
   MUSIC_OPTIONS,
-  REALTOR_AGENT_OPTIONS,
   TEXT_CAPTIONS_OPTIONS,
   TRANSITIONS_OPTIONS,
-  CREATIVE_FREEDOM_OPTIONS,
   isVideoServiceSelected,
   computeEstimatedPrice,
 } from "@/types/services";
@@ -59,7 +57,7 @@ export function SummaryCard({ state, mobile = false }: SummaryCardProps) {
       {state.customerName && (
         <div>
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            Khách hàng
+            Customer
           </p>
           <p className="text-sm mt-0.5">{state.customerName}</p>
           {state.customerEmail && (
@@ -67,8 +65,10 @@ export function SummaryCard({ state, mobile = false }: SummaryCardProps) {
               {state.customerEmail}
             </p>
           )}
-          {state.zaloId && (
-            <p className="text-xs text-muted-foreground">Zalo: {state.zaloId}</p>
+          {state.realEstateAddress && (
+            <p className="text-xs text-muted-foreground">
+              Address: {state.realEstateAddress}
+            </p>
           )}
           {state.instagramHandle && (
             <p className="text-xs text-muted-foreground">
@@ -87,7 +87,7 @@ export function SummaryCard({ state, mobile = false }: SummaryCardProps) {
       {state.selectedServices.length > 0 && (
         <div>
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            Dịch vụ đã chọn ({state.selectedServices.length})
+            Services ({state.selectedServices.length})
           </p>
           <ul className="mt-1 space-y-0.5">
             {state.selectedServices.map((id) => {
@@ -117,7 +117,7 @@ export function SummaryCard({ state, mobile = false }: SummaryCardProps) {
             {state.videoDuration && (
               <li className="flex items-center justify-between">
                 <span>
-                  Thời lượng:{" "}
+                  Duration:{" "}
                   {getOptionLabel(state.videoDuration, VIDEO_DURATION_OPTIONS)}
                 </span>
               </li>
@@ -130,9 +130,9 @@ export function SummaryCard({ state, mobile = false }: SummaryCardProps) {
                 </span>
               </li>
             )}
-            {state.aspectRatios.length > 0 && (
+            {state.aspectRatios && (
               <li>
-                Aspect: {state.aspectRatios.join(", ")}
+                Aspect: {state.aspectRatios}
               </li>
             )}
             {state.music && (
@@ -141,8 +141,11 @@ export function SummaryCard({ state, mobile = false }: SummaryCardProps) {
                 {getOptionLabel(state.music, MUSIC_OPTIONS)}
               </li>
             )}
-            {state.realtorAgent.length > 0 && (
-              <li>Realtor: {state.realtorAgent.join(", ")}</li>
+            {state.aiOption && (
+              <li>AI Option (+$20){state.aiNote ? `: ${state.aiNote}` : ""}</li>
+            )}
+            {state.boundaryDrawOption && (
+              <li>Boundary Draw (+$10){state.boundaryDrawNote ? `: ${state.boundaryDrawNote}` : ""}</li>
             )}
             {state.textCaptions.length > 0 && (
               <li>Text: {state.textCaptions.join(", ")}</li>
@@ -151,12 +154,6 @@ export function SummaryCard({ state, mobile = false }: SummaryCardProps) {
               <li>
                 Transitions:{" "}
                 {getOptionLabel(state.transitions, TRANSITIONS_OPTIONS)}
-              </li>
-            )}
-            {state.creativeFreedom && (
-              <li>
-                Creative freedom:{" "}
-                {getOptionLabel(state.creativeFreedom, CREATIVE_FREEDOM_OPTIONS)}
               </li>
             )}
           </ul>
@@ -189,14 +186,14 @@ export function SummaryCard({ state, mobile = false }: SummaryCardProps) {
         <div className="border-t pt-3">
           <div className="flex items-center justify-between">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              Tạm tính
+              Subtotal
             </p>
             <p className="text-sm font-bold text-primary">
               {formatCurrency(estimatedPrice)}
             </p>
           </div>
           <p className="mt-1 text-[10px] text-muted-foreground">
-            Giá ước tính, có thể thay đổi
+            Estimated price, subject to change
           </p>
         </div>
       )}
@@ -204,7 +201,7 @@ export function SummaryCard({ state, mobile = false }: SummaryCardProps) {
       {state.selectedServices.length === 0 && (
         <div className="flex flex-col items-center gap-2 py-4 text-muted-foreground">
           <Package className="h-8 w-8" />
-          <p className="text-sm">Chưa chọn dịch vụ</p>
+          <p className="text-sm">No service selected</p>
         </div>
       )}
     </div>
@@ -218,7 +215,7 @@ export function SummaryCard({ state, mobile = false }: SummaryCardProps) {
           onClick={() => setIsOpen(!isOpen)}
           className="flex w-full items-center justify-between p-3 text-left"
         >
-          <span className="text-sm font-medium">Tóm tắt đơn hàng</span>
+          <span className="text-sm font-medium">Order Summary</span>
           {isOpen ? (
             <ChevronUp className="h-4 w-4" />
           ) : (
@@ -234,7 +231,7 @@ export function SummaryCard({ state, mobile = false }: SummaryCardProps) {
 
   return (
     <div className={cn("rounded-lg border bg-card p-4")}>
-      <p className="text-sm font-semibold mb-3">Tóm tắt đơn hàng</p>
+      <p className="text-sm font-semibold mb-3">Order Summary</p>
       {content}
     </div>
   );

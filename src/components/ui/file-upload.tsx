@@ -63,13 +63,13 @@ export function FileUpload({
 
         // Check max files limit
         if (value.length + newFiles.length >= maxFiles) {
-          alert(`Tối đa ${maxFiles} file.`);
+          alert(`Maximum ${maxFiles} file.`);
           break;
         }
 
         // Check file size
         if (file.size > maxSizeBytes) {
-          alert(`File "${file.name}" vượt quá ${maxSizeMB}MB.`);
+          alert(`File "${file.name}" exceeds ${maxSizeMB}MB.`);
           continue;
         }
 
@@ -77,7 +77,7 @@ export function FileUpload({
         const isImage = IMAGE_TYPES.includes(file.type);
         const isVideo = VIDEO_TYPES.includes(file.type);
         if (!isImage && !isVideo) {
-          alert(`File "${file.name}" không được hỗ trợ. Chỉ chấp nhận ảnh và video.`);
+          alert(`File "${file.name}" is not supported. Only images and videos are allowed.`);
           continue;
         }
 
@@ -166,10 +166,10 @@ export function FileUpload({
         />
         <Upload className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
         <p className="text-sm text-muted-foreground">
-          Kéo thả hoặc <span className="text-primary font-medium">nhấp để chọn</span> ảnh/video
+          Drag & drop or <span className="text-primary font-medium">click to select</span> images/videos
         </p>
         <p className="text-xs text-muted-foreground mt-1">
-          Hỗ trợ: JPG, PNG, GIF, WebP, MP4, WebM • Tối đa {maxSizeMB}MB/file • {maxFiles} file
+          Supported: JPG, PNG, GIF, WebP, MP4, WebM • Maximum {maxSizeMB}MB/file • {maxFiles} files
         </p>
       </div>
 
@@ -179,7 +179,7 @@ export function FileUpload({
           {imageCount > 0 && (
             <span className="flex items-center gap-1">
               <ImageIcon className="h-3.5 w-3.5" />
-              {imageCount} ảnh
+              {imageCount} images
             </span>
           )}
           {videoCount > 0 && (
@@ -188,7 +188,7 @@ export function FileUpload({
               {videoCount} video
             </span>
           )}
-          <span>• {value.length}/{maxFiles} file</span>
+          <span>• {value.length}/{maxFiles} files</span>
         </div>
       )}
 

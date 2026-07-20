@@ -40,7 +40,7 @@ export function UploadBlock({
 
   return (
     <div className="space-y-3">
-      <Label>Tải lên tệp</Label>
+      <Label>Upload Files</Label>
       <div className="grid gap-2">
         {UPLOAD_METHOD_OPTIONS.map((option) => (
           <div key={option.value} className="space-y-2">
