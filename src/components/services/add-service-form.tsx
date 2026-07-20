@@ -10,6 +10,10 @@ import { ServiceDetailsStep } from "./service-details-step";
 import { SummaryCard } from "./summary-card";
 import {
   getInitialFormState,
+  getTotalPhotoQuantity,
+  getVirtualStagingPhotoTotal,
+  isNonVirtualStagingPhotoSelected,
+  isVirtualStagingSelected,
   type AddServiceFormState,
 } from "@/types/services";
 import type { UploadedFile } from "@/components/ui/file-upload";
@@ -76,24 +80,57 @@ export function AddServiceForm({
 
   const validateStep2 = (): boolean => {
     const newErrors: Partial<Record<keyof AddServiceFormState, string>> = {};
+    const state = formRef.current;
 
-    if (!formRef.current.customerName.trim()) {
+    if (!state.customerName.trim()) {
       newErrors.customerName = "Please enter your full name.";
     }
 
-    if (!formRef.current.customerEmail.trim()) {
+    if (!state.customerEmail.trim()) {
       newErrors.customerEmail = "Please enter your email.";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formRef.current.customerEmail)) {
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(state.customerEmail)) {
       newErrors.customerEmail = "Invalid email format.";
     }
 
-    if (!formRef.current.confirmRequirements) {
+    if (isNonVirtualStagingPhotoSelected(state.selectedServices)) {
+      if (getTotalPhotoQuantity(state) < 1) {
+        newErrors.photoQuantities =
+          "Enter at least 1 photo across Single Exposure, Blended Brackets, or Flambient.";
+      }
+    }
+
+    if (isVirtualStagingSelected(state.selectedServices)) {
+      if (!state.virtualStagingStyle?.trim()) {
+        newErrors.virtualStagingStyle = "Select a staging style.";
+      }
+      if (getVirtualStagingPhotoTotal(state) < 1) {
+        newErrors.virtualStagingRoomCounts =
+          "Enter at least 1 photo count for a room type.";
+      }
+    }
+
+    if (!state.confirmRequirements) {
       newErrors.confirmRequirements =
         "Please confirm you have provided all requirements.";
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    if (Object.keys(newErrors).length > 0) {
+      const firstKey = Object.keys(newErrors)[0];
+      const el =
+        document.getElementById("photo-quantities-section") ||
+        document.getElementById("virtual-staging-section") ||
+        document.getElementById(
+          firstKey === "customerName"
+            ? "customerName"
+            : firstKey === "customerEmail"
+              ? "customerEmail"
+              : "",
+        );
+      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return false;
+    }
+    return true;
   };
 
   const handleNext = () => {
@@ -106,10 +143,14 @@ export function AddServiceForm({
 
   const handlePrevious = () => {
     const selectedServices = formRef.current.selectedServices;
-    formRef.current = getInitialFormState();
-    formRef.current.selectedServices = selectedServices;
+    formRef.current = {
+      ...getInitialFormState(),
+      ...(initial || {}),
+      selectedServices,
+    };
     setErrors({});
     setCurrentStep(1);
+    forceUpdate();
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 

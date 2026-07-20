@@ -4,6 +4,7 @@ import { useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
+  PHOTO_SERVICES,
   VIDEO_DURATION_OPTIONS,
   VIDEO_STYLE_OPTIONS,
   ASPECT_RATIO_OPTIONS,
@@ -12,11 +13,23 @@ import {
   TRANSITIONS_OPTIONS,
   VIRTUAL_STAGING_ROOMS,
   VIRTUAL_STAGING_STYLES,
+  PHOTO_QUANTITY_FIELDS,
+  PHOTO_ADDON_OPTIONS,
+  PHOTO_ADDON_PRICE,
+  PHOTO_QTY_MAX,
   isVideoServiceSelected,
   isVirtualStagingSelected,
+  isNonVirtualStagingPhotoSelected,
+  isPhotoAddonEligible,
+  getTotalPhotoQuantity,
+  getVirtualStagingPhotoTotal,
+  clampPhotoQty,
   computeEstimatedPrice,
   type AddServiceFormState,
+  type PhotoQuantities,
+  type PhotoAddOns,
 } from "@/types/services";
+import { formatCurrency } from "@/lib/utils";
 import { RadioGroupField } from "./radio-group-field";
 import { TextareaField } from "./textarea-field";
 import { Input } from "@/components/ui/input";
@@ -25,6 +38,7 @@ import { SummaryCard } from "./summary-card";
 import { UploadBlock } from "./upload-block";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { UploadedFile } from "@/components/ui/file-upload";
+import { cn } from "@/lib/utils";
 
 interface ServiceDetailsStepProps {
   state: AddServiceFormState;
@@ -63,6 +77,74 @@ const renderCheckboxOption = (
   );
 };
 
+function QuantityStepper({
+  id,
+  label,
+  gloss,
+  value,
+  onValueChange,
+}: {
+  id: string;
+  label: string;
+  gloss?: string;
+  value: number;
+  onValueChange: (n: number) => void;
+}) {
+  const set = (raw: number) => onValueChange(clampPhotoQty(raw));
+  return (
+    <div className="flex flex-col gap-2 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="min-w-0">
+        <Label htmlFor={id} className="text-sm font-medium">
+          {label}
+        </Label>
+        {gloss && (
+          <p className="text-[11px] text-muted-foreground">{gloss}</p>
+        )}
+      </div>
+      <div className="flex items-center gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-11 w-11 p-0"
+          aria-label={`Decrease ${label}`}
+          disabled={value <= 0}
+          onClick={() => set(value - 1)}
+        >
+          -
+        </Button>
+        <Input
+          id={id}
+          type="number"
+          min={0}
+          max={PHOTO_QTY_MAX}
+          value={value}
+          onChange={(e) => {
+            const n = parseInt(e.target.value, 10);
+            set(Number.isNaN(n) ? 0 : n);
+          }}
+          onBlur={(e) => {
+            const n = parseInt(e.target.value, 10);
+            set(Number.isNaN(n) ? 0 : n);
+          }}
+          className="h-11 w-20 text-center tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+        />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-11 w-11 p-0"
+          aria-label={`Increase ${label}`}
+          disabled={value >= PHOTO_QTY_MAX}
+          onClick={() => set(value + 1)}
+        >
+          +
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export function ServiceDetailsStep({
   state,
   onChange,
@@ -74,12 +156,61 @@ export function ServiceDetailsStep({
 }: ServiceDetailsStepProps) {
   const hasVideo = isVideoServiceSelected(state.selectedServices);
   const hasVirtualStaging = isVirtualStagingSelected(state.selectedServices);
+  const hasNonVSPhoto = isNonVirtualStagingPhotoSelected(state.selectedServices);
+  const hasAddons = isPhotoAddonEligible(state.selectedServices);
+
+  const selectedPhoto = PHOTO_SERVICES.find((s) =>
+    state.selectedServices.includes(s.id),
+  );
+  const unitPrice = selectedPhoto?.price ?? 0;
+  const totalPhotoQty = getTotalPhotoQuantity(state);
+  const vsPhotoTotal = getVirtualStagingPhotoTotal(state);
+  const photoBase = unitPrice * totalPhotoQty;
+  const vsBase =
+    (PHOTO_SERVICES.find((s) => s.id === "virtual-staging")?.price ?? 0) *
+    vsPhotoTotal;
 
   const estimatedPrice = computeEstimatedPrice(state);
+  const needsQty =
+    hasNonVSPhoto || hasVirtualStaging;
   const formattedPrice =
     estimatedPrice > 0
-      ? estimatedPrice.toLocaleString("en-US", { style: "currency", currency: "USD" })
-      : "Free";
+      ? formatCurrency(estimatedPrice)
+      : needsQty &&
+          ((hasNonVSPhoto && totalPhotoQty === 0) ||
+            (hasVirtualStaging && vsPhotoTotal === 0))
+        ? "Enter quantities to estimate"
+        : formatCurrency(0);
+
+  const setPhotoQty = useCallback(
+    (key: keyof PhotoQuantities, n: number) => {
+      onChange("photoQuantities", {
+        ...state.photoQuantities,
+        [key]: clampPhotoQty(n),
+      });
+    },
+    [onChange, state.photoQuantities],
+  );
+
+  const setRoomCount = useCallback(
+    (room: string, n: number) => {
+      onChange("virtualStagingRoomCounts", {
+        ...state.virtualStagingRoomCounts,
+        [room]: clampPhotoQty(n),
+      });
+    },
+    [onChange, state.virtualStagingRoomCounts],
+  );
+
+  const setAddon = useCallback(
+    <K extends keyof PhotoAddOns>(key: K, value: PhotoAddOns[K]) => {
+      onChange("photoAddOns", {
+        ...state.photoAddOns,
+        [key]: value,
+      });
+    },
+    [onChange, state.photoAddOns],
+  );
 
   return (
     <div className="space-y-8">
@@ -161,6 +292,103 @@ export function ServiceDetailsStep({
           </div>
         </div>
       </section>
+
+      {/* 2a. Photo quantities + add-ons (non-VS photo) */}
+      <ConditionalSection show={hasNonVSPhoto}>
+        <section
+          id="photo-quantities-section"
+          className={cn(
+            "space-y-6 rounded-lg border bg-card p-4 sm:p-6",
+            errors.photoQuantities && "border-destructive",
+          )}
+        >
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-primary" />
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+              Photo Quantities <span className="text-destructive">*</span>
+            </h3>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            How many finished photos of each exposure type? Price = (total photos) ×{" "}
+            {selectedPhoto?.label ?? "service"} unit price (
+            {formatCurrency(unitPrice)}).
+          </p>
+
+          <fieldset className="space-y-3" aria-invalid={!!errors.photoQuantities}>
+            <legend className="sr-only">Photo quantities by exposure type</legend>
+            <div className="grid gap-3">
+              {PHOTO_QUANTITY_FIELDS.map((field) => (
+                <QuantityStepper
+                  key={field.key}
+                  id={`photo-qty-${field.key}`}
+                  label={field.label}
+                  gloss={field.gloss}
+                  value={state.photoQuantities?.[field.key] ?? 0}
+                  onValueChange={(n) => setPhotoQty(field.key, n)}
+                />
+              ))}
+            </div>
+            <p className="text-sm font-medium">
+              Total photos: {totalPhotoQty} · Base: {formatCurrency(photoBase)}
+            </p>
+            {errors.photoQuantities && (
+              <p className="text-xs text-destructive" role="alert">
+                {errors.photoQuantities}
+              </p>
+            )}
+          </fieldset>
+
+          {hasAddons ? (
+            <fieldset className="space-y-3">
+              <legend className="text-sm font-medium">
+                Replacement add-ons (+{formatCurrency(PHOTO_ADDON_PRICE)}/photo)
+              </legend>
+              <div className="space-y-3">
+                {PHOTO_ADDON_OPTIONS.map((opt) => {
+                  const checked = !!state.photoAddOns?.[opt.key];
+                  const addonCost = checked ? PHOTO_ADDON_PRICE * totalPhotoQty : 0;
+                  return (
+                    <div key={opt.key} className="rounded-lg border p-3 space-y-2">
+                      {renderCheckboxOption(
+                        {
+                          value: opt.key,
+                          label: `${opt.label} (+$${PHOTO_ADDON_PRICE}/photo · currently ${formatCurrency(addonCost)})`,
+                        },
+                        checked,
+                        (v) => setAddon(opt.key, v),
+                      )}
+                      {checked && totalPhotoQty === 0 && (
+                        <p className="text-[11px] text-muted-foreground pl-1">
+                          Add photo quantities above to price this add-on.
+                        </p>
+                      )}
+                      {checked && (
+                        <TextareaField
+                          id={`${opt.key}-note`}
+                          label={`${opt.label} note`}
+                          placeholder={opt.helper}
+                          value={state.photoAddOns?.[opt.noteKey] ?? ""}
+                          onChange={(v) => setAddon(opt.noteKey, v)}
+                          rows={2}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </fieldset>
+          ) : (
+            <TextareaField
+              id="photoServiceNote"
+              label="Photo service notes"
+              placeholder="Comments or special instructions for this photo service..."
+              value={state.photoServiceNote}
+              onChange={(v) => onChange("photoServiceNote", v)}
+              rows={3}
+            />
+          )}
+        </section>
+      </ConditionalSection>
 
       {/* 2. Video Editing Options (conditional) */}
       <ConditionalSection show={hasVideo}>
@@ -420,7 +648,10 @@ export function ServiceDetailsStep({
 
       {/* 3. Virtual Staging Section (conditional) */}
       <ConditionalSection show={hasVirtualStaging}>
-        <section className="space-y-6 rounded-lg border bg-card p-4 sm:p-6">
+        <section
+          id="virtual-staging-section"
+          className="space-y-6 rounded-lg border bg-card p-4 sm:p-6"
+        >
           <div className="flex items-center gap-2">
             <div className="h-2 w-2 rounded-full bg-primary" />
             <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
@@ -428,40 +659,82 @@ export function ServiceDetailsStep({
             </h3>
           </div>
 
-          <fieldset className="space-y-3">
-            <legend className="text-sm font-medium">Room Type</legend>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {VIRTUAL_STAGING_ROOMS.map((option) =>
-                renderCheckboxOption(
-                  option,
-                  state.virtualStagingRooms.includes(option.value),
-                  (checked) => {
-                    if (checked) {
-                      onChange("virtualStagingRooms", [
-                        ...state.virtualStagingRooms,
-                        option.value,
-                      ]);
-                    } else {
-                      onChange(
-                        "virtualStagingRooms",
-                        state.virtualStagingRooms.filter(
-                          (v) => v !== option.value,
-                        ),
-                      );
-                    }
-                  },
-                ),
-              )}
-            </div>
-          </fieldset>
+          <div
+            className={cn(
+              "space-y-3 rounded-lg border p-4",
+              errors.virtualStagingStyle && "border-destructive",
+            )}
+          >
+            <RadioGroupField
+              name="virtualStagingStyle"
+              legend="Style *"
+              options={VIRTUAL_STAGING_STYLES}
+              value={state.virtualStagingStyle}
+              onChange={(v) => onChange("virtualStagingStyle", v)}
+            />
+            {errors.virtualStagingStyle && (
+              <p className="text-xs text-destructive" role="alert">
+                {errors.virtualStagingStyle}
+              </p>
+            )}
+            <TextareaField
+              id="virtualStagingStyleNote"
+              label="Style notes"
+              placeholder="Furniture style, mood, materials..."
+              value={state.virtualStagingStyleNote}
+              onChange={(v) => onChange("virtualStagingStyleNote", v)}
+              rows={2}
+            />
+          </div>
 
-          <RadioGroupField
-            name="virtualStagingStyle"
-            legend="Virtual Staging Style"
-            options={VIRTUAL_STAGING_STYLES}
-            value={state.virtualStagingStyle}
-            onChange={(v) => onChange("virtualStagingStyle", v)}
-          />
+          <fieldset
+            className={cn(
+              "space-y-3 rounded-lg border p-4",
+              errors.virtualStagingRoomCounts && "border-destructive",
+            )}
+            aria-invalid={!!errors.virtualStagingRoomCounts}
+          >
+            <legend className="text-sm font-medium px-1">
+              Rooms to stage <span className="text-destructive">*</span>
+            </legend>
+            <p className="text-xs text-muted-foreground">
+              Enter how many photos to virtually stage as each room type. Total
+              staged photos × unit price (
+              {formatCurrency(
+                PHOTO_SERVICES.find((s) => s.id === "virtual-staging")?.price ??
+                  0,
+              )}
+              ).
+            </p>
+            <div className="grid gap-3">
+              {VIRTUAL_STAGING_ROOMS.map((room) => (
+                <QuantityStepper
+                  key={room.value}
+                  id={`vs-room-${room.value}`}
+                  label={`${room.label} (photos)`}
+                  value={state.virtualStagingRoomCounts?.[room.value] ?? 0}
+                  onValueChange={(n) => setRoomCount(room.value, n)}
+                />
+              ))}
+            </div>
+            <p className="text-sm font-medium">
+              Total staged photos: {vsPhotoTotal} · Base:{" "}
+              {formatCurrency(vsBase)}
+            </p>
+            {errors.virtualStagingRoomCounts && (
+              <p className="text-xs text-destructive" role="alert">
+                {errors.virtualStagingRoomCounts}
+              </p>
+            )}
+            <TextareaField
+              id="virtualStagingRoomsNote"
+              label="Room notes"
+              placeholder="Which images map to which room..."
+              value={state.virtualStagingRoomsNote}
+              onChange={(v) => onChange("virtualStagingRoomsNote", v)}
+              rows={2}
+            />
+          </fieldset>
         </section>
       </ConditionalSection>
 

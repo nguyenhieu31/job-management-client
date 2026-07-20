@@ -199,6 +199,9 @@ export const UpdateVideoFullAction = createAsyncThunk<
     imageTempUrls,
     videoTempUrls,
   );
+  if (res.code == 200) {
+    toast.success("Cập nhật video thành công");
+  }
   return res.data;
 });
 

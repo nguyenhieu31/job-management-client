@@ -6,6 +6,21 @@ export interface ServiceOption {
   samplesAvailable?: boolean;
 }
 
+export interface PhotoQuantities {
+  singleExposure: number;
+  blendedBrackets: number;
+  flambient: number;
+}
+
+export interface PhotoAddOns {
+  skyReplacement: boolean;
+  tvScreenReplacement: boolean;
+  grassReplacement: boolean;
+  skyReplacementNote: string;
+  tvScreenReplacementNote: string;
+  grassReplacementNote: string;
+}
+
 export interface AddServiceFormState {
   customerName: string;
   customerEmail: string;
@@ -14,6 +29,9 @@ export interface AddServiceFormState {
   websiteUrl: string;
   orderNotes: string;
   selectedServices: string[];
+  photoQuantities: PhotoQuantities;
+  photoServiceNote: string;
+  photoAddOns: PhotoAddOns;
   videoStyle: string;
   videoDuration: string;
   customVideoDuration: string;
@@ -33,8 +51,12 @@ export interface AddServiceFormState {
   dropboxLink: string;
   googleDriveLink: string;
   wetransferLink: string;
+  /** @deprecated legacy multi-select; new orders use virtualStagingRoomCounts */
   virtualStagingRooms: string[];
+  virtualStagingRoomCounts: Record<string, number>;
   virtualStagingStyle: string;
+  virtualStagingStyleNote: string;
+  virtualStagingRoomsNote: string;
   confirmRequirements: boolean;
   confirmExtraCharges: boolean;
 }
@@ -143,31 +165,157 @@ export const CONFIRMATION_OPTIONS = [
   },
 ];
 
-export const VIRTUAL_STAGING_ROOMS = [
-  { value: "living-room", label: "Living Room", price: 2 },
-  { value: "dining-room", label: "Dining Room", price: 2 },
-  { value: "bedroom", label: "Bedroom", price: 2 },
-  { value: "office", label: "Office", price: 2 },
-  { value: "patio", label: "Patio", price: 2.5 },
-  { value: "outdoor-space", label: "Outdoor Space", price: 2.5 },
+export const PHOTO_QUANTITY_FIELDS = [
+  {
+    key: "singleExposure" as const,
+    label: "Single Exposure",
+    gloss: "One frame per shot",
+  },
+  {
+    key: "blendedBrackets" as const,
+    label: "Blended Brackets (HDR)",
+    gloss: "Multi-exposure blend",
+  },
+  {
+    key: "flambient" as const,
+    label: "Flambient",
+    gloss: "Flash + ambient blend",
+  },
 ];
+
+export const PHOTO_ADDON_PRICE = 1;
+
+export const PHOTO_ADDON_OPTIONS = [
+  {
+    key: "skyReplacement" as const,
+    noteKey: "skyReplacementNote" as const,
+    label: "Sky Replacement",
+    helper: "Preferred sky style / time of day…",
+  },
+  {
+    key: "tvScreenReplacement" as const,
+    noteKey: "tvScreenReplacementNote" as const,
+    label: "TV Screen Replacement",
+    helper: "Screen content or color preference…",
+  },
+  {
+    key: "grassReplacement" as const,
+    noteKey: "grassReplacementNote" as const,
+    label: "Grass Replacement",
+    helper: "Per-photo grass fix on this order — different from the Lawn Replacement service.",
+  },
+];
+
+export const PHOTO_ADDON_ELIGIBLE_IDS = [
+  "hdr-editing",
+  "single-photo",
+  "flash",
+  "flambient-editing",
+  "day-to-dusk",
+] as const;
+
+export const PHOTO_QTY_MAX = 500;
+
+export const VIRTUAL_STAGING_ROOMS = [
+  { value: "living-room", label: "Living Room" },
+  { value: "bedroom", label: "Bedroom" },
+  { value: "kitchen", label: "Kitchen" },
+  { value: "dining-room", label: "Dining Room" },
+  { value: "home-office", label: "Home Office" },
+  { value: "outdoor-patio", label: "Outdoor / Patio" },
+];
+
+/** Labels for legacy room values stored on older orders */
+export const VIRTUAL_STAGING_LEGACY_ROOM_LABELS: Record<string, string> = {
+  "living-room": "Living Room",
+  "dining-room": "Dining Room",
+  bedroom: "Bedroom",
+  office: "Office",
+  patio: "Patio",
+  "outdoor-space": "Outdoor Space",
+  kitchen: "Kitchen",
+  "home-office": "Home Office",
+  "outdoor-patio": "Outdoor / Patio",
+};
 
 export const VIRTUAL_STAGING_STYLES = [
   { value: "modern", label: "Modern" },
   { value: "luxury", label: "Luxury" },
   { value: "scandinavian", label: "Scandinavian" },
-  { value: "contemporary", label: "Contemporary" },
-  { value: "farmhouse", label: "Farmhouse" },
-  { value: "coastal", label: "Coastal" },
-  { value: "custom", label: "Custom based on client request" },
+  { value: "modern-farmhouse", label: "Modern Farmhouse" },
+  { value: "minimalist", label: "Minimalist" },
 ];
 
 export function isVideoServiceSelected(selectedServices: string[]): boolean {
   return selectedServices.some((id) => VIDEO_SERVICE_IDS.includes(id));
 }
 
+export function isPhotoServiceSelected(selectedServices: string[]): boolean {
+  return selectedServices.some((id) => PHOTO_SERVICE_IDS.includes(id));
+}
+
 export function isVirtualStagingSelected(selectedServices: string[]): boolean {
   return selectedServices.includes("virtual-staging");
+}
+
+export function isNonVirtualStagingPhotoSelected(
+  selectedServices: string[],
+): boolean {
+  return (
+    isPhotoServiceSelected(selectedServices) &&
+    !isVirtualStagingSelected(selectedServices)
+  );
+}
+
+export function isPhotoAddonEligible(selectedServices: string[]): boolean {
+  return selectedServices.some((id) =>
+    (PHOTO_ADDON_ELIGIBLE_IDS as readonly string[]).includes(id),
+  );
+}
+
+export function getTotalPhotoQuantity(state: AddServiceFormState): number {
+  const q = state.photoQuantities;
+  if (!q) return 0;
+  return (
+    (Number(q.singleExposure) || 0) +
+    (Number(q.blendedBrackets) || 0) +
+    (Number(q.flambient) || 0)
+  );
+}
+
+export function getVirtualStagingPhotoTotal(state: AddServiceFormState): number {
+  const counts = state.virtualStagingRoomCounts;
+  if (!counts || typeof counts !== "object") return 0;
+  return Object.values(counts).reduce(
+    (sum, n) => sum + (Number.isFinite(n) ? Math.max(0, Number(n)) : 0),
+    0,
+  );
+}
+
+export function emptyVirtualStagingRoomCounts(): Record<string, number> {
+  return Object.fromEntries(
+    VIRTUAL_STAGING_ROOMS.map((r) => [r.value, 0]),
+  );
+}
+
+export function emptyPhotoAddOns(): PhotoAddOns {
+  return {
+    skyReplacement: false,
+    tvScreenReplacement: false,
+    grassReplacement: false,
+    skyReplacementNote: "",
+    tvScreenReplacementNote: "",
+    grassReplacementNote: "",
+  };
+}
+
+export function emptyPhotoQuantities(): PhotoQuantities {
+  return { singleExposure: 0, blendedBrackets: 0, flambient: 0 };
+}
+
+export function clampPhotoQty(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  return Math.min(PHOTO_QTY_MAX, Math.max(0, Math.floor(value)));
 }
 
 type PriceLookupOption = { price?: number } & ({ value: string } | { id: string });
@@ -336,43 +484,63 @@ const sumArrayPrices = (
 
 export function computeEstimatedPrice(state: AddServiceFormState): number {
   let total = 0;
+  const selected = state.selectedServices ?? [];
+  const hasVS = isVirtualStagingSelected(selected);
+  const hasNonVSPhoto = isNonVirtualStagingPhotoSelected(selected);
+  const hasVideo = isVideoServiceSelected(selected);
 
-  total += [...PHOTO_SERVICES, ...VIDEO_SERVICES].reduce(
-    (sum, s) => sum + (state.selectedServices.includes(s.id) ? (s.price ?? 0) : 0),
-    0,
-  );
-
-  if (state.videoStyle) {
-    total += getOptionPrice(VIDEO_STYLE_OPTIONS, state.videoStyle);
+  if (hasNonVSPhoto) {
+    const totalQty = getTotalPhotoQuantity(state);
+    for (const id of selected) {
+      if (!PHOTO_SERVICE_IDS.includes(id) || id === "virtual-staging") continue;
+      const unit = getServicePrice(PHOTO_SERVICES, id);
+      total += unit * totalQty;
+    }
+    if (isPhotoAddonEligible(selected) && totalQty > 0) {
+      const addOns = state.photoAddOns;
+      if (addOns?.skyReplacement) total += PHOTO_ADDON_PRICE * totalQty;
+      if (addOns?.tvScreenReplacement) total += PHOTO_ADDON_PRICE * totalQty;
+      if (addOns?.grassReplacement) total += PHOTO_ADDON_PRICE * totalQty;
+    }
   }
 
-  if (state.videoDuration && state.videoDuration !== "custom") {
-    total += getOptionPrice(VIDEO_DURATION_OPTIONS, state.videoDuration);
+  if (hasVS) {
+    const roomTotal = getVirtualStagingPhotoTotal(state);
+    total += getServicePrice(PHOTO_SERVICES, "virtual-staging") * roomTotal;
   }
 
-  if (state.videoDurationExtended > 0) {
-    total += state.videoDurationExtended * DURATION_EXTEND_PRICE;
-  }
+  if (hasVideo) {
+    total += VIDEO_SERVICES.reduce(
+      (sum, s) => sum + (selected.includes(s.id) ? (s.price ?? 0) : 0),
+      0,
+    );
 
-  total += getOptionPrice(ASPECT_RATIO_OPTIONS, state.aspectRatios);
+    if (state.videoStyle) {
+      total += getOptionPrice(VIDEO_STYLE_OPTIONS, state.videoStyle);
+    }
 
-  if (state.music) {
-    total += getOptionPrice(MUSIC_OPTIONS, state.music);
-  }
+    if (state.videoDuration && state.videoDuration !== "custom") {
+      total += getOptionPrice(VIDEO_DURATION_OPTIONS, state.videoDuration);
+    }
 
-  if (state.aiOption) total += 20;
-  if (state.boundaryDrawOption) total += 10;
+    if (state.videoDurationExtended > 0) {
+      total += state.videoDurationExtended * DURATION_EXTEND_PRICE;
+    }
 
-  total += sumArrayPrices(TEXT_CAPTIONS_OPTIONS, state.textCaptions);
+    total += getOptionPrice(ASPECT_RATIO_OPTIONS, state.aspectRatios);
 
-  if (state.transitions) {
-    total += getOptionPrice(TRANSITIONS_OPTIONS, state.transitions);
-  }
+    if (state.music) {
+      total += getOptionPrice(MUSIC_OPTIONS, state.music);
+    }
 
-  total += sumArrayPrices(VIRTUAL_STAGING_ROOMS, state.virtualStagingRooms);
+    if (state.aiOption) total += 20;
+    if (state.boundaryDrawOption) total += 10;
 
-  if (state.virtualStagingStyle) {
-    total += getOptionPrice(VIRTUAL_STAGING_STYLES, state.virtualStagingStyle);
+    total += sumArrayPrices(TEXT_CAPTIONS_OPTIONS, state.textCaptions);
+
+    if (state.transitions) {
+      total += getOptionPrice(TRANSITIONS_OPTIONS, state.transitions);
+    }
   }
 
   return total;
@@ -387,6 +555,9 @@ export function getInitialFormState(): AddServiceFormState {
     websiteUrl: "",
     orderNotes: "",
     selectedServices: [],
+    photoQuantities: emptyPhotoQuantities(),
+    photoServiceNote: "",
+    photoAddOns: emptyPhotoAddOns(),
     videoStyle: "",
     videoDuration: "",
     customVideoDuration: "",
@@ -407,7 +578,10 @@ export function getInitialFormState(): AddServiceFormState {
     googleDriveLink: "",
     wetransferLink: "",
     virtualStagingRooms: [],
+    virtualStagingRoomCounts: emptyVirtualStagingRoomCounts(),
     virtualStagingStyle: "",
+    virtualStagingStyleNote: "",
+    virtualStagingRoomsNote: "",
     confirmRequirements: false,
     confirmExtraCharges: false,
   };

@@ -7,14 +7,23 @@ import {
   type AddServiceFormState,
   PHOTO_SERVICES,
   VIDEO_SERVICES,
-  VIDEO_SERVICE_IDS,
   VIDEO_DURATION_OPTIONS,
   VIDEO_STYLE_OPTIONS,
   ASPECT_RATIO_OPTIONS,
   MUSIC_OPTIONS,
   TEXT_CAPTIONS_OPTIONS,
   TRANSITIONS_OPTIONS,
+  PHOTO_QUANTITY_FIELDS,
+  PHOTO_ADDON_OPTIONS,
+  PHOTO_ADDON_PRICE,
+  VIRTUAL_STAGING_ROOMS,
+  VIRTUAL_STAGING_STYLES,
   isVideoServiceSelected,
+  isNonVirtualStagingPhotoSelected,
+  isVirtualStagingSelected,
+  isPhotoAddonEligible,
+  getTotalPhotoQuantity,
+  getVirtualStagingPhotoTotal,
   computeEstimatedPrice,
 } from "@/types/services";
 
@@ -33,7 +42,7 @@ function getServiceLabel(id: string): string {
 
 function getServicePrice(id: string): number | undefined {
   const photo = PHOTO_SERVICES.find((s) => s.id === id);
-  if (photo?.price) return photo.price;
+  if (photo?.price != null) return photo.price;
   const video = VIDEO_SERVICES.find((s) => s.id === id);
   return video?.price;
 }
@@ -49,11 +58,15 @@ function getOptionLabel(
 export function SummaryCard({ state, mobile = false }: SummaryCardProps) {
   const [isOpen, setIsOpen] = useState(false);
   const hasVideo = isVideoServiceSelected(state.selectedServices);
+  const hasNonVSPhoto = isNonVirtualStagingPhotoSelected(state.selectedServices);
+  const hasVS = isVirtualStagingSelected(state.selectedServices);
+  const hasAddons = isPhotoAddonEligible(state.selectedServices);
   const estimatedPrice = computeEstimatedPrice(state);
+  const totalQty = getTotalPhotoQuantity(state);
+  const vsTotal = getVirtualStagingPhotoTotal(state);
 
   const content = (
     <div className="space-y-4">
-      {/* Customer */}
       {state.customerName && (
         <div>
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
@@ -83,7 +96,6 @@ export function SummaryCard({ state, mobile = false }: SummaryCardProps) {
         </div>
       )}
 
-      {/* Selected Services */}
       {state.selectedServices.length > 0 && (
         <div>
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
@@ -91,13 +103,23 @@ export function SummaryCard({ state, mobile = false }: SummaryCardProps) {
           </p>
           <ul className="mt-1 space-y-0.5">
             {state.selectedServices.map((id) => {
-              const price = getServicePrice(id);
+              const unit = getServicePrice(id) ?? 0;
+              let line: number | null = null;
+              if (hasNonVSPhoto && PHOTO_SERVICES.some((s) => s.id === id)) {
+                line = unit * totalQty;
+              } else if (hasVS && id === "virtual-staging") {
+                line = unit * vsTotal;
+              } else if (hasVideo) {
+                line = unit;
+              }
               return (
-                <li key={id} className="flex items-center justify-between text-sm">
-                  <span>{getServiceLabel(id)}</span>
-                  {price != null && (
-                    <span className="text-xs text-muted-foreground">
-                      +{formatCurrency(price)}
+                <li key={id} className="flex items-center justify-between text-sm gap-2">
+                  <span className="min-w-0 truncate">{getServiceLabel(id)}</span>
+                  {line != null && (
+                    <span className="text-xs text-muted-foreground shrink-0 tabular-nums">
+                      {hasNonVSPhoto || hasVS
+                        ? `${formatCurrency(unit)} × ${hasVS && id === "virtual-staging" ? vsTotal : totalQty} = ${formatCurrency(line)}`
+                        : `+${formatCurrency(line)}`}
                     </span>
                   )}
                 </li>
@@ -107,7 +129,80 @@ export function SummaryCard({ state, mobile = false }: SummaryCardProps) {
         </div>
       )}
 
-      {/* Video options */}
+      {hasNonVSPhoto && (
+        <div>
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            Photo quantities
+          </p>
+          <ul className="mt-1 space-y-0.5 text-sm">
+            {PHOTO_QUANTITY_FIELDS.map((f) => (
+              <li key={f.key} className="flex justify-between gap-2">
+                <span>{f.label}</span>
+                <span className="tabular-nums text-muted-foreground">
+                  {state.photoQuantities?.[f.key] ?? 0}
+                </span>
+              </li>
+            ))}
+            <li className="flex justify-between gap-2 font-medium pt-0.5">
+              <span>Total</span>
+              <span className="tabular-nums">{totalQty}</span>
+            </li>
+          </ul>
+          {hasAddons && state.photoAddOns && (
+            <ul className="mt-2 space-y-0.5 text-sm">
+              {PHOTO_ADDON_OPTIONS.map((opt) => {
+                if (!state.photoAddOns?.[opt.key]) return null;
+                const cost = PHOTO_ADDON_PRICE * totalQty;
+                return (
+                  <li key={opt.key} className="flex justify-between gap-2">
+                    <span>{opt.label}</span>
+                    <span className="tabular-nums text-muted-foreground">
+                      +{formatCurrency(cost)}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          {!hasAddons && state.photoServiceNote?.trim() && (
+            <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
+              Note: {state.photoServiceNote}
+            </p>
+          )}
+        </div>
+      )}
+
+      {hasVS && (
+        <div>
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            Virtual Staging
+          </p>
+          <ul className="mt-1 space-y-0.5 text-sm">
+            {state.virtualStagingStyle && (
+              <li>
+                Style:{" "}
+                {getOptionLabel(state.virtualStagingStyle, VIRTUAL_STAGING_STYLES)}
+              </li>
+            )}
+            {VIRTUAL_STAGING_ROOMS.map((room) => {
+              const n = state.virtualStagingRoomCounts?.[room.value] ?? 0;
+              if (n <= 0) return null;
+              return (
+                <li key={room.value} className="flex justify-between gap-2">
+                  <span>{room.label}</span>
+                  <span className="tabular-nums text-muted-foreground">
+                    {n} photos
+                  </span>
+                </li>
+              );
+            })}
+            {vsTotal === 0 && (
+              <li className="text-xs text-muted-foreground">No room counts yet</li>
+            )}
+          </ul>
+        </div>
+      )}
+
       {hasVideo && (
         <div>
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
@@ -115,37 +210,31 @@ export function SummaryCard({ state, mobile = false }: SummaryCardProps) {
           </p>
           <ul className="mt-1 space-y-0.5 text-sm">
             {state.videoDuration && (
-              <li className="flex items-center justify-between">
-                <span>
-                  Duration:{" "}
-                  {getOptionLabel(state.videoDuration, VIDEO_DURATION_OPTIONS)}
-                </span>
+              <li>
+                Duration:{" "}
+                {getOptionLabel(state.videoDuration, VIDEO_DURATION_OPTIONS)}
               </li>
             )}
             {state.videoStyle && (
-              <li className="flex items-center justify-between">
-                <span>
-                  Style:{" "}
-                  {getOptionLabel(state.videoStyle, VIDEO_STYLE_OPTIONS)}
-                </span>
-              </li>
-            )}
-            {state.aspectRatios && (
               <li>
-                Aspect: {state.aspectRatios}
+                Style: {getOptionLabel(state.videoStyle, VIDEO_STYLE_OPTIONS)}
               </li>
             )}
+            {state.aspectRatios && <li>Aspect: {state.aspectRatios}</li>}
             {state.music && (
-              <li>
-                Music:{" "}
-                {getOptionLabel(state.music, MUSIC_OPTIONS)}
-              </li>
+              <li>Music: {getOptionLabel(state.music, MUSIC_OPTIONS)}</li>
             )}
             {state.aiOption && (
-              <li>AI Option (+$20){state.aiNote ? `: ${state.aiNote}` : ""}</li>
+              <li>
+                AI Option (+$20)
+                {state.aiNote ? `: ${state.aiNote}` : ""}
+              </li>
             )}
             {state.boundaryDrawOption && (
-              <li>Boundary Draw (+$10){state.boundaryDrawNote ? `: ${state.boundaryDrawNote}` : ""}</li>
+              <li>
+                Boundary Draw (+$10)
+                {state.boundaryDrawNote ? `: ${state.boundaryDrawNote}` : ""}
+              </li>
             )}
             {state.textCaptions.length > 0 && (
               <li>Text: {state.textCaptions.join(", ")}</li>
@@ -160,7 +249,6 @@ export function SummaryCard({ state, mobile = false }: SummaryCardProps) {
         </div>
       )}
 
-      {/* Upload methods */}
       {state.uploadMethods.length > 0 && (
         <div>
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
@@ -181,22 +269,23 @@ export function SummaryCard({ state, mobile = false }: SummaryCardProps) {
         </div>
       )}
 
-      {/* Estimated Total */}
-      {estimatedPrice > 0 && (
-        <div className="border-t pt-3">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              Subtotal
-            </p>
-            <p className="text-sm font-bold text-primary">
-              {formatCurrency(estimatedPrice)}
-            </p>
-          </div>
-          <p className="mt-1 text-[10px] text-muted-foreground">
-            Estimated price, subject to change
+      <div className="border-t pt-3">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            Subtotal
+          </p>
+          <p className="text-sm font-bold text-primary">
+            {estimatedPrice > 0
+              ? formatCurrency(estimatedPrice)
+              : hasNonVSPhoto || hasVS
+                ? "Enter quantities"
+                : formatCurrency(0)}
           </p>
         </div>
-      )}
+        <p className="mt-1 text-[10px] text-muted-foreground">
+          Estimated price, subject to change
+        </p>
+      </div>
 
       {state.selectedServices.length === 0 && (
         <div className="flex flex-col items-center gap-2 py-4 text-muted-foreground">
@@ -222,9 +311,7 @@ export function SummaryCard({ state, mobile = false }: SummaryCardProps) {
             <ChevronDown className="h-4 w-4" />
           )}
         </button>
-        {isOpen && (
-          <div className="border-t p-3">{content}</div>
-        )}
+        {isOpen && <div className="border-t p-3">{content}</div>}
       </div>
     );
   }

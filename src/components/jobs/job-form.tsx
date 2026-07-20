@@ -725,19 +725,57 @@ export function JobForm({
                 />
               </div>
 
-              {/* Input Number */}
-              <div className="grid gap-2">
-                <Label htmlFor="inputNumber">Số lượng input</Label>
-                <Input
-                  id="inputNumber"
-                  type="number"
-                  min="0"
-                  defaultValue={formRef.current.inputNumber}
-                  onChange={(e) =>
-                    (formRef.current.inputNumber = e.target.value)
-                  }
-                  placeholder="Nhập số lượng input"
-                />
+              {/* Input Number and File Price in one row */}
+              <div
+                className={`grid ${
+                  editingJob ? "grid-cols-3" : "grid-cols-1"
+                } gap-4`}
+              >
+                {/* Input Number */}
+                <div className="grid gap-2">
+                  <Label htmlFor="inputNumber">Số lượng input</Label>
+                  <Input
+                    id="inputNumber"
+                    type="number"
+                    min="0"
+                    defaultValue={formRef.current.inputNumber}
+                    onChange={(e) =>
+                      (formRef.current.inputNumber = e.target.value)
+                    }
+                    placeholder="Nhập số lượng input"
+                  />
+                </div>
+                {/* Output Number - Only show when editing */}
+                {editingJob && (
+                  <div className="grid gap-2">
+                    <Label htmlFor="outputNumber">Số lượng output</Label>
+                    <Input
+                      id="outputNumber"
+                      type="number"
+                      min="0"
+                      defaultValue={formRef.current.outputNumber}
+                      onChange={(e) =>
+                        (formRef.current.outputNumber = e.target.value)
+                      }
+                      placeholder="Nhập số lượng output"
+                    />
+                  </div>
+                )}
+                {editingJob && (
+                  <div className="grid gap-2">
+                    <Label htmlFor="outputNumber">Số lượng output QA</Label>
+                    <Input
+                      id="outputNumber"
+                      type="number"
+                      min="0"
+                      defaultValue={formRef.current.qaOutputNumber}
+                      onChange={(e) =>
+                        (formRef.current.qaOutputNumber = e.target.value)
+                      }
+                      placeholder="Nhập số lượng output QA"
+                    />
+                  </div>
+                )}
               </div>
 
             {/* File Price */}
