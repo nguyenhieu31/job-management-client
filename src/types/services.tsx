@@ -29,6 +29,7 @@ export interface AddServiceFormState {
   websiteUrl: string;
   orderNotes: string;
   selectedServices: string[];
+  photoQuantity: number;
   photoQuantities: PhotoQuantities;
   photoServiceNote: string;
   photoAddOns: PhotoAddOns;
@@ -54,6 +55,7 @@ export interface AddServiceFormState {
   /** @deprecated legacy multi-select; new orders use virtualStagingRoomCounts */
   virtualStagingRooms: string[];
   virtualStagingRoomCounts: Record<string, number>;
+  virtualStagingRoomNotes: Record<string, string>;
   virtualStagingStyle: string;
   virtualStagingStyleNote: string;
   virtualStagingRoomsNote: string;
@@ -62,7 +64,7 @@ export interface AddServiceFormState {
 }
 
 export const PHOTO_SERVICES: ServiceOption[] = [
-  { id: "hdr-editing", label: "HDR Editing", subtitle: "Xử lý ảnh HDR chuyên nghiệp", price: 0.75, samplesAvailable: true },
+  { id: "hdr-editing", label: "Blended Brackets (HDR)", subtitle: "Kết hợp nhiều khung hình HDR chuyên nghiệp", price: 0.75, samplesAvailable: true },
   { id: "single-photo", label: "Single Photo Editing", subtitle: "Chỉnh sửa ảnh đơn lẻ", price: 0.6, samplesAvailable: true },
   { id: "flash", label: "Flash Editing", subtitle: "Chỉnh sửa ảnh flash", price: 1, samplesAvailable: true },
   { id: "flambient-editing", label: "Flambient Editing", subtitle: "Kết hợp flash và ánh sáng tự nhiên", price: 1.2, samplesAvailable: true },
@@ -90,6 +92,7 @@ export const VIDEO_DURATION_OPTIONS = [
   { value: "15s", label: "15 seconds" },
   { value: "30s", label: "30 seconds" },
   { value: "60s", label: "60 seconds" },
+  { value: "custom", label: "Custom" },
 ];
 
 export const DURATION_EXTEND_PRICE = 10;
@@ -165,25 +168,7 @@ export const CONFIRMATION_OPTIONS = [
   },
 ];
 
-export const PHOTO_QUANTITY_FIELDS = [
-  {
-    key: "singleExposure" as const,
-    label: "Single Exposure",
-    gloss: "One frame per shot",
-  },
-  {
-    key: "blendedBrackets" as const,
-    label: "Blended Brackets (HDR)",
-    gloss: "Multi-exposure blend",
-  },
-  {
-    key: "flambient" as const,
-    label: "Flambient",
-    gloss: "Flash + ambient blend",
-  },
-];
-
-export const PHOTO_ADDON_PRICE = 1;
+export const PHOTO_QUANTITY_FIELDS = [] as const;
 
 export const PHOTO_ADDON_OPTIONS = [
   {
@@ -202,6 +187,7 @@ export const PHOTO_ADDON_OPTIONS = [
     key: "grassReplacement" as const,
     noteKey: "grassReplacementNote" as const,
     label: "Grass Replacement",
+    price: 1,
     helper: "Per-photo grass fix on this order — different from the Lawn Replacement service.",
   },
 ];
@@ -274,13 +260,7 @@ export function isPhotoAddonEligible(selectedServices: string[]): boolean {
 }
 
 export function getTotalPhotoQuantity(state: AddServiceFormState): number {
-  const q = state.photoQuantities;
-  if (!q) return 0;
-  return (
-    (Number(q.singleExposure) || 0) +
-    (Number(q.blendedBrackets) || 0) +
-    (Number(q.flambient) || 0)
-  );
+  return Number.isFinite(state.photoQuantity) ? Math.max(0, state.photoQuantity) : 0;
 }
 
 export function getVirtualStagingPhotoTotal(state: AddServiceFormState): number {
@@ -307,6 +287,11 @@ export function emptyPhotoAddOns(): PhotoAddOns {
     tvScreenReplacementNote: "",
     grassReplacementNote: "",
   };
+}
+
+export function getPhotoAddOnPrice(state: AddServiceFormState, key: keyof PhotoAddOns): number {
+  const opt = PHOTO_ADDON_OPTIONS.find((o) => o.key === key);
+  return opt?.price ?? 0;
 }
 
 export function emptyPhotoQuantities(): PhotoQuantities {
@@ -498,9 +483,11 @@ export function computeEstimatedPrice(state: AddServiceFormState): number {
     }
     if (isPhotoAddonEligible(selected) && totalQty > 0) {
       const addOns = state.photoAddOns;
-      if (addOns?.skyReplacement) total += PHOTO_ADDON_PRICE * totalQty;
-      if (addOns?.tvScreenReplacement) total += PHOTO_ADDON_PRICE * totalQty;
-      if (addOns?.grassReplacement) total += PHOTO_ADDON_PRICE * totalQty;
+      for (const opt of PHOTO_ADDON_OPTIONS) {
+        if (addOns?.[opt.key] && opt.price) {
+          total += opt.price * totalQty;
+        }
+      }
     }
   }
 
@@ -519,11 +506,13 @@ export function computeEstimatedPrice(state: AddServiceFormState): number {
       total += getOptionPrice(VIDEO_STYLE_OPTIONS, state.videoStyle);
     }
 
-    if (state.videoDuration && state.videoDuration !== "custom") {
-      total += getOptionPrice(VIDEO_DURATION_OPTIONS, state.videoDuration);
-    }
-
-    if (state.videoDurationExtended > 0) {
+    if (state.videoDuration === "custom") {
+      const secs = parseInt(state.customVideoDuration, 10);
+      if (Number.isFinite(secs) && secs >= 60) {
+        const extra = Math.floor((secs - 60) / 15);
+        total += extra * DURATION_EXTEND_PRICE;
+      }
+    } else if (state.videoDurationExtended > 0) {
       total += state.videoDurationExtended * DURATION_EXTEND_PRICE;
     }
 
@@ -555,6 +544,7 @@ export function getInitialFormState(): AddServiceFormState {
     websiteUrl: "",
     orderNotes: "",
     selectedServices: [],
+    photoQuantity: 0,
     photoQuantities: emptyPhotoQuantities(),
     photoServiceNote: "",
     photoAddOns: emptyPhotoAddOns(),
@@ -579,6 +569,7 @@ export function getInitialFormState(): AddServiceFormState {
     wetransferLink: "",
     virtualStagingRooms: [],
     virtualStagingRoomCounts: emptyVirtualStagingRoomCounts(),
+    virtualStagingRoomNotes: {},
     virtualStagingStyle: "",
     virtualStagingStyleNote: "",
     virtualStagingRoomsNote: "",

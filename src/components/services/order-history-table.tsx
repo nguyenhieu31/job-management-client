@@ -361,22 +361,17 @@ function ConfigurationDetails({ config }: { config: unknown }) {
   const vsStyleNote = obj.virtualStagingStyleNote as string | undefined;
   const vsRoomsNote = obj.virtualStagingRoomsNote as string | undefined;
 
-  const photoQuantities =
+  const photoQtyTotal = Number(obj.photoQuantity) || 0;
+  const legacyPhotoQty =
     obj.photoQuantities && typeof obj.photoQuantities === "object"
       ? (obj.photoQuantities as Record<string, number>)
       : null;
-  const photoQtyLines = photoQuantities
-    ? PHOTO_QUANTITY_FIELDS.map((f) => {
-        const n = Number(photoQuantities[f.key]) || 0;
-        return n > 0 ? `${f.label}: ${n}` : null;
-      }).filter(Boolean) as string[]
+  const legacyPhotoQtyLine = legacyPhotoQty
+    ? Object.entries(legacyPhotoQty)
+        .filter(([, n]) => Number(n) > 0)
+        .map(([k, n]) => `${k}: ${n}`)
     : [];
-  const photoQtyTotal = photoQuantities
-    ? PHOTO_QUANTITY_FIELDS.reduce(
-        (s, f) => s + (Number(photoQuantities[f.key]) || 0),
-        0,
-      )
-    : 0;
+  const hasPhotoQty = photoQtyTotal > 0 || legacyPhotoQtyLine.length > 0;
 
   const photoAddOns =
     obj.photoAddOns && typeof obj.photoAddOns === "object"
@@ -424,14 +419,32 @@ function ConfigurationDetails({ config }: { config: unknown }) {
       })
     : [];
 
-  const hasPhotoQty = photoQtyTotal > 0 || photoQtyLines.length > 0;
+  const roomNotes =
+    obj.virtualStagingRoomNotes &&
+    typeof obj.virtualStagingRoomNotes === "object"
+      ? (obj.virtualStagingRoomNotes as Record<string, string>)
+      : null;
+  const roomNoteEntries: { roomLabel: string; note: string }[] = [];
+  if (roomNotes) {
+    for (const [k, v] of Object.entries(roomNotes)) {
+      if (isFilledString(v)) {
+        const label =
+          lookupLabel(VIRTUAL_STAGING_ROOMS, k) ??
+          VIRTUAL_STAGING_LEGACY_ROOM_LABELS[k] ??
+          k;
+        roomNoteEntries.push({ roomLabel: label, note: String(v) });
+      }
+    }
+  }
+
   const hasAddons = addonLines.length > 0;
   const hasVS =
     !!virtualStagingStyle ||
     roomCountLines.length > 0 ||
     legacyRoomLabels.length > 0 ||
     isFilledString(vsStyleNote) ||
-    isFilledString(vsRoomsNote);
+    isFilledString(vsRoomsNote) ||
+    roomNoteEntries.length > 0;
 
   const hasNotes =
     configOrderNotes ||
@@ -443,6 +456,7 @@ function ConfigurationDetails({ config }: { config: unknown }) {
     photoServiceNote ||
     vsStyleNote ||
     vsRoomsNote ||
+    roomNoteEntries.length > 0 ||
     addonNotes.length > 0;
   const hasUpload =
     uploadMethodLabels.length > 0 || dropboxLink || googleDriveLink || wetransferLink;
@@ -503,7 +517,7 @@ function ConfigurationDetails({ config }: { config: unknown }) {
 
       {hasPhotoQty && (
         <ConfigSection title="Photo Quantities">
-          <ConfigListRow label="By exposure type" values={photoQtyLines} />
+          <ConfigListRow label="Quantity" values={legacyPhotoQtyLine} />
           {photoQtyTotal > 0 && (
             <ConfigRow label="Total photos" value={String(photoQtyTotal)} />
           )}
@@ -529,6 +543,9 @@ function ConfigurationDetails({ config }: { config: unknown }) {
             }
           />
           <ConfigRow label="Style notes" value={vsStyleNote} highlight />
+          {roomNoteEntries.map((r) => (
+            <ConfigRow key={r.roomLabel} label={`${r.roomLabel} note`} value={r.note} highlight />
+          ))}
           <ConfigRow label="Room notes" value={vsRoomsNote} highlight />
         </ConfigSection>
       )}

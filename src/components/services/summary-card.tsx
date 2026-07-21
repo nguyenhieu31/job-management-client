@@ -4,7 +4,6 @@ import { cn, formatCurrency } from "@/lib/utils";
 import { ChevronDown, ChevronUp, Package } from "lucide-react";
 import { useState } from "react";
 import {
-  type AddServiceFormState,
   PHOTO_SERVICES,
   VIDEO_SERVICES,
   VIDEO_DURATION_OPTIONS,
@@ -13,9 +12,7 @@ import {
   MUSIC_OPTIONS,
   TEXT_CAPTIONS_OPTIONS,
   TRANSITIONS_OPTIONS,
-  PHOTO_QUANTITY_FIELDS,
   PHOTO_ADDON_OPTIONS,
-  PHOTO_ADDON_PRICE,
   VIRTUAL_STAGING_ROOMS,
   VIRTUAL_STAGING_STYLES,
   isVideoServiceSelected,
@@ -25,6 +22,7 @@ import {
   getTotalPhotoQuantity,
   getVirtualStagingPhotoTotal,
   computeEstimatedPrice,
+  type AddServiceFormState,
 } from "@/types/services";
 
 interface SummaryCardProps {
@@ -135,14 +133,10 @@ export function SummaryCard({ state, mobile = false }: SummaryCardProps) {
             Photo quantities
           </p>
           <ul className="mt-1 space-y-0.5 text-sm">
-            {PHOTO_QUANTITY_FIELDS.map((f) => (
-              <li key={f.key} className="flex justify-between gap-2">
-                <span>{f.label}</span>
-                <span className="tabular-nums text-muted-foreground">
-                  {state.photoQuantities?.[f.key] ?? 0}
-                </span>
-              </li>
-            ))}
+            <li className="flex justify-between gap-2">
+              <span>{getServiceLabel(state.selectedServices[0])} Quantity</span>
+              <span className="tabular-nums text-muted-foreground">{totalQty}</span>
+            </li>
             <li className="flex justify-between gap-2 font-medium pt-0.5">
               <span>Total</span>
               <span className="tabular-nums">{totalQty}</span>
@@ -152,7 +146,7 @@ export function SummaryCard({ state, mobile = false }: SummaryCardProps) {
             <ul className="mt-2 space-y-0.5 text-sm">
               {PHOTO_ADDON_OPTIONS.map((opt) => {
                 if (!state.photoAddOns?.[opt.key]) return null;
-                const cost = PHOTO_ADDON_PRICE * totalQty;
+                const cost = (opt.price ?? 0) * totalQty;
                 return (
                   <li key={opt.key} className="flex justify-between gap-2">
                     <span>{opt.label}</span>
