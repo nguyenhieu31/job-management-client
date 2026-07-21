@@ -132,17 +132,17 @@ export default function LoginPage() {
           </form>
 
           {/* Divider */}
-          <div className="relative">
+          {/* <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-border" />
             </div>
             <div className="relative flex justify-center text-sm">
               <span className="px-4 bg-background text-muted-foreground">Or continue with</span>
             </div>
-          </div>
+          </div> */}
 
           {/* Google Sign In */}
-          <Button
+          {/* <Button
             variant="outline"
             className="w-full h-12 text-base bg-transparent hover:bg-accent"
             type="button"
@@ -174,15 +174,15 @@ export default function LoginPage() {
                 Sign in with Google
               </>
             )}
-          </Button>
+          </Button> */}
 
           {/* Sign Up Link */}
-          <p className="text-center text-sm text-muted-foreground">
+          {/* <p className="text-center text-sm text-muted-foreground">
             Don&apos;t have an account?{" "}
             <Link href="/auth/register" className="font-medium text-foreground hover:underline transition-colors">
               Create account
             </Link>
-          </p>
+          </p> */}
         </div>
       </div>
 
