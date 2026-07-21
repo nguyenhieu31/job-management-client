@@ -25,6 +25,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -56,6 +57,7 @@ import { EditableInput } from "./editable-input";
 import { formatCurrency, formatCurrencyVND, formatDate, getFirstDayOfMonth } from "@/lib/utils";
 import { EmployeeResponse } from "@/types/employees";
 import { VideoDetailDialog } from "./video-detail-dialog";
+import { RelatedWorkSection } from "@/components/shared/related-work-section";
 import SearchableDropdown from "../ui/search-able-dropdown";
 import { useAppDispatch, useAppSelector } from "@/store/store";
 import {
@@ -156,6 +158,7 @@ const columnLabels: Record<string, string> = {
   employeeNote: "Thuê ngoài",
   assignedEmployee: "Người Được Giao",
   assignedSale: "Saler",
+  relatedWork: "Video tương tự",
   qa: "QA",
   editedNumber: "Số Lần Chỉnh Sửa",
   editedFee: "Phí Chỉnh Sửa",
@@ -232,6 +235,7 @@ export function VideoTable({
     useState<number>(0);
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
   const [previewJob, setPreviewJob] = useState<VideoResponse | null>(null);
+  const [relatedWorkVideo, setRelatedWorkVideo] = useState<VideoResponse | null>(null);
   const { roleName, email } = useAppSelector((state) => state.authenticate);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [updateTrigger, setUpdateTrigger] = useState(0);
@@ -1408,6 +1412,24 @@ console.log("editValue: ", editValue)
           </span>
         );
 
+      case "relatedWork":
+        return video.customer?.customerCode ? (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              setRelatedWorkVideo(video);
+            }}
+            className="h-8 gap-1"
+          >
+            <ExternalLink className="h-3 w-3" />
+            Xem
+          </Button>
+        ) : (
+          <span className="text-xs text-muted-foreground">—</span>
+        );
+
       case "actions":
         return (
           <div className="flex items-center justify-end gap-2">
@@ -2016,6 +2038,26 @@ console.log("editValue: ", editValue)
               Từ Chối
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Related Work Dialog */}
+      <Dialog open={!!relatedWorkVideo} onOpenChange={(open) => { if (!open) setRelatedWorkVideo(null); }}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Video tương tự</DialogTitle>
+            <DialogDescription>
+              Các video cùng khách hàng {relatedWorkVideo?.customer?.customerCode || ""}
+            </DialogDescription>
+          </DialogHeader>
+          {relatedWorkVideo?.customer?.customerCode && (
+            <RelatedWorkSection
+              customerCode={relatedWorkVideo.customer.customerCode}
+              currentItemId={relatedWorkVideo.id}
+              currentItemType="video"
+              onViewItem={() => {}}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </>

@@ -180,6 +180,7 @@ export const ROLE_COLUMNS = {
     // "assignedSale",
     "assignedEmployee",
     "note",
+    "relatedWork",
     // "paymentStatus",
     "actions",
   ],
@@ -193,6 +194,7 @@ export const ROLE_COLUMNS = {
     "totalPayPerFile",
     "jobStatus",
     "note",
+    "relatedWork",
     "actions",
   ],
   special: [
@@ -207,6 +209,7 @@ export const ROLE_COLUMNS = {
     "note",
     "employeeNote",
     "paymentEmployee",
+    "relatedWork",
     "actions",
   ],
   saler: [
@@ -223,6 +226,7 @@ export const ROLE_COLUMNS = {
     // "assignedSale",
     "assignedEmployee",
     "note",
+    "relatedWork",
     // "paymentStatus",
     // "actions",
   ],

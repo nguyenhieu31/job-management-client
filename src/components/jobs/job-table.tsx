@@ -20,7 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Check, Eye, Trash2 } from "lucide-react";
+import { Check, Eye, Trash2, ExternalLink } from "lucide-react";
 import { useState, useMemo, useCallback, useRef } from "react";
 import type {
   UserRole,
@@ -40,6 +40,14 @@ import {
 } from "@/lib/utils";
 import { EmployeeResponse } from "@/types/employees";
 import { JobDetailDialog } from "./job-detail-dialog";
+import { RelatedWorkSection } from "@/components/shared/related-work-section";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import SearchableDropdown from "../ui/search-able-dropdown";
 import { useAppDispatch, useAppSelector } from "@/store/store";
 import {
@@ -143,6 +151,7 @@ const columnLabels: Record<string, string> = {
   assignedSale: "Saler",
   qa: "QA",
   deadline: "Deadline",
+  relatedWork: "Công việc tương tự",
   actions: "Hành Động",
 };
 
@@ -196,6 +205,7 @@ export function JobTable({
   const [totalOutputEmployees, setTotalOutputEmployees] = useState<number>(0);
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
   const [previewJob, setPreviewJob] = useState<JobResponse | null>(null);
+  const [relatedWorkJob, setRelatedWorkJob] = useState<JobResponse | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editField, setEditField] = useState<"employeeNote" | null>(null);
   const [editVideoId, setEditVideoId] = useState<number | null>(null);
@@ -1071,6 +1081,24 @@ export function JobTable({
           </span>
         );
 
+      case "relatedWork":
+        return job.customer?.customerCode ? (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              setRelatedWorkJob(job);
+            }}
+            className="h-8 gap-1"
+          >
+            <ExternalLink className="h-3 w-3" />
+            Xem
+          </Button>
+        ) : (
+          <span className="text-xs text-muted-foreground">—</span>
+        );
+
       case "actions":
         return (
           <ActionCell
@@ -1339,6 +1367,26 @@ export function JobTable({
         onOpenChange={setPreviewDialogOpen}
         job={previewJob}
       />
+
+      {/* Related Work Dialog */}
+      <Dialog open={!!relatedWorkJob} onOpenChange={(open) => { if (!open) setRelatedWorkJob(null); }}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Công việc tương tự</DialogTitle>
+            <DialogDescription>
+              Các công việc cùng khách hàng {relatedWorkJob?.customer?.customerCode || ""}
+            </DialogDescription>
+          </DialogHeader>
+          {relatedWorkJob?.customer?.customerCode && (
+            <RelatedWorkSection
+              customerCode={relatedWorkJob.customer.customerCode}
+              currentItemId={relatedWorkJob.id}
+              currentItemType="job"
+              onViewItem={() => {}}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
