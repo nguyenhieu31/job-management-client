@@ -17,6 +17,7 @@ const navigation = [
   { name: "Công Việc Photo", href: "/dashboard/job", icon: Briefcase },
   { name: "Công Việc Video", href: "/dashboard/video", icon: Briefcase },
   { name: "Nhân Viên", href: "/dashboard/employees", icon: Users },
+  { name: "Tài Khoản Khách Hàng", href: "/dashboard/customer-accounts", icon: Users },
   { name: "Khách Hàng", href: "/dashboard/customers", icon: Users },
   { name: "Yêu Cầu Công Việc", href: "/dashboard/work-requests", icon: Settings },
   { name: "Hoá Đơn", href: "/dashboard/invoices", icon: FileText },

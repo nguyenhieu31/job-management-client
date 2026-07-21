@@ -13,9 +13,7 @@ import {
   TRANSITIONS_OPTIONS,
   VIRTUAL_STAGING_ROOMS,
   VIRTUAL_STAGING_STYLES,
-  PHOTO_QUANTITY_FIELDS,
   PHOTO_ADDON_OPTIONS,
-  PHOTO_ADDON_PRICE,
   PHOTO_QTY_MAX,
   isVideoServiceSelected,
   isVirtualStagingSelected,
@@ -23,6 +21,7 @@ import {
   isPhotoAddonEligible,
   getTotalPhotoQuantity,
   getVirtualStagingPhotoTotal,
+  getPhotoAddOnPrice,
   clampPhotoQty,
   computeEstimatedPrice,
   type AddServiceFormState,
@@ -182,16 +181,6 @@ export function ServiceDetailsStep({
         ? "Enter quantities to estimate"
         : formatCurrency(0);
 
-  const setPhotoQty = useCallback(
-    (key: keyof PhotoQuantities, n: number) => {
-      onChange("photoQuantities", {
-        ...state.photoQuantities,
-        [key]: clampPhotoQty(n),
-      });
-    },
-    [onChange, state.photoQuantities],
-  );
-
   const setRoomCount = useCallback(
     (room: string, n: number) => {
       onChange("virtualStagingRoomCounts", {
@@ -200,6 +189,16 @@ export function ServiceDetailsStep({
       });
     },
     [onChange, state.virtualStagingRoomCounts],
+  );
+
+  const setRoomNote = useCallback(
+    (room: string, note: string) => {
+      onChange("virtualStagingRoomNotes", {
+        ...state.virtualStagingRoomNotes,
+        [room]: note,
+      });
+    },
+    [onChange, state.virtualStagingRoomNotes],
   );
 
   const setAddon = useCallback(
@@ -309,25 +308,18 @@ export function ServiceDetailsStep({
             </h3>
           </div>
           <p className="text-xs text-muted-foreground">
-            How many finished photos of each exposure type? Price = (total photos) ×{" "}
-            {selectedPhoto?.label ?? "service"} unit price (
+            Quantity × {selectedPhoto?.label ?? "service"} unit price (
             {formatCurrency(unitPrice)}).
           </p>
 
           <fieldset className="space-y-3" aria-invalid={!!errors.photoQuantities}>
-            <legend className="sr-only">Photo quantities by exposure type</legend>
-            <div className="grid gap-3">
-              {PHOTO_QUANTITY_FIELDS.map((field) => (
-                <QuantityStepper
-                  key={field.key}
-                  id={`photo-qty-${field.key}`}
-                  label={field.label}
-                  gloss={field.gloss}
-                  value={state.photoQuantities?.[field.key] ?? 0}
-                  onValueChange={(n) => setPhotoQty(field.key, n)}
-                />
-              ))}
-            </div>
+            <legend className="sr-only">Photo quantity</legend>
+            <QuantityStepper
+              id="photo-quantity"
+              label={`${selectedPhoto?.label ?? "Photo"} Quantity`}
+              value={state.photoQuantity ?? 0}
+              onValueChange={(n) => onChange("photoQuantity", clampPhotoQty(n))}
+            />
             <p className="text-sm font-medium">
               Total photos: {totalPhotoQty} · Base: {formatCurrency(photoBase)}
             </p>
@@ -341,18 +333,17 @@ export function ServiceDetailsStep({
           {hasAddons ? (
             <fieldset className="space-y-3">
               <legend className="text-sm font-medium">
-                Replacement add-ons (+{formatCurrency(PHOTO_ADDON_PRICE)}/photo)
+                Replacement add-ons
               </legend>
               <div className="space-y-3">
                 {PHOTO_ADDON_OPTIONS.map((opt) => {
                   const checked = !!state.photoAddOns?.[opt.key];
-                  const addonCost = checked ? PHOTO_ADDON_PRICE * totalPhotoQty : 0;
                   return (
                     <div key={opt.key} className="rounded-lg border p-3 space-y-2">
                       {renderCheckboxOption(
                         {
                           value: opt.key,
-                          label: `${opt.label} (+$${PHOTO_ADDON_PRICE}/photo · currently ${formatCurrency(addonCost)})`,
+                          label: `${opt.label}`,
                         },
                         checked,
                         (v) => setAddon(opt.key, v),
@@ -423,50 +414,66 @@ export function ServiceDetailsStep({
                     onChange={(e) => onChange("customVideoDuration", e.target.value)}
                     className="max-w-xs"
                   />
+                  {(() => {
+                    const secs = parseInt(state.customVideoDuration, 10);
+                    if (!Number.isFinite(secs) || secs < 1) return null;
+                    if (secs < 60) {
+                      return <p className="text-xs text-muted-foreground">Free (under 60s)</p>;
+                    }
+                    const extra = Math.floor((secs - 60) / 15);
+                    const cost = extra * 10;
+                    return (
+                      <p className="text-xs text-muted-foreground">
+                        {secs}s &middot; First 60s free &middot; {extra} × 15s = +${cost}
+                      </p>
+                    );
+                  })()}
                 </div>
               )}
 
-              <div className="rounded-lg bg-muted/30 p-3 space-y-2">
-                <p className="text-xs font-medium text-muted-foreground">Extended Duration</p>
-                <p className="text-[11px] text-muted-foreground">First 60s free. Each extra 15s: +$10</p>
-                <div className="flex items-center gap-3">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                    onClick={() =>
-                      onChange(
-                        "videoDurationExtended",
-                        Math.max(0, (state.videoDurationExtended || 0) - 1),
-                      )
-                    }
-                    disabled={!state.videoDurationExtended}
-                  >
-                    -
-                  </Button>
-                  <span className="w-8 text-center font-medium text-sm tabular-nums">
-                    {state.videoDurationExtended || 0}
-                  </span>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                    onClick={() =>
-                      onChange(
-                        "videoDurationExtended",
-                        (state.videoDurationExtended || 0) + 1,
-                      )
-                    }
-                  >
-                    +
-                  </Button>
-                  <span className="text-xs text-muted-foreground">
-                    × 15s = ${(state.videoDurationExtended || 0) * 10}
-                  </span>
+              {state.videoDuration !== "custom" && (
+                <div className="rounded-lg bg-muted/30 p-3 space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground">Extended Duration</p>
+                  <p className="text-[11px] text-muted-foreground">First 60s free. Each extra 15s: +$10</p>
+                  <div className="flex items-center gap-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={() =>
+                        onChange(
+                          "videoDurationExtended",
+                          Math.max(0, (state.videoDurationExtended || 0) - 1),
+                        )
+                      }
+                      disabled={!state.videoDurationExtended}
+                    >
+                      -
+                    </Button>
+                    <span className="w-8 text-center font-medium text-sm tabular-nums">
+                      {state.videoDurationExtended || 0}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={() =>
+                        onChange(
+                          "videoDurationExtended",
+                          (state.videoDurationExtended || 0) + 1,
+                        )
+                      }
+                    >
+                      +
+                    </Button>
+                    <span className="text-xs text-muted-foreground">
+                      × 15s = ${(state.videoDurationExtended || 0) * 10}
+                    </span>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Video Style */}
@@ -708,13 +715,24 @@ export function ServiceDetailsStep({
             </p>
             <div className="grid gap-3">
               {VIRTUAL_STAGING_ROOMS.map((room) => (
-                <QuantityStepper
-                  key={room.value}
-                  id={`vs-room-${room.value}`}
-                  label={`${room.label} (photos)`}
-                  value={state.virtualStagingRoomCounts?.[room.value] ?? 0}
-                  onValueChange={(n) => setRoomCount(room.value, n)}
-                />
+                <div key={room.value} className="space-y-2 rounded-lg border p-3">
+                  <QuantityStepper
+                    id={`vs-room-${room.value}`}
+                    label={`${room.label} (photos)`}
+                    value={state.virtualStagingRoomCounts?.[room.value] ?? 0}
+                    onValueChange={(n) => setRoomCount(room.value, n)}
+                  />
+                  {(state.virtualStagingRoomCounts?.[room.value] ?? 0) > 0 && (
+                    <TextareaField
+                      id={`vs-room-${room.value}-note`}
+                      label="Image files note"
+                      placeholder={`Which image files for ${room.label.toLowerCase()}?`}
+                      value={state.virtualStagingRoomNotes?.[room.value] ?? ""}
+                      onChange={(v) => setRoomNote(room.value, v)}
+                      rows={2}
+                    />
+                  )}
+                </div>
               ))}
             </div>
             <p className="text-sm font-medium">
@@ -754,7 +772,7 @@ export function ServiceDetailsStep({
       </section>
 
       {/* 5. Estimated Price Summary */}
-      <section className="rounded-lg border bg-card p-4 sm:p-6">
+      {/* <section className="rounded-lg border bg-card p-4 sm:p-6">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
             <p className="text-lg font-semibold">Subtotal: {formattedPrice}</p>
@@ -764,8 +782,8 @@ export function ServiceDetailsStep({
           </div>
           <SummaryCard state={state} mobile />
         </div>
-      </section>
-
+      </section> */}
+  
       {/* 6. Order Notes */}
       <section className="rounded-lg border bg-card p-4 sm:p-6">
         <div className="space-y-4">

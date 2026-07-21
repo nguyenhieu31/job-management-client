@@ -240,9 +240,9 @@ export function RelatedWorkSection({
                     <span>{item.assigneeName}</span>
                     <span>{formatDate(item.createdAt)}</span>
                   </div>
-                  {item.note && (
+                  {/* {item.note && (
                     <div className="mt-1.5 rounded border border-amber-200/50 bg-amber-50/60 p-1.5 text-xs text-amber-800 dark:border-amber-800/30 dark:bg-amber-950/20 dark:text-amber-200 truncate max-w-md" dangerouslySetInnerHTML={{ __html: item.note }} />
-                  )}
+                  )} */}
                 </div>
 
                 {item.doneLink && (

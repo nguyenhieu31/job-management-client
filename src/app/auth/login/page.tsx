@@ -29,7 +29,7 @@ export default function LoginPage() {
     e.preventDefault()
     setIsLoading(true)
     try{
-      const payload = await dispatch(LoginAccountAction({ email, password }));
+      const payload = await dispatch(LoginAccountAction({ username: email, password }));
       const response = payload.payload as LoginResponse;
       if(response){
         router.push(response.roleName === "CUSTOMER" ? "/dashboard/order-service" : "/dashboard/job");
@@ -74,13 +74,13 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">Email or Username</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <Input
                     id="email"
-                    type="email"
-                    placeholder="you@example.com"
+                    type="text"
+                    placeholder="you@example.com or username"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="pl-10 h-12"

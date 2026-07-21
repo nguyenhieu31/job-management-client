@@ -219,6 +219,7 @@ export const ROLE_COLUMNS = {
     "assignedEmployee",
     "qa",
     // "note",
+    "relatedWork",
     "actions",
   ],
   qa: [
