@@ -20,6 +20,7 @@ interface CustomerAccountFormProps {
 
 interface CustomerAccountFormData {
     userName: string;
+    fullName: string;
     email: string;
     password: string;
     isActive: boolean;
@@ -29,19 +30,20 @@ export function CustomerAccountForm({
     open, onOpenChange, onSubmit, editingAccount, onResetPassword,
 }: CustomerAccountFormProps) {
     const [formData, setFormData] = useState<CustomerAccountFormData>({
-        userName: "", email: "", password: "", isActive: true,
+        userName: "", fullName: "", email: "", password: "", isActive: true,
     });
 
     useEffect(() => {
         if (editingAccount) {
             setFormData({
                 userName: editingAccount.userName || "",
+                fullName: editingAccount.fullName || "",
                 email: editingAccount.email,
                 password: "",
                 isActive: editingAccount.isActive,
             });
         } else {
-            setFormData({ userName: "", email: "", password: "", isActive: true });
+            setFormData({ userName: "", fullName: "", email: "", password: "", isActive: true });
         }
     }, [editingAccount, open]);
 
@@ -50,6 +52,7 @@ export function CustomerAccountForm({
         const payload: Partial<CustomerAccountRequest> = {
             ...(editingAccount && { id: editingAccount.id }),
             userName: formData.userName || undefined,
+            fullName: formData.fullName || undefined,
             email: formData.email,
             isActive: formData.isActive,
         };
@@ -83,10 +86,17 @@ export function CustomerAccountForm({
                     )}
 
                     <div className="space-y-2">
-                        <Label htmlFor="userName">Tên người dùng</Label>
+                        <Label htmlFor="userName">Tên người dùng <span className="text-red-500">(dùng để đăng nhập)</span></Label>
                         <Input id="userName" type="text" value={formData.userName}
                             onChange={(e) => setFormData({ ...formData, userName: e.target.value })}
                             placeholder="Nhập tên người dùng" />
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="fullName">Họ và tên</Label>
+                        <Input id="fullName" type="text" value={formData.fullName}
+                            onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                            placeholder="Nhập họ và tên" />
                     </div>
 
                     <div className="space-y-2">

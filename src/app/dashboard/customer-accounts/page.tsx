@@ -71,7 +71,7 @@ export default function CustomerAccountsPage() {
     if (account.id) {
       await dispatch(UpdateCustomerAccountAction({
         id: account.id,
-        userName: account.userName,
+        fullName: account.fullName,
         email: account.email || "",
         isActive: account.isActive ?? true,
       }));
@@ -79,6 +79,7 @@ export default function CustomerAccountsPage() {
     } else {
       await dispatch(CreateCustomerAccountAction({
         userName: account.userName,
+        fullName: account.fullName,
         email: account.email || "",
         password: account.password || "",
       }));

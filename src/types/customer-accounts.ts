@@ -15,6 +15,7 @@ export interface CustomerAccountRequest {
     userName?: string;
     email: string;
     password?: string;
+    fullName?: string;
     isActive?: boolean;
 }
 
