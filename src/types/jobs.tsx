@@ -38,6 +38,7 @@ export interface CustomerInfo {
   company: string;
   customerCode?: string;
   sales?: SaleInfo[];
+  customerNote?: string;
 }
 
 export interface JobViewResponse {

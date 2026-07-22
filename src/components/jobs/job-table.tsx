@@ -1383,6 +1383,7 @@ export function JobTable({
               currentItemId={relatedWorkJob.id}
               currentItemType="job"
               onViewItem={() => {}}
+              customerNote={relatedWorkJob.customer?.customerNote}
             />
           )}
         </DialogContent>

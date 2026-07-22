@@ -2053,6 +2053,7 @@ console.log("editValue: ", editValue)
               currentItemId={relatedWorkVideo.id}
               currentItemType="video"
               onViewItem={() => {}}
+              customerNote={relatedWorkVideo.customer?.customerNote}
             />
           )}
         </DialogContent>
