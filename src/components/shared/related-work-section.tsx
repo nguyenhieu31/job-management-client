@@ -156,6 +156,11 @@ export function RelatedWorkSection({
     setLoading(false);
   }, [customerCode, currentItemId, currentItemType]);
 
+  const openInNewTab = (url: string) => {
+    const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
+    if (newWindow) newWindow.opener = null;
+  };
+
   useEffect(() => {
     fetchRelated();
   }, [fetchRelated]);
@@ -223,7 +228,10 @@ export function RelatedWorkSection({
                   }
                 >
                   {item.type === "video" ? (
-                    <Film className="mr-1 h-3 w-3" />
+                    <Film className="mr-1 h-3 w-3" onClick={(e) => {
+                      e.stopPropagation();
+                      openInNewTab(item.doneLink || "#");
+                    }} />
                   ) : (
                     <Briefcase className="mr-1 h-3 w-3" />
                   )}
