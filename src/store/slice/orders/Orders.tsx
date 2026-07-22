@@ -98,7 +98,7 @@ export const searchAdminOrdersAction = createAsyncThunk<
 
 export const updateOrderStatusAction = createAsyncThunk<
   OrderResponse,
-  { id: number; status: OrderStatus; rejectNote?: string | null }
+  { id: number; status: OrderStatus; rejectNote?: string | null; linkDone?: string | null; doneNote?: string | null }
 >("updateOrderStatusAction", async (data) => {
   try {
     const response = await updateOrderStatus(data);

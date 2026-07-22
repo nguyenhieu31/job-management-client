@@ -681,6 +681,26 @@ export function OrderDetailDialog({
             </div>
           )}
 
+          {order.linkDone && (
+            <div className="space-y-2">
+              <h3 className="font-semibold text-emerald-700">Link Done</h3>
+              <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm break-all">
+                <a href={order.linkDone} target="_blank" rel="noopener noreferrer" className="text-emerald-700 underline hover:text-emerald-800">
+                  {order.linkDone}
+                </a>
+              </p>
+            </div>
+          )}
+
+          {order.doneNote && (
+            <div className="space-y-2">
+              <h3 className="font-semibold text-emerald-700">Done Note</h3>
+              <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm whitespace-pre-wrap text-emerald-800">
+                {order.doneNote}
+              </p>
+            </div>
+          )}
+
           {order.attachments && order.attachments.length > 0 && (
             <div className="space-y-2">
               <h3 className="font-semibold">
@@ -792,6 +812,8 @@ interface OrderHistoryTableProps {
     orderId: number,
     status: OrderStatus,
     rejectNote?: string,
+    linkDone?: string,
+    doneNote?: string,
   ) => void | Promise<void>;
   onApply: (filters: {
     keyword: string;
@@ -826,6 +848,12 @@ export function OrderHistoryTable({
     status: OrderStatus | null;
   }>({ open: false, orderId: null, status: null });
   const [rejectNote, setRejectNote] = useState("");
+  const [completeDialog, setCompleteDialog] = useState<{
+    open: boolean;
+    orderId: number | null;
+  }>({ open: false, orderId: null });
+  const [completeLinkDone, setCompleteLinkDone] = useState("");
+  const [completeDoneNote, setCompleteDoneNote] = useState("");
 
   const isBusy = loading || searching || actionLoading;
   const isManager = mode === "manager";
@@ -1068,9 +1096,15 @@ export function OrderHistoryTable({
                                   variant="outline"
                                   disabled={actionLoading}
                                   className="h-8 border-emerald-500 text-emerald-700 hover:bg-emerald-50"
-                                  onClick={() =>
-                                    onStatusChange?.(order.id, primary.next)
-                                  }
+                                  onClick={() => {
+                                    if (primary.next === "COMPLETED") {
+                                      setCompleteDialog({ open: true, orderId: order.id });
+                                      setCompleteLinkDone("");
+                                      setCompleteDoneNote("");
+                                    } else {
+                                      onStatusChange?.(order.id, primary.next);
+                                    }
+                                  }}
                                 >
                                   {primary.label}
                                 </Button>
@@ -1193,6 +1227,78 @@ export function OrderHistoryTable({
               }}
             >
               Confirm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={completeDialog.open}
+        onOpenChange={(open) => {
+          if (!open) {
+            setCompleteDialog({ open: false, orderId: null });
+            setCompleteLinkDone("");
+            setCompleteDoneNote("");
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Complete Order</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="linkDone" className="text-sm font-medium">
+                Link Done (URL)
+              </label>
+              <Input
+                id="linkDone"
+                placeholder="e.g. https://drive.google.com/..."
+                value={completeLinkDone}
+                onChange={(e) => setCompleteLinkDone(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="doneNote" className="text-sm font-medium">
+                Done Note
+              </label>
+              <Textarea
+                id="doneNote"
+                placeholder="Note for customer..."
+                value={completeDoneNote}
+                onChange={(e) => setCompleteDoneNote(e.target.value)}
+                className="min-h-[100px]"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setCompleteDialog({ open: false, orderId: null });
+                setCompleteLinkDone("");
+                setCompleteDoneNote("");
+              }}
+            >
+              Close
+            </Button>
+            <Button
+              disabled={actionLoading || completeDialog.orderId == null}
+              onClick={async () => {
+                if (completeDialog.orderId == null) return;
+                await onStatusChange?.(
+                  completeDialog.orderId,
+                  "COMPLETED",
+                  undefined,
+                  completeLinkDone.trim() || undefined,
+                  completeDoneNote.trim() || undefined,
+                );
+                setCompleteDialog({ open: false, orderId: null });
+                setCompleteLinkDone("");
+                setCompleteDoneNote("");
+              }}
+            >
+              Confirm Complete
             </Button>
           </DialogFooter>
         </DialogContent>

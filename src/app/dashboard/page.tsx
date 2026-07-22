@@ -14,6 +14,8 @@ export default function DashboardPage() {
     if (pathname !== "/dashboard") return;
     if (roleName === "CUSTOMER") {
       router.replace("/dashboard/order-service");
+    } else if (roleName === "MANAGER") {
+      router.replace("/dashboard/overview");
     } else if (roleName) {
       router.replace("/dashboard/job");
     }

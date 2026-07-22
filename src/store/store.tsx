@@ -14,6 +14,7 @@ import VideoSlice from "./slice/videos/Videos";
 import BankTransactionSlice from "./slice/bank-transaction/BankTransaction";
 import OrdersSlice from "./slice/orders/Orders";
 import CustomerAccountSlice from "./slice/customer-account/CustomerAccount";
+import OverviewSlice from "./slice/overview/Overview";
 import { injectStore } from "@/lib/utils/axios-instance";
 
 export const store = configureStore({
@@ -32,6 +33,7 @@ export const store = configureStore({
         bankTransaction: BankTransactionSlice,
         order: OrdersSlice,
         customerAccount: CustomerAccountSlice,
+        overview: OverviewSlice,
     }
 });
 
