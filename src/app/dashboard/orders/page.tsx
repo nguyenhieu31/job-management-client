@@ -74,6 +74,8 @@ export default function ManagerOrdersPage() {
     orderId: number,
     status: OrderStatus,
     rejectNote?: string,
+    linkDone?: string,
+    doneNote?: string,
   ) => {
     setActionLoading(true);
     try {
@@ -82,6 +84,8 @@ export default function ManagerOrdersPage() {
           id: orderId,
           status,
           rejectNote: rejectNote ?? null,
+          linkDone: linkDone ?? null,
+          doneNote: doneNote ?? null,
         }),
       ).unwrap();
       toast.success("Order status updated successfully");

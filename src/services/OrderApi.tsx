@@ -81,6 +81,8 @@ export const updateOrderStatus = async (data: {
   id: number;
   status: OrderStatus;
   rejectNote?: string | null;
+  linkDone?: string | null;
+  doneNote?: string | null;
 }) => {
   try {
     const res = await axiosInstance.put(
@@ -90,6 +92,8 @@ export const updateOrderStatus = async (data: {
         params: {
           status: data.status,
           rejectNote: data.rejectNote || undefined,
+          linkDone: data.linkDone || undefined,
+          doneNote: data.doneNote || undefined,
         },
       },
     );

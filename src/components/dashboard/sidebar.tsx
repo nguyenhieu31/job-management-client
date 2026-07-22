@@ -4,7 +4,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { redirect, usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { Briefcase, Users, Menu, X, Settings, Lock, FileText, Banknote } from "lucide-react"
+import { Briefcase, Users, Menu, X, Settings, Lock, FileText, Banknote, BarChart3 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
 import { useAppDispatch, useAppSelector } from "@/store/store"
@@ -13,6 +13,7 @@ import NotificationBell from "@/components/notifications/notification-bell"
 import LogoImage from "@/assets/logo.png"
 
 const navigation = [
+  { name: "Tổng Quan", href: "/dashboard/overview", icon: BarChart3 },
   // { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Công Việc Photo", href: "/dashboard/job", icon: Briefcase },
   { name: "Công Việc Video", href: "/dashboard/video", icon: Briefcase },

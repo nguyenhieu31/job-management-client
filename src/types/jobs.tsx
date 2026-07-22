@@ -38,6 +38,7 @@ export interface CustomerInfo {
   company: string;
   customerCode?: string;
   sales?: SaleInfo[];
+  customerNote?: string;
 }
 
 export interface JobViewResponse {
@@ -219,7 +220,7 @@ export const ROLE_COLUMNS = {
     "assignedEmployee",
     "qa",
     // "note",
-    "relatedWork",
+    // "relatedWork",
     "actions",
   ],
   qa: [
@@ -255,7 +256,7 @@ export const ROLE_COLUMNS = {
     "payPerFile",
     "totalPayPerFile",
     "note",
-    "relatedWork",
+    // "relatedWork",
     "qaNote",
     "actions",
   ],
@@ -273,7 +274,7 @@ export const ROLE_COLUMNS = {
     "payPerFile",
     "totalPayPerFile",
     "note",
-    "relatedWork",
+    // "relatedWork",
     "qaNote",
     "employeeNote",
     "paymentEmployee",
