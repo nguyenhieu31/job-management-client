@@ -36,6 +36,7 @@ export function CustomerForm({
     phone: "",
     company: "",
     customerCode: "",
+    customerNote: "",
     saleIds: [] as number[],
     isJobAccount: true,
     isVideoAccount: true,
@@ -51,6 +52,7 @@ export function CustomerForm({
         phone: editingCustomer.phone,
         company: editingCustomer.company,
         customerCode: editingCustomer.customerCode || "",
+        customerNote: editingCustomer.customerNote || "",
         saleIds: existingSaleIds,
         isJobAccount: editingCustomer.isJobAccount,
         isVideoAccount: editingCustomer.isVideoAccount,
@@ -62,6 +64,7 @@ export function CustomerForm({
         phone: "",
         company: "",
         customerCode: "",
+        customerNote: "",
         saleIds: [],
         isJobAccount: true,
         isVideoAccount: true,
@@ -88,6 +91,7 @@ export function CustomerForm({
       phone: formData.phone,
       company: formData.company,
       customerCode: formData.customerCode || undefined,
+      customerNote: formData.customerNote || undefined,
       // Send as saleIds for backend Create/UpdateCustomerRequest
       ...(formData.saleIds.length > 0 && { saleIds: formData.saleIds }),
       isJobAccount: formData.isJobAccount,
@@ -161,6 +165,19 @@ export function CustomerForm({
                 setFormData({ ...formData, customerCode: e.target.value })
               }
               placeholder="VD: ACME-001"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="customerNote">Ghi Chú</Label>
+            <textarea
+              id="customerNote"
+              value={formData.customerNote}
+              onChange={(e) =>
+                setFormData({ ...formData, customerNote: e.target.value })
+              }
+              placeholder="Nhập ghi chú về khách hàng..."
+              className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
             />
           </div>
 

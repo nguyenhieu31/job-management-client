@@ -50,6 +50,7 @@ export function CustomerTable({
             <TableHead className="w-12">STT</TableHead>
             <TableHead>Họ Tên</TableHead>
             <TableHead>Email Invoice</TableHead>
+            <TableHead>Ghi Chú</TableHead>
             <TableHead>Sale Phụ Trách</TableHead>
             {roleName === "MANAGER" && (
               <TableHead className="text-right">Hành Động</TableHead>
@@ -59,7 +60,7 @@ export function CustomerTable({
         <TableBody>
           {customers.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={5} className="text-center py-8">
+              <TableCell colSpan={roleName === "MANAGER" ? 6 : 5} className="text-center py-8">
                 <p className="text-muted-foreground">
                   Không tìm thấy khách hàng
                 </p>
@@ -77,6 +78,9 @@ export function CustomerTable({
                 </TableCell>
                 <TableCell className="font-medium">{customer.name}</TableCell>
                 <TableCell>{customer.email}</TableCell>
+                <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">
+                  {customer.customerNote || "—"}
+                </TableCell>
                 <TableCell>
                   {customer.sales && customer.sales.length > 0
                     ? customer.sales.map((s) => s.name).join(", ")
