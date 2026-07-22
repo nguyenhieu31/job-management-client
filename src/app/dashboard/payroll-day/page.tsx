@@ -130,8 +130,8 @@ export default function JobsPage() {
     if (roleName === undefined) return;
     if (roleName === "MANAGER") {
       Promise.all([
-        dispatch(GetAllEmployeesAction({ pageNumber: 0, pageSize: 100 })),
-        dispatch(GetAllCustomersAction({ pageNumber: 0, pageSize: 100 })),
+        dispatch(GetAllEmployeesAction({ pageNumber: 0, pageSize: 1000 })),
+        dispatch(GetAllCustomersAction({ pageNumber: 0, pageSize: 1000 })),
       ]);
     }
   }, [dispatch, roleName]);

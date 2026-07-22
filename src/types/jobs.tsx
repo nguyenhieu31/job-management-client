@@ -36,6 +36,7 @@ export interface CustomerInfo {
   email: string;
   phone: string;
   company: string;
+  customerCode?: string;
   sales?: SaleInfo[];
 }
 
@@ -110,6 +111,8 @@ export interface JobRequest {
   filePrice: number;
   payPerFile: number;
   payPerFileQa: number;
+  totalPayPerFile?: number | null;
+  totalPayPerFileQa?: number | null;
   inputNumber: number;
   outputNumber?: number | null;
   qaOutputNumber?: number | null;
@@ -216,6 +219,7 @@ export const ROLE_COLUMNS = {
     "assignedEmployee",
     "qa",
     // "note",
+    "relatedWork",
     "actions",
   ],
   qa: [
@@ -251,6 +255,7 @@ export const ROLE_COLUMNS = {
     "payPerFile",
     "totalPayPerFile",
     "note",
+    "relatedWork",
     "qaNote",
     "actions",
   ],
@@ -268,6 +273,7 @@ export const ROLE_COLUMNS = {
     "payPerFile",
     "totalPayPerFile",
     "note",
+    "relatedWork",
     "qaNote",
     "employeeNote",
     "paymentEmployee",
@@ -285,8 +291,8 @@ export const ROLE_COLUMNS = {
     "jobStatus",
     "linkDone",
     "assignedSale",
-    // "assignedEmployee",
-    // "qa"
+    "assignedEmployee",
+    "qa"
   ]
 } as const;
 

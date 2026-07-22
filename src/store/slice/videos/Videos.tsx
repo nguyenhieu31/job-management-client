@@ -143,7 +143,9 @@ export const UpdateGridViewVideoAction = createAsyncThunk(
       inputLink?: string | null;
       doneLink?: string | null;
       payPerFile?: number | null;
+      totalPayPerFile?: number | null;
       payPerFileQa?: number | null;
+      assignedSaleId?: number | null;
       isDeleteAssignee?: boolean;
       fileStoragesNeedRemove?: import("@/types/jobs").FileStorage[];
     };
@@ -197,6 +199,9 @@ export const UpdateVideoFullAction = createAsyncThunk<
     imageTempUrls,
     videoTempUrls,
   );
+  if (res.code == 200) {
+    toast.success("Cập nhật video thành công");
+  }
   return res.data;
 });
 

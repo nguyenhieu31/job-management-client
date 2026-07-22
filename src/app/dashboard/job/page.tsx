@@ -230,11 +230,12 @@ export default function JobsPage() {
       }));
       return;
     }
-
-    if(roleName === "MANAGER"){
+    //commented out because saler can see all jobs, not only assigned jobs
+    // else if(roleName === "SALER"){
+    //   dispatch(GetAllJobsBySalerAssigneeAction({pageNumber: pagination.currentPage - 1, pageSize: pagination.pageSize, fromDate: getFirstDayOfMonth()}));
+    // }
+    if(roleName === "MANAGER" || roleName === "SALER"){
       dispatch(GetAllJobsAction({pageNumber: pagination.currentPage - 1, pageSize: pagination.pageSize, fromDate: getFirstDayOfMonth()}));
-    }else if(roleName === "SALER"){
-      dispatch(GetAllJobsBySalerAssigneeAction({pageNumber: pagination.currentPage - 1, pageSize: pagination.pageSize, fromDate: getFirstDayOfMonth()}));
     }else if(roleName === "QA"){
       dispatch(GetAllJobsByQualifiedAssigneeAction({pageNumber: pagination.currentPage - 1, pageSize: pagination.pageSize, email: email || "", fromDate: getFirstDayOfMonth()}));
     }else if(roleName === "EMPLOYEE" || roleName === "SPECIAL"){
@@ -292,7 +293,7 @@ export default function JobsPage() {
         pagination={pagination}
         onPageChange={handlePageChange}
         employees={employeeList.filter((e) => e.isJobAccount === true)}
-        customers={salerCustomerList.filter((c) => c.isJobAccount === true)}
+        customers={customerList.filter((c) => c.isJobAccount === true)}
         onFiltersChange={setActiveFilters}
         salers={salerList}
       />
@@ -309,7 +310,7 @@ export default function JobsPage() {
             userRole={userRole}
             employees={employeeList.filter((e) => e.isJobAccount === true)}
             qaList={qaList}
-            customers={salerCustomerList.filter((c) => c.isJobAccount === true)}
+            customers={customerList.filter((c) => c.isJobAccount === true)}
             onEdit={(job) => {
               setEditingJob(job as unknown as JobResponse);
               setFormOpen(true);
@@ -340,7 +341,7 @@ export default function JobsPage() {
           }
         }}
         editingJob={editingJob}
-        customers={salerCustomerList.filter((c) => c.isJobAccount === true)}
+        customers={customerList.filter((c) => c.isJobAccount === true)}
         employees={employeeList.filter((e) => e.isJobAccount === true)}
         qaList={qaList}
         workRequests={workRequestList}

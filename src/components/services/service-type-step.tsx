@@ -30,7 +30,7 @@ export function ServiceTypeStep({ value, onChange }: ServiceTypeStepProps) {
     <div className="space-y-8">
       <div>
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-base font-semibold">Chỉnh sửa ảnh</h3>
+          <h3 className="text-base font-semibold">Photo Editing</h3>
           <span className="text-xs text-muted-foreground">Photo Editing</span>
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -51,7 +51,7 @@ export function ServiceTypeStep({ value, onChange }: ServiceTypeStepProps) {
 
       <div>
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-base font-semibold">Chỉnh sửa video</h3>
+          <h3 className="text-base font-semibold">Video Editing</h3>
           <span className="text-xs text-muted-foreground">Video Editing</span>
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -63,6 +63,9 @@ export function ServiceTypeStep({ value, onChange }: ServiceTypeStepProps) {
               subtitle={service.subtitle}
               checked={value.includes(service.id)}
               onChange={toggleService}
+              samplesAvailable={service.samplesAvailable}
+              onViewSamples={setSelectedSampleService}
+              isVideo={true}
             />
           ))}
         </div>
@@ -73,7 +76,7 @@ export function ServiceTypeStep({ value, onChange }: ServiceTypeStepProps) {
           <span className="inline-flex items-center justify-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
             {value.length}
           </span>
-          <span>dịch vụ đã chọn</span>
+          <span>service(s) selected</span>
         </div>
       )}
 

@@ -12,10 +12,12 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import Image from "next/image";
 import {
   Select,
@@ -35,10 +37,10 @@ import {
 import type { OrderResponse, OrderStatus } from "@/types/orders";
 import {
   ASPECT_RATIO_OPTIONS,
-  CREATIVE_FREEDOM_OPTIONS,
   MUSIC_OPTIONS,
   PHOTO_SERVICES,
-  REALTOR_AGENT_OPTIONS,
+  PHOTO_QUANTITY_FIELDS,
+  PHOTO_ADDON_OPTIONS,
   TEXT_CAPTIONS_OPTIONS,
   TRANSITIONS_OPTIONS,
   UPLOAD_METHOD_OPTIONS,
@@ -47,6 +49,7 @@ import {
   VIDEO_STYLE_OPTIONS,
   VIRTUAL_STAGING_ROOMS,
   VIRTUAL_STAGING_STYLES,
+  VIRTUAL_STAGING_LEGACY_ROOM_LABELS,
 } from "@/types/services";
 import {
   ChevronLeft,
@@ -62,6 +65,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { useState } from "react";
+import { formatCurrency } from "@/lib/utils";
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
 
@@ -89,7 +93,7 @@ function OrderTablePagination({
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2 py-4">
       <div className="flex items-center gap-2">
         <span className="text-sm text-muted-foreground">
-          Số mục trên trang:
+          Items per page:
         </span>
         <Select
           value={String(pageSize)}
@@ -108,7 +112,7 @@ function OrderTablePagination({
         </Select>
       </div>
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        Hiển thị {startItem}-{endItem} của {totalItems} mục
+        Showing {startItem}-{endItem} of {totalItems} items
       </div>
       <div className="flex items-center gap-2">
         <Button
@@ -117,7 +121,7 @@ function OrderTablePagination({
           onClick={() => onPageChange(0)}
           disabled={!canGoPrevious}
           className="h-8 w-8"
-          aria-label="Trang đầu"
+          aria-label="First page"
         >
           <ChevronsLeft className="h-4 w-4" />
         </Button>
@@ -127,12 +131,12 @@ function OrderTablePagination({
           onClick={() => onPageChange(pageNumber - 1)}
           disabled={!canGoPrevious}
           className="h-8 w-8"
-          aria-label="Trang trước"
+          aria-label="Previous page"
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <span className="text-sm tabular-nums">
-          Trang {pageNumber + 1} / {totalPages}
+          Page {pageNumber + 1} / {totalPages}
         </span>
         <Button
           variant="outline"
@@ -140,7 +144,7 @@ function OrderTablePagination({
           onClick={() => onPageChange(pageNumber + 1)}
           disabled={!canGoNext}
           className="h-8 w-8"
-          aria-label="Trang sau"
+          aria-label="Next page"
         >
           <ChevronRight className="h-4 w-4" />
         </Button>
@@ -150,7 +154,7 @@ function OrderTablePagination({
           onClick={() => onPageChange(Math.max(totalPages - 1, 0))}
           disabled={!canGoNext}
           className="h-8 w-8"
-          aria-label="Trang cuối"
+          aria-label="Last page"
         >
           <ChevronsRight className="h-4 w-4" />
         </Button>
@@ -160,13 +164,13 @@ function OrderTablePagination({
 }
 
 const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
-  PENDING: "Đang chờ",
-  REVIEWED: "Đã xem",
-  CONFIRMED: "Đã xác nhận",
-  IN_PROGRESS: "Đang thực hiện",
-  COMPLETED: "Hoàn thành",
-  CANCELLED: "Đã hủy",
-  REJECTED: "Bị từ chối",
+  PENDING: "Pending",
+  REVIEWED: "Reviewed",
+  CONFIRMED: "Confirmed",
+  IN_PROGRESS: "In Progress",
+  COMPLETED: "Completed",
+  CANCELLED: "Cancelled",
+  REJECTED: "Rejected",
 };
 
 const ORDER_STATUS_BADGE_VARIANT: Record<
@@ -187,23 +191,49 @@ const ORDER_STATUS_BADGE_CLASS: Partial<Record<OrderStatus, string>> = {
   IN_PROGRESS: "bg-amber-100 text-amber-700 border-amber-200",
 };
 
-const VND_FORMATTER = new Intl.NumberFormat("vi-VN");
+const VND_FORMATTER = new Intl.NumberFormat("en-US");
 
 const STATUS_FILTER_OPTIONS: { value: OrderStatus | "ALL"; label: string }[] = [
-  { value: "ALL", label: "Tất cả trạng thái" },
+  { value: "ALL", label: "All Statuses" },
   ...(
     Object.entries(ORDER_STATUS_LABELS) as [OrderStatus, string][]
   ).map(([value, label]) => ({ value, label })),
 ];
 
+/** Primary forward action for manager multi-step pipeline */
+export function getPrimaryOrderAction(
+  status: OrderStatus,
+): { next: OrderStatus; label: string } | null {
+  switch (status) {
+    case "PENDING":
+      return { next: "REVIEWED", label: "Review" };
+    case "REVIEWED":
+      return { next: "CONFIRMED", label: "Confirm" };
+    case "CONFIRMED":
+      return { next: "IN_PROGRESS", label: "Accept" };
+    case "IN_PROGRESS":
+      return { next: "COMPLETED", label: "Complete" };
+    default:
+      return null;
+  }
+}
+
+export function canTerminalOrderAction(status: OrderStatus): boolean {
+  return (
+    status === "PENDING" ||
+    status === "REVIEWED" ||
+    status === "CONFIRMED"
+  );
+}
+
 function formatCreatedAt(createdAt: string): string {
   const parsed = new Date(createdAt);
   if (Number.isNaN(parsed.getTime())) return createdAt;
-  return parsed.toLocaleString("vi-VN");
+  return parsed.toLocaleString("en-US");
 }
 
 function formatFileSize(sizeBytes?: number): string {
-  if (sizeBytes == null || Number.isNaN(sizeBytes)) return "—";
+  if (sizeBytes == null || Number.isNaN(sizeBytes)) return "\u2014";
   if (sizeBytes < 1024) return `${sizeBytes} B`;
   if (sizeBytes < 1024 * 1024) return `${(sizeBytes / 1024).toFixed(1)} KB`;
   return `${(sizeBytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -222,173 +252,323 @@ function isFilledString(v: unknown): v is string {
   return typeof v === "string" && v.trim().length > 0;
 }
 
+function ConfigSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="space-y-3 rounded-lg border bg-card p-4 sm:p-6">
+      <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+        {title}
+      </h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
+        {children}
+      </div>
+    </section>
+  );
+}
+
+function ConfigRow({ label, value, highlight }: { label: string; value: string | null | undefined; highlight?: boolean }) {
+  if (!value) return null;
+  return (
+    <div className={highlight ? "col-span-full rounded-md border border-amber-200 bg-amber-50/60 p-2" : ""}>
+      <ConfigLabel label={label} />
+      <p className="text-sm whitespace-pre-wrap">{value}</p>
+    </div>
+  );
+}
+
+function ConfigListRow({ label, values, highlight }: { label: string; values: string[] | null | undefined; highlight?: boolean }) {
+  if (!values || values.length === 0) return null;
+  return (
+    <div className={highlight ? "col-span-full rounded-md border border-amber-200 bg-amber-50/60 p-2" : ""}>
+      <ConfigLabel label={label} />
+      <ul className="mt-0.5 list-inside list-disc text-sm">
+        {values.map((item, i) => (
+          <li key={i}>{item}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function ConfigLabel({ label }: { label: string }) {
+  return <span className="text-xs font-medium text-muted-foreground">{label}</span>;
+}
+
 function ConfigurationDetails({ config }: { config: unknown }) {
   if (!config || typeof config !== "object") return null;
   const obj = config as Record<string, unknown>;
 
   const serviceLabels = Array.isArray(obj.selectedServices)
-    ? (obj.selectedServices as string[])
-        .map((id) => SERVICE_LABEL_LOOKUP.get(id) ?? id)
-    : [];
-  const zaloId = isFilledString(obj.zaloId) ? obj.zaloId : null;
-  const instagramHandle = isFilledString(obj.instagramHandle) ? obj.instagramHandle : null;
-  const websiteUrl = isFilledString(obj.websiteUrl) ? obj.websiteUrl : null;
-  const videoDurationLabel = isFilledString(obj.videoDuration)
-    ? (lookupLabel(VIDEO_DURATION_OPTIONS, obj.videoDuration) ?? obj.videoDuration)
-    : null;
-  const videoStyleLabel = isFilledString(obj.videoStyle)
-    ? (lookupLabel(VIDEO_STYLE_OPTIONS, obj.videoStyle) ?? obj.videoStyle)
-    : null;
-  const aspectRatioLabels = Array.isArray(obj.aspectRatios)
-    ? (obj.aspectRatios as string[])
-        .map((v) => lookupLabel(ASPECT_RATIO_OPTIONS, v) ?? v)
-    : [];
-  const musicLabel = isFilledString(obj.music)
-    ? (lookupLabel(MUSIC_OPTIONS, obj.music) ?? obj.music)
-    : null;
-  const realtorAgentLabels = Array.isArray(obj.realtorAgent)
-    ? (obj.realtorAgent as string[])
-        .map((v) => lookupLabel(REALTOR_AGENT_OPTIONS, v) ?? v)
+    ? (obj.selectedServices as string[]).map((id) => SERVICE_LABEL_LOOKUP.get(id) ?? id)
     : [];
   const textCaptionLabels = Array.isArray(obj.textCaptions)
-    ? (obj.textCaptions as string[])
-        .map((v) => lookupLabel(TEXT_CAPTIONS_OPTIONS, v) ?? v)
+    ? (obj.textCaptions as string[]).map((v) => lookupLabel(TEXT_CAPTIONS_OPTIONS, v) ?? v)
     : [];
-  const transitionsLabel = isFilledString(obj.transitions)
+  const uploadMethodLabels = Array.isArray(obj.uploadMethods)
+    ? (obj.uploadMethods as string[]).map((v) => lookupLabel(UPLOAD_METHOD_OPTIONS, v) ?? v)
+    : [];
+
+  const customerName = obj.customerName as string | undefined;
+  const customerEmail = obj.customerEmail as string | undefined;
+  const realEstateAddress = obj.realEstateAddress as string | undefined;
+  const instagramHandle = obj.instagramHandle as string | undefined;
+  const websiteUrl = obj.websiteUrl as string | undefined;
+  const videoDuration = isFilledString(obj.videoDuration)
+    ? (lookupLabel(VIDEO_DURATION_OPTIONS, obj.videoDuration) ?? obj.videoDuration)
+    : null;
+  const customVideoDuration = obj.customVideoDuration as string | undefined;
+  const videoDurationExtended = obj.videoDurationExtended != null ? Number(obj.videoDurationExtended) : undefined;
+  const videoStyle = isFilledString(obj.videoStyle)
+    ? (lookupLabel(VIDEO_STYLE_OPTIONS, obj.videoStyle) ?? obj.videoStyle)
+    : null;
+  const aspectRatios = isFilledString(obj.aspectRatios as string)
+    ? (lookupLabel(ASPECT_RATIO_OPTIONS, obj.aspectRatios as string) ?? obj.aspectRatios as string)
+    : null;
+  const music = isFilledString(obj.music)
+    ? (lookupLabel(MUSIC_OPTIONS, obj.music) ?? obj.music)
+    : null;
+  const transitions = isFilledString(obj.transitions)
     ? (lookupLabel(TRANSITIONS_OPTIONS, obj.transitions) ?? obj.transitions)
     : null;
-  const creativeFreedomLabel = isFilledString(obj.creativeFreedom)
-    ? (lookupLabel(CREATIVE_FREEDOM_OPTIONS, obj.creativeFreedom) ??
-        obj.creativeFreedom)
-    : null;
-  const uploadMethodLabels = Array.isArray(obj.uploadMethods)
-    ? (obj.uploadMethods as string[])
-        .map((v) => lookupLabel(UPLOAD_METHOD_OPTIONS, v) ?? v)
-    : [];
-  const virtualStagingRoomLabels = Array.isArray(obj.virtualStagingRooms)
-    ? (obj.virtualStagingRooms as string[])
-        .map((v) => lookupLabel(VIRTUAL_STAGING_ROOMS, v) ?? v)
-    : [];
-  const virtualStagingStyleLabel = isFilledString(obj.virtualStagingStyle)
+  const aiOption = !!obj.aiOption;
+  const boundaryDrawOption = !!obj.boundaryDrawOption;
+  const confirmRequirements = !!obj.confirmRequirements;
+  const confirmExtraCharges = !!obj.confirmExtraCharges;
+  const virtualStagingStyle = isFilledString(obj.virtualStagingStyle)
     ? (lookupLabel(VIRTUAL_STAGING_STYLES, obj.virtualStagingStyle) ??
+        lookupLabel(
+          [
+            { value: "contemporary", label: "Contemporary" },
+            { value: "farmhouse", label: "Farmhouse" },
+            { value: "coastal", label: "Coastal" },
+            { value: "custom", label: "Custom based on client request" },
+            ...VIRTUAL_STAGING_STYLES,
+          ],
+          obj.virtualStagingStyle,
+        ) ??
         obj.virtualStagingStyle)
     : null;
+  const dropboxLink = obj.dropboxLink as string | undefined;
+  const googleDriveLink = obj.googleDriveLink as string | undefined;
+  const wetransferLink = obj.wetransferLink as string | undefined;
 
-  const renderRow = (
-    label: string,
-    value: string | null | undefined,
-    list?: string[],
-  ) => {
-    if (list) {
-      if (list.length === 0) return null;
-      return (
-        <div key={label} className="space-y-1">
-          <div className="text-xs uppercase tracking-wide text-muted-foreground">
-            {label}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {list.map((item, idx) => (
-              <span
-                key={`${label}-${idx}`}
-                className="inline-flex items-center rounded-md border bg-muted/40 px-2 py-1 text-xs"
-              >
-                {item}
-              </span>
-            ))}
-          </div>
-        </div>
-      );
+  const configOrderNotes = obj.orderNotes as string | undefined;
+  const aiNote = obj.aiNote as string | undefined;
+  const musicNote = obj.musicNote as string | undefined;
+  const textCaptionsNote = obj.textCaptionsNote as string | undefined;
+  const transitionsNote = obj.transitionsNote as string | undefined;
+  const boundaryDrawNote = obj.boundaryDrawNote as string | undefined;
+  const photoServiceNote = obj.photoServiceNote as string | undefined;
+  const vsStyleNote = obj.virtualStagingStyleNote as string | undefined;
+  const vsRoomsNote = obj.virtualStagingRoomsNote as string | undefined;
+
+  const photoQtyTotal = Number(obj.photoQuantity) || 0;
+  const legacyPhotoQty =
+    obj.photoQuantities && typeof obj.photoQuantities === "object"
+      ? (obj.photoQuantities as Record<string, number>)
+      : null;
+  const legacyPhotoQtyLine = legacyPhotoQty
+    ? Object.entries(legacyPhotoQty)
+        .filter(([, n]) => Number(n) > 0)
+        .map(([k, n]) => `${k}: ${n}`)
+    : [];
+  const hasPhotoQty = photoQtyTotal > 0 || legacyPhotoQtyLine.length > 0;
+
+  const photoAddOns =
+    obj.photoAddOns && typeof obj.photoAddOns === "object"
+      ? (obj.photoAddOns as Record<string, unknown>)
+      : null;
+  const addonLines: string[] = [];
+  const addonNotes: { label: string; note: string }[] = [];
+  if (photoAddOns) {
+    for (const opt of PHOTO_ADDON_OPTIONS) {
+      if (photoAddOns[opt.key]) {
+        addonLines.push(opt.label);
+        const note = photoAddOns[opt.noteKey];
+        if (isFilledString(note)) {
+          addonNotes.push({ label: `${opt.label} note`, note: String(note) });
+        }
+      }
     }
-    if (!value) return null;
-    return (
-      <div key={label}>
-        <div className="text-xs uppercase tracking-wide text-muted-foreground">
-          {label}
-        </div>
-        <div className="text-sm font-medium">{value}</div>
-      </div>
-    );
-  };
+  }
 
-  const hasAnyService =
-    serviceLabels.length > 0 ||
-    isFilledString(obj.zaloId) ||
-    isFilledString(obj.instagramHandle) ||
-    isFilledString(obj.websiteUrl) ||
-    isFilledString(obj.videoDuration) ||
-    isFilledString(obj.videoStyle) ||
-    aspectRatioLabels.length > 0 ||
-    isFilledString(obj.music) ||
-    realtorAgentLabels.length > 0 ||
-    textCaptionLabels.length > 0 ||
-    isFilledString(obj.transitions) ||
-    isFilledString(obj.requiredShots) ||
-    isFilledString(obj.excludedShots) ||
-    isFilledString(obj.referenceVideos) ||
-    isFilledString(obj.creativeFreedom);
+  const roomCounts =
+    obj.virtualStagingRoomCounts &&
+    typeof obj.virtualStagingRoomCounts === "object" &&
+    !Array.isArray(obj.virtualStagingRoomCounts)
+      ? (obj.virtualStagingRoomCounts as Record<string, number>)
+      : null;
+  const roomCountLines = roomCounts
+    ? Object.entries(roomCounts)
+        .filter(([, n]) => Number(n) > 0)
+        .map(([k, n]) => {
+          const label =
+            lookupLabel(VIRTUAL_STAGING_ROOMS, k) ??
+            VIRTUAL_STAGING_LEGACY_ROOM_LABELS[k] ??
+            k;
+          return `${label} — ${n} photos`;
+        })
+    : [];
 
+  const legacyRoomLabels = Array.isArray(obj.virtualStagingRooms)
+    ? (obj.virtualStagingRooms as string[]).map((v) => {
+        const label =
+          lookupLabel(VIRTUAL_STAGING_ROOMS, v) ??
+          VIRTUAL_STAGING_LEGACY_ROOM_LABELS[v] ??
+          v;
+        return `${label} (legacy) · 1 photo`;
+      })
+    : [];
+
+  const roomNotes =
+    obj.virtualStagingRoomNotes &&
+    typeof obj.virtualStagingRoomNotes === "object"
+      ? (obj.virtualStagingRoomNotes as Record<string, string>)
+      : null;
+  const roomNoteEntries: { roomLabel: string; note: string }[] = [];
+  if (roomNotes) {
+    for (const [k, v] of Object.entries(roomNotes)) {
+      if (isFilledString(v)) {
+        const label =
+          lookupLabel(VIRTUAL_STAGING_ROOMS, k) ??
+          VIRTUAL_STAGING_LEGACY_ROOM_LABELS[k] ??
+          k;
+        roomNoteEntries.push({ roomLabel: label, note: String(v) });
+      }
+    }
+  }
+
+  const hasAddons = addonLines.length > 0;
+  const hasVS =
+    !!virtualStagingStyle ||
+    roomCountLines.length > 0 ||
+    legacyRoomLabels.length > 0 ||
+    isFilledString(vsStyleNote) ||
+    isFilledString(vsRoomsNote) ||
+    roomNoteEntries.length > 0;
+
+  const hasNotes =
+    configOrderNotes ||
+    aiNote ||
+    musicNote ||
+    textCaptionsNote ||
+    transitionsNote ||
+    boundaryDrawNote ||
+    photoServiceNote ||
+    vsStyleNote ||
+    vsRoomsNote ||
+    roomNoteEntries.length > 0 ||
+    addonNotes.length > 0;
   const hasUpload =
-    uploadMethodLabels.length > 0 ||
-    isFilledString(obj.dropboxLink) ||
-    isFilledString(obj.googleDriveLink) ||
-    isFilledString(obj.wetransferLink);
-
-  const hasVirtualStaging =
-    virtualStagingRoomLabels.length > 0 || virtualStagingStyleLabel !== null;
-
-  if (!hasAnyService && !hasUpload && !hasVirtualStaging) return null;
+    uploadMethodLabels.length > 0 || dropboxLink || googleDriveLink || wetransferLink;
 
   return (
-    <div className="space-y-6">
-      {hasAnyService && (
-        <section className="space-y-4 rounded-lg border bg-card p-4 sm:p-6">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            Dịch vụ đã chọn
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-            {renderRow("Các dịch vụ", null, serviceLabels)}
-            {renderRow("Zalo", zaloId)}
-            {renderRow("Instagram", instagramHandle)}
-            {renderRow("Website", websiteUrl)}
-            {renderRow("Thời lượng video", videoDurationLabel)}
-            {renderRow("Phong cách chỉnh sửa video", videoStyleLabel)}
-            {renderRow("Tỷ lệ khung hình", null, aspectRatioLabels)}
-            {renderRow("Nhạc nền", musicLabel)}
-            {renderRow("Realtor / Agent", null, realtorAgentLabels)}
-            {renderRow("Text & Captions", null, textCaptionLabels)}
-            {renderRow("Transitions", transitionsLabel)}
-            {renderRow("Required Shots", isFilledString(obj.requiredShots) ? obj.requiredShots : null)}
-            {renderRow("Excluded Shots", isFilledString(obj.excludedShots) ? obj.excludedShots : null)}
-            {renderRow("Reference Videos", isFilledString(obj.referenceVideos) ? obj.referenceVideos : null)}
-            {renderRow("Creative Freedom", creativeFreedomLabel)}
-          </div>
-        </section>
+    <div className="space-y-5">
+      {(customerName || customerEmail || realEstateAddress || instagramHandle || websiteUrl) && (
+        <ConfigSection title="Customer & Property">
+          <ConfigRow label="Customer Name" value={customerName} />
+          <ConfigRow label="Customer Email" value={customerEmail} />
+          <ConfigRow label="Real Estate Address" value={realEstateAddress} />
+          <ConfigRow label="Instagram" value={instagramHandle} />
+          <ConfigRow label="Website URL" value={websiteUrl} />
+        </ConfigSection>
       )}
 
-      {hasVirtualStaging && (
-        <section className="space-y-4 rounded-lg border bg-card p-4 sm:p-6">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            Virtual Staging
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-            {renderRow("Loại phòng", null, virtualStagingRoomLabels)}
-            {renderRow("Style", virtualStagingStyleLabel)}
-          </div>
-        </section>
+      {(serviceLabels.length > 0 ||
+        videoDuration ||
+        videoStyle ||
+        aspectRatios ||
+        music ||
+        textCaptionLabels.length > 0 ||
+        transitions ||
+        customVideoDuration ||
+        (videoDurationExtended != null && videoDurationExtended > 0)) && (
+        <ConfigSection title="Services & Configuration">
+          <ConfigListRow label="Selected Services" values={serviceLabels} />
+          <ConfigRow label="Video Duration" value={videoDuration} />
+          {videoDuration === "Custom" || videoDuration === "custom" ? (
+            <ConfigRow
+              label="Custom Duration"
+              value={customVideoDuration ? `${customVideoDuration}s` : undefined}
+            />
+          ) : null}
+          {videoDurationExtended != null && videoDurationExtended > 0 ? (
+            <ConfigRow
+              label="Extended Duration"
+              value={`+${videoDurationExtended} × 15s`}
+            />
+          ) : null}
+          <ConfigRow label="Editing Style" value={videoStyle} />
+          <ConfigRow label="Aspect Ratio" value={aspectRatios} />
+          <ConfigRow label="Background Music" value={music} />
+          <ConfigListRow label="Text & Captions" values={textCaptionLabels} />
+          <ConfigRow label="Transitions" value={transitions} />
+          {aiOption && <ConfigRow label="AI Voiceover (+$20)" value="Yes" />}
+          {boundaryDrawOption && (
+            <ConfigRow label="Boundary Draw (+$10)" value="Yes" />
+          )}
+          {confirmRequirements && (
+            <ConfigRow label="Requirements Confirmed" value="Yes" />
+          )}
+          {confirmExtraCharges && (
+            <ConfigRow label="Extra Charges Confirmed" value="Yes" />
+          )}
+        </ConfigSection>
+      )}
+
+      {hasPhotoQty && (
+        <ConfigSection title="Photo Quantities">
+          <ConfigListRow label="Quantity" values={legacyPhotoQtyLine} />
+          {photoQtyTotal > 0 && (
+            <ConfigRow label="Total photos" value={String(photoQtyTotal)} />
+          )}
+        </ConfigSection>
+      )}
+
+      {hasAddons && (
+        <ConfigSection title="Replacement Add-ons">
+          <ConfigListRow label="Enabled" values={addonLines} />
+          {addonNotes.map((n) => (
+            <ConfigRow key={n.label} label={n.label} value={n.note} highlight />
+          ))}
+        </ConfigSection>
+      )}
+
+      {hasVS && (
+        <ConfigSection title="Virtual Staging">
+          <ConfigRow label="Style" value={virtualStagingStyle} />
+          <ConfigListRow
+            label="Rooms"
+            values={
+              roomCountLines.length > 0 ? roomCountLines : legacyRoomLabels
+            }
+          />
+          <ConfigRow label="Style notes" value={vsStyleNote} highlight />
+          {roomNoteEntries.map((r) => (
+            <ConfigRow key={r.roomLabel} label={`${r.roomLabel} note`} value={r.note} highlight />
+          ))}
+          <ConfigRow label="Room notes" value={vsRoomsNote} highlight />
+        </ConfigSection>
       )}
 
       {hasUpload && (
-        <section className="space-y-4 rounded-lg border bg-card p-4 sm:p-6">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            Tải lên tệp
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-            {renderRow("Phương thức tải", null, uploadMethodLabels)}
-            {renderRow("Dropbox link", isFilledString(obj.dropboxLink) ? obj.dropboxLink : null)}
-            {renderRow("Google Drive link", isFilledString(obj.googleDriveLink) ? obj.googleDriveLink : null)}
-            {renderRow("WeTransfer link", isFilledString(obj.wetransferLink) ? obj.wetransferLink : null)}
-          </div>
-        </section>
+        <ConfigSection title="Upload Methods">
+          <ConfigListRow label="Upload Method" values={uploadMethodLabels} />
+          <ConfigRow label="Dropbox Link" value={dropboxLink} />
+          <ConfigRow label="Google Drive Link" value={googleDriveLink} />
+          <ConfigRow label="WeTransfer Link" value={wetransferLink} />
+        </ConfigSection>
+      )}
+
+      {hasNotes && (
+        <ConfigSection title="Notes & Instructions">
+          <ConfigRow label="Order Notes" value={configOrderNotes} highlight />
+          <ConfigRow label="Photo service notes" value={photoServiceNote} highlight />
+          <ConfigRow label="AI Voiceover Note" value={aiNote} highlight />
+          <ConfigRow label="Music Note" value={musicNote} highlight />
+          <ConfigRow label="Text Captions Note" value={textCaptionsNote} highlight />
+          <ConfigRow label="Transitions Note" value={transitionsNote} highlight />
+          <ConfigRow label="Boundary Draw Note" value={boundaryDrawNote} highlight />
+        </ConfigSection>
       )}
     </div>
   );
@@ -428,10 +608,10 @@ export function OrderDetailDialog({
         <div className="space-y-6 mt-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-3">
-              <h3 className="font-semibold">Thông tin khách hàng</h3>
+              <h3 className="font-semibold">Customer Information</h3>
               <div className="rounded-lg border bg-muted/30 p-4 space-y-2 text-sm">
                 <div>
-                  <span className="text-muted-foreground">Họ và tên: </span>
+                  <span className="text-muted-foreground">Full Name: </span>
                   <span className="font-medium">{order.customerName}</span>
                 </div>
                 <div>
@@ -439,35 +619,35 @@ export function OrderDetailDialog({
                   <span className="font-medium">{order.customerEmail}</span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Số điện thoại: </span>
+                  <span className="text-muted-foreground">Phone: </span>
                   <span className="font-medium">
-                    {order.customerPhone || "—"}
+                    {order.customerPhone || "\u2014"}
                   </span>
                 </div>
               </div>
             </div>
 
             <div className="space-y-3">
-              <h3 className="font-semibold">Thông tin đơn hàng</h3>
+              <h3 className="font-semibold">Order Information</h3>
               <div className="rounded-lg border bg-muted/30 p-4 space-y-2 text-sm">
                 <div>
-                  <span className="text-muted-foreground">Ngày tạo: </span>
+                  <span className="text-muted-foreground">Created: </span>
                   <span className="font-medium">
                     {formatCreatedAt(order.createdAt)}
                   </span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Cập nhật: </span>
+                  <span className="text-muted-foreground">Updated: </span>
                   <span className="font-medium">
                     {formatCreatedAt(order.updatedAt)}
                   </span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Giá ước tính: </span>
+                  <span className="text-muted-foreground">Est. Price: </span>
                   <span className="font-medium">
                     {order.estimatedPrice != null
-                      ? `${VND_FORMATTER.format(order.estimatedPrice)} VND`
-                      : "—"}
+                      ? formatCurrency(order.estimatedPrice)
+                      : "\u2014"}
                   </span>
                 </div>
               </div>
@@ -476,9 +656,27 @@ export function OrderDetailDialog({
 
           {order.orderNotes && (
             <div className="space-y-2">
-              <h3 className="font-semibold">Ghi chú</h3>
+              <h3 className="font-semibold">Notes</h3>
               <p className="rounded-lg border bg-amber-50/50 p-4 text-sm whitespace-pre-wrap">
                 {order.orderNotes}
+              </p>
+            </div>
+          )}
+
+          {order.managerRejectNote && (
+            <div className="space-y-2">
+              <h3 className="font-semibold text-red-700">Rejection Reason (System)</h3>
+              <p className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm whitespace-pre-wrap text-red-800">
+                {order.managerRejectNote}
+              </p>
+            </div>
+          )}
+
+          {order.customerRejectNote && (
+            <div className="space-y-2">
+              <h3 className="font-semibold text-red-700">Rejection Reason (Customer)</h3>
+              <p className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm whitespace-pre-wrap text-red-800">
+                {order.customerRejectNote}
               </p>
             </div>
           )}
@@ -486,7 +684,7 @@ export function OrderDetailDialog({
           {order.attachments && order.attachments.length > 0 && (
             <div className="space-y-2">
               <h3 className="font-semibold">
-                Tệp đính kèm ({order.attachments.length})
+                Attachments ({order.attachments.length})
               </h3>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
                 {order.attachments.map((att, idx) => {
@@ -588,6 +786,13 @@ interface OrderHistoryTableProps {
   error?: string;
   totalPages?: number;
   totalItems?: number;
+  mode?: "customer" | "manager";
+  actionLoading?: boolean;
+  onStatusChange?: (
+    orderId: number,
+    status: OrderStatus,
+    rejectNote?: string,
+  ) => void | Promise<void>;
   onApply: (filters: {
     keyword: string;
     status: OrderStatus | null;
@@ -604,6 +809,9 @@ export function OrderHistoryTable({
   error = "",
   totalPages: serverTotalPages,
   totalItems: serverTotalItems,
+  mode = "customer",
+  actionLoading = false,
+  onStatusChange,
   onApply,
   onReset,
 }: OrderHistoryTableProps) {
@@ -612,8 +820,15 @@ export function OrderHistoryTable({
   const [pageNumber, setPageNumber] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [previewing, setPreviewing] = useState<OrderResponse | null>(null);
+  const [rejectDialog, setRejectDialog] = useState<{
+    open: boolean;
+    orderId: number | null;
+    status: OrderStatus | null;
+  }>({ open: false, orderId: null, status: null });
+  const [rejectNote, setRejectNote] = useState("");
 
-  const isBusy = loading || searching;
+  const isBusy = loading || searching || actionLoading;
+  const isManager = mode === "manager";
 
   const handleApply = () => {
     setPageNumber(0);
@@ -664,7 +879,7 @@ export function OrderHistoryTable({
     return (
       <Card className="border-dashed bg-muted/30">
         <CardContent className="py-8 text-center text-sm text-muted-foreground">
-          Đang tải lịch sử đơn hàng…
+          Loading order history\u2026
         </CardContent>
       </Card>
     );
@@ -674,7 +889,7 @@ export function OrderHistoryTable({
     return (
       <Card className="border-destructive/40 bg-destructive/5">
         <CardContent className="py-6 text-sm text-destructive">
-          Không thể tải lịch sử đơn hàng. {error}
+          Could not load order history. {error}
         </CardContent>
       </Card>
     );
@@ -684,17 +899,19 @@ export function OrderHistoryTable({
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle>Lịch sử đơn hàng</CardTitle>
+          <CardTitle>
+            {isManager ? "Order Management" : "Order History"}
+          </CardTitle>
           <CardDescription>
-            Tìm kiếm theo mã đơn, tên, email, số điện thoại hoặc lọc theo
-            trạng thái rồi nhấn &ldquo;Áp dụng&rdquo;.
+            Search by order code, name, email, phone or filter by status,
+            then click &ldquo;Apply&rdquo;.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
             <div className="relative flex-1">
               <label className="text-xs font-medium text-muted-foreground">
-                Từ khoá
+                Keyword
               </label>
               <Search className="pointer-events-none absolute left-3 top-[70%] h-4 w-4 translate-y-[-50%] text-muted-foreground" />
               <Input
@@ -703,14 +920,14 @@ export function OrderHistoryTable({
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleApply();
                 }}
-                placeholder="Tìm kiếm đơn hàng..."
+                placeholder="Search orders..."
                 className="pl-9"
                 disabled={isBusy}
               />
             </div>
             <div className="sm:w-[220px]">
               <label className="text-xs font-medium text-muted-foreground">
-                Trạng thái
+                Status
               </label>
               <Select
                 value={statusFilter}
@@ -733,14 +950,14 @@ export function OrderHistoryTable({
             </div>
             <div className="flex gap-2">
               <Button onClick={handleApply} disabled={isBusy}>
-                Áp dụng
+                Apply
               </Button>
               <Button
                 variant="outline"
                 onClick={handleReset}
                 disabled={isBusy}
               >
-                Đặt lại
+                Reset
               </Button>
             </div>
           </div>
@@ -748,7 +965,7 @@ export function OrderHistoryTable({
           {searching && orders.length === 0 && (
             <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Đang tìm kiếm…</p>
+              <p className="text-sm text-muted-foreground">Searching\u2026</p>
             </div>
           )}
 
@@ -760,22 +977,25 @@ export function OrderHistoryTable({
               {hasFilters ? (
                 <>
                   <p className="text-sm font-medium">
-                    Không có đơn hàng nào khớp với bộ lọc.
+                    No orders match your filters.
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Thử điều chỉnh từ khoá hoặc trạng thái rồi nhấn
-                    &ldquo;Áp dụng&rdquo;.
+                    Try adjusting your keyword or status then click
+                    &ldquo;Apply&rdquo;.
                   </p>
                 </>
               ) : (
                 <>
                   <p className="text-sm font-medium">
-                    Bạn chưa có đơn hàng nào.
+                    {isManager
+                      ? "No orders yet."
+                      : "You have no orders yet."}
                   </p>
-                  <p className="text-xs text-muted-foreground">
-                    Nhấn &ldquo;Đặt dịch vụ mới&rdquo; phía dưới để bắt
-                    đầu.
-                  </p>
+                  {!isManager && (
+                    <p className="text-xs text-muted-foreground">
+                      Click &ldquo;Book New Service&rdquo; below to get started.
+                    </p>
+                  )}
                 </>
               )}
             </div>
@@ -786,11 +1006,14 @@ export function OrderHistoryTable({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Mã đơn</TableHead>
-                    <TableHead>Khách hàng</TableHead>
-                    <TableHead>Ngày tạo</TableHead>
-                    <TableHead>Trạng thái</TableHead>
-                    <TableHead className="text-right">Giá ước tính</TableHead>
+                    <TableHead>Order Code</TableHead>
+                    <TableHead>Customer</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Est. Price</TableHead>
+                    {isManager && (
+                      <TableHead className="text-right">Actions</TableHead>
+                    )}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -798,6 +1021,8 @@ export function OrderHistoryTable({
                     const variant = ORDER_STATUS_BADGE_VARIANT[order.status];
                     const variantClass =
                       ORDER_STATUS_BADGE_CLASS[order.status];
+                    const primary = getPrimaryOrderAction(order.status);
+                    const canTerminal = canTerminalOrderAction(order.status);
                     return (
                       <TableRow
                         key={order.id}
@@ -829,8 +1054,66 @@ export function OrderHistoryTable({
                         <TableCell className="text-right tabular-nums">
                           {order.estimatedPrice != null
                             ? `${VND_FORMATTER.format(order.estimatedPrice)}`
-                            : "—"}
+                            : "\u2014"}
                         </TableCell>
+                        {isManager && (
+                          <TableCell
+                            className="text-right"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <div className="flex flex-wrap justify-end gap-1">
+                              {primary && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  disabled={actionLoading}
+                                  className="h-8 border-emerald-500 text-emerald-700 hover:bg-emerald-50"
+                                  onClick={() =>
+                                    onStatusChange?.(order.id, primary.next)
+                                  }
+                                >
+                                  {primary.label}
+                                </Button>
+                              )}
+                              {canTerminal && (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    disabled={actionLoading}
+                                    className="h-8 border-orange-500 text-orange-700 hover:bg-orange-50"
+                                    onClick={() => {
+                                      setRejectDialog({
+                                        open: true,
+                                        orderId: order.id,
+                                        status: "CANCELLED",
+                                      });
+                                      setRejectNote("");
+                                    }}
+                                  >
+                                    Cancel
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    disabled={actionLoading}
+                                    className="h-8 border-red-500 text-red-700 hover:bg-red-50"
+                                    onClick={() => {
+                                      setRejectDialog({
+                                        open: true,
+                                        orderId: order.id,
+                                        status: "REJECTED",
+                                      });
+                                      setRejectNote("");
+                                    }}
+                                  >
+                                    Reject
+                                  </Button>
+                                </>
+                              )}
+                            </div>
+                          </TableCell>
+                        )}
                       </TableRow>
                     );
                   })}
@@ -860,10 +1143,65 @@ export function OrderHistoryTable({
         }}
       />
 
+      <Dialog
+        open={rejectDialog.open}
+        onOpenChange={(open) => {
+          if (!open) {
+            setRejectDialog({ open: false, orderId: null, status: null });
+            setRejectNote("");
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {rejectDialog.status === "CANCELLED"
+                ? "Cancel Order"
+                : "Reject Order"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Textarea
+              placeholder="Enter reason (optional)..."
+              value={rejectNote}
+              onChange={(e) => setRejectNote(e.target.value)}
+              className="min-h-[120px]"
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setRejectDialog({ open: false, orderId: null, status: null });
+                setRejectNote("");
+              }}
+            >
+              Close
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={actionLoading || rejectDialog.orderId == null}
+              onClick={async () => {
+                if (rejectDialog.orderId == null || !rejectDialog.status) return;
+                await onStatusChange?.(
+                  rejectDialog.orderId,
+                  rejectDialog.status,
+                  rejectNote.trim() || undefined,
+                );
+                setRejectDialog({ open: false, orderId: null, status: null });
+                setRejectNote("");
+              }}
+            >
+              Confirm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {isBusy && orders.length > 0 && (
         <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
           <Loader2 className="h-3 w-3 animate-spin" />
-          Đang cập nhật…
+          Updating\u2026
         </div>
       )}
     </div>

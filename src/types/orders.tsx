@@ -26,6 +26,8 @@ export interface OrderResponse {
   status: OrderStatus;
   configuration: unknown;
   estimatedPrice?: number | null;
+  customerRejectNote?: string | null;
+  managerRejectNote?: string | null;
   attachments?: OrderAttachment[];
   createdAt: string;
   updatedAt: string;

@@ -100,6 +100,8 @@ export function JobForm({
     inputNumber: "",
     outputNumber: "",
     qaOutputNumber: "",
+    totalPayPerFile: "",
+    totalPayPerFileQa: "",
     paymentStatus: "UNPAID" as PaymentStatus,
     paymentEmployee: "UNPAID" as EmployeePaymentStatus,
     paymentEmployeeQa: "UNPAID" as EmployeePaymentStatus,
@@ -142,6 +144,12 @@ export function JobForm({
         inputNumber: String(editingJob.inputNumber),
         outputNumber: String(editingJob.outputNumber || ""),
         qaOutputNumber: String(editingJob.qaOutputNumber || ""),
+        totalPayPerFile: editingJob.totalPayPerFile
+          ? formatVND(String(editingJob.totalPayPerFile))
+          : "",
+        totalPayPerFileQa: editingJob.totalPayPerFileQa
+          ? formatVND(String(editingJob.totalPayPerFileQa))
+          : "",
         doneLink: editingJob.doneLink || "",
         paymentStatus: editingJob.paymentStatus,
         paymentEmployee: editingJob.paymentEmployee,
@@ -215,6 +223,8 @@ export function JobForm({
         inputNumber: "",
         outputNumber: "",
         qaOutputNumber: "",
+        totalPayPerFile: "",
+        totalPayPerFileQa: "",
         doneLink: "",
         paymentStatus: "UNPAID",
         paymentEmployee: "UNPAID",
@@ -308,6 +318,8 @@ export function JobForm({
       filePrice,
       payPerFile,
       payPerFileQa,
+      totalPayPerFile,
+      totalPayPerFileQa,
       fileCount,
       outputNumber,
       qaOutputNumber,
@@ -329,6 +341,8 @@ export function JobForm({
     // Parse VND formatted strings back to numbers (remove dots)
     const payPerFileNum = parseVND(payPerFile);
     const payPerFileQaNum = parseVND(payPerFileQa);
+    const totalPayPerFileNum = parseVND(totalPayPerFile);
+    const totalPayPerFileQaNum = parseVND(totalPayPerFileQa);
     const fileCountNum = parseInt(fileCount) || 0;
     const outputNum = parseInt(outputNumber) || 0;
     const qaOutputNum = parseInt(qaOutputNumber) || 0;
@@ -401,6 +415,8 @@ export function JobForm({
           filePrice: price,
           payPerFile: payPerFileNum,
           payPerFileQa: payPerFileQaNum,
+          totalPayPerFile: totalPayPerFileNum !== 0 ? totalPayPerFileNum : null,
+          totalPayPerFileQa: totalPayPerFileQaNum !== 0 ? totalPayPerFileQaNum : null,
           inputNumber: inputCount,
           outputNumber: outputNum !== 0 ? outputNum : null,
           qaOutputNumber: qaOutputNum !== 0 ? qaOutputNum : null,
@@ -435,6 +451,7 @@ export function JobForm({
           inputNumber: inputCount,
           filePrice: price,
           payPerFile: payPerFileNum,
+          totalPayPerFile: totalPayPerFileNum !== 0 ? totalPayPerFileNum : null,
           fileCount: fileCountNum,
           paymentStatus,
           paymentEmployee,
@@ -463,6 +480,8 @@ export function JobForm({
       fileCount: "",
       inputNumber: "",
       outputNumber: "",
+      totalPayPerFile: "",
+      totalPayPerFileQa: "",
       doneLink: "",
       paymentStatus: "UNPAID",
       paymentEmployee: "UNPAID",
@@ -759,23 +778,23 @@ export function JobForm({
                 )}
               </div>
 
-              {/* File Price */}
-              <div className="grid gap-2">
-                <Label htmlFor="filePrice">
-                  Giá mỗi file <span className="text-red-500">($)</span>
-                </Label>
-                <SearchableDropdown
-                  options={filePriceOptions}
-                  placeholder="Nhập giá mỗi file"
-                  onChange={(e) =>
-                    (formRef.current.filePrice = e?.name.toString() || "")
-                  }
-                  defaultValue={{ id: 0, name: formRef.current.filePrice }}
-                  type="number"
-                />
-              </div>
+            {/* File Price */}
+            <div className="grid gap-2">
+              <Label htmlFor="filePrice">
+                Giá mỗi file <span className="text-red-500">($)</span>
+              </Label>
+              <SearchableDropdown
+                options={filePriceOptions}
+                placeholder="Nhập giá mỗi file"
+                onChange={(e) =>
+                  (formRef.current.filePrice = e?.name.toString() || "")
+                }
+                defaultValue={{ id: 0, name: formRef.current.filePrice }}
+                type="number"
+              />
+            </div>
 
-              {/* Total Price Display */}
+            {/* Total Price Display */}
               {formRef.current.outputNumber && formRef.current.filePrice && (
                 <div className="grid gap-2">
                   <Label>Tổng giá (Tính toán)</Label>
@@ -854,6 +873,7 @@ export function JobForm({
                     </div>
                   </div>
                 )}
+
 
               {/* Job Status and Payment Status in one row */}
               <div className="grid grid-cols-2 gap-4">

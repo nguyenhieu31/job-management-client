@@ -10,12 +10,14 @@ import { useState } from "react"
 import { useAppDispatch, useAppSelector } from "@/store/store"
 import { LogoutAction } from "@/store/slice/authentication/Authentication"
 import NotificationBell from "@/components/notifications/notification-bell"
+import LogoImage from "@/assets/logo.png"
 
 const navigation = [
   // { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Công Việc Photo", href: "/dashboard/job", icon: Briefcase },
   { name: "Công Việc Video", href: "/dashboard/video", icon: Briefcase },
   { name: "Nhân Viên", href: "/dashboard/employees", icon: Users },
+  { name: "Tài Khoản Khách Hàng", href: "/dashboard/customer-accounts", icon: Users },
   { name: "Khách Hàng", href: "/dashboard/customers", icon: Users },
   { name: "Yêu Cầu Công Việc", href: "/dashboard/work-requests", icon: Settings },
   { name: "Hoá Đơn", href: "/dashboard/invoices", icon: FileText },
@@ -25,6 +27,7 @@ const navigation = [
   // { name: "Cấu Hình Thư Mục", href: "/dashboard/settings", icon: Folder },
   { name: "Thay Đổi Mật Khẩu", href: "/dashboard/change-password", icon: Lock },
   { name: "Dịch Vụ", href: "/dashboard/order-service", icon: Briefcase },
+  { name: "Quản lý đơn hàng", href: "/dashboard/orders", icon: FileText },
 ]
 
 export function Sidebar() {
@@ -49,7 +52,10 @@ export function Sidebar() {
           item.href === '/dashboard/change-password'
         )
       : roleName === 'MANAGER'
-      ? navigation.filter(item => item.href !== '/dashboard/my-payroll')
+      ? navigation.filter(item =>
+          item.href !== '/dashboard/my-payroll' &&
+          item.href !== '/dashboard/order-service'
+        )
       : roleName === 'SALER'
       ? navigation.filter(item => 
           item.href === '/dashboard/job' || 
@@ -57,7 +63,7 @@ export function Sidebar() {
           item.href === '/dashboard/customers' ||
           item.href === '/dashboard/change-password'
         )
-      : navigation;
+      : navigation.filter(item => item.href !== '/dashboard/orders');
   }
   
 
@@ -87,7 +93,7 @@ export function Sidebar() {
           {/* Logo/Brand */}
           <div className="flex items-center h-16 px-6 border-b gap-3">
             <Image
-              src="/logo.png"
+              src={LogoImage}
               alt="Job Manager Logo"
               width={32}
               height={32}

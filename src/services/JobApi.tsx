@@ -85,20 +85,22 @@ export const searchJobByConditions = async (data: PageRequest & {
     endDate: string | null;
     selectedEmployeeIds?: number[];
     selectedCustomerIds?: number[];
+    customerCode?: string | null;
     assignedSaleIds?: number[];
 }) => {
     try {
         const res = await axiosInstance.get(`/admin/jobs/search-conditions`, { params: {
             pageNumber: data.pageNumber,
             pageSize: data.pageSize,
-            keyword: data.keyword,
-            jobStatus: data.jobStatus,
-            paymentStatus: data.paymentStatus,
-            paymentEmployee: data.paymentEmployee,
-            startDate: data.startDate,
-            endDate: data.endDate,
+            keyword: data.keyword ?? undefined,
+            jobStatus: data.jobStatus ?? undefined,
+            paymentStatus: data.paymentStatus ?? undefined,
+            paymentEmployee: data.paymentEmployee ?? undefined,
+            startDate: data.startDate ?? undefined,
+            endDate: data.endDate ?? undefined,
             selectedEmployeeIds: data.selectedEmployeeIds ? data.selectedEmployeeIds : undefined,
             selectedCustomerIds: data.selectedCustomerIds ? data.selectedCustomerIds : undefined,
+            customerCode: data.customerCode || undefined,
             assignedSaleIds: data.assignedSaleIds && data.assignedSaleIds.length > 0 ? data.assignedSaleIds : undefined,
         } });
         return res as unknown as ApiResponse<PageResponse<JobResponse[]>>;

@@ -1,9 +1,7 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
-import Image from "next/image";
-import { Loader2, ImageIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { useCallback, useState } from "react";
+import { ChevronLeft, ChevronRight, Monitor } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -11,17 +9,17 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { BeforeAfterSlider } from "@/components/ui/before-after-slider";
 import {
   PHOTO_SERVICES,
+  VIDEO_SERVICES,
   getServiceSampleImages,
-  SERVICE_SAMPLE_ALT,
   type ServiceOption,
 } from "@/types/services";
 
-type ViewState = "before" | "after";
-
 function getServiceLabel(serviceId: string): string {
-  const service = (PHOTO_SERVICES as ServiceOption[]).find(
+  const service = ([...PHOTO_SERVICES, ...VIDEO_SERVICES] as ServiceOption[]).find(
     (s) => s.id === serviceId,
   );
   return service?.label ?? serviceId;
@@ -38,118 +36,93 @@ export function ServiceSampleDialog({
   open,
   onClose,
 }: ServiceSampleDialogProps) {
-  const [view, setView] = useState<ViewState>("before");
-  const [loading, setLoading] = useState(true);
-  const loadedImages = useRef<Set<string>>(new Set());
-
   const samples = serviceId ? getServiceSampleImages(serviceId) : [];
-  const currentPair = samples[0] ?? null;
-  const alt =
-    serviceId && SERVICE_SAMPLE_ALT[serviceId]
-      ? SERVICE_SAMPLE_ALT[serviceId]
-      : null;
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const currentPair = samples[currentIndex] ?? null;
+  const isVideo = !!currentPair?.video;
   const label = serviceId ? getServiceLabel(serviceId) : "";
-
-  const currentSrc =
-    currentPair && view === "before" ? currentPair.before : currentPair?.after;
+  const hasMultiple = samples.length > 1;
 
   const handleClose = useCallback(() => {
-    setView("before");
-    setLoading(true);
-    loadedImages.current = new Set();
+    setCurrentIndex(0);
     onClose();
   }, [onClose]);
 
-  const handleLoad = useCallback(() => {
-    if (currentSrc) {
-      loadedImages.current.add(currentSrc);
-    }
-    setLoading(false);
-  }, [currentSrc]);
+  const goPrev = useCallback(() => {
+    setCurrentIndex((i) => Math.max(0, i - 1));
+  }, []);
+
+  const goNext = useCallback(() => {
+    setCurrentIndex((i) => Math.min(samples.length - 1, i + 1));
+  }, [samples.length]);
 
   return (
     <Dialog open={open} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>{label || "Ảnh mẫu"}</DialogTitle>
+          <DialogTitle>{label || (isVideo ? "Video mẫu" : "Ảnh mẫu")}</DialogTitle>
           <DialogDescription>
-            So sánh kết quả trước và sau khi chỉnh sửa
+            {isVideo ? "Video mẫu cho dịch vụ này" : "So sánh kết quả trước và sau khi chỉnh sửa"}
+            {hasMultiple && ` (${currentIndex + 1}/${samples.length})`}
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col items-center gap-4">
           {!currentPair ? (
             <div className="flex flex-col items-center gap-3 py-12 text-muted-foreground">
-              <ImageIcon className="h-12 w-12" />
-              <p className="text-sm">Chưa có ảnh mẫu cho dịch vụ này</p>
+              <Monitor className="h-12 w-12" />
+              <p className="text-sm">Chưa có mẫu cho dịch vụ này</p>
             </div>
           ) : (
             <>
-              <div className="relative w-full overflow-hidden rounded-lg border bg-muted/30">
-                <div className="relative aspect-[16/10] w-full">
-                  {loading && (
-                    <div className="absolute inset-0 z-10 flex items-center justify-center">
-                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    </div>
-                  )}
-                  <Image
-                    src={currentSrc}
-                    alt={
-                      alt
-                        ? view === "before"
-                          ? alt.before
-                          : alt.after
-                        : `${view === "before" ? "Trước" : "Sau"} khi chỉnh sửa - ${label}`
-                    }
-                    fill
-                    sizes="(max-width: 600px) 100vw, 600px"
-                    className={cn(
-                      "object-contain",
-                      loading && "invisible",
-                    )}
-                    onLoad={handleLoad}
-                    onError={handleLoad}
-                    priority
+              {isVideo ? (
+                <div className="w-full overflow-hidden rounded-lg border bg-black">
+                  <video
+                    key={currentIndex}
+                    src={currentPair.video}
+                    controls
+                    className="w-full aspect-video"
+                    poster={currentPair.before}
+                    autoPlay
+                  >
+                    Trình duyệt của bạn không hỗ trợ phát video.
+                  </video>
+                </div>
+              ) : (
+                <div className="w-full overflow-hidden rounded-lg border">
+                  <BeforeAfterSlider
+                    beforeSrc={currentPair.before ?? ""}
+                    afterSrc={currentPair.after ?? ""}
+                    alt={label}
                   />
                 </div>
-              </div>
+              )}
 
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setView("before");
-                    if (!loadedImages.current.has(currentPair.before)) {
-                      setLoading(true);
-                    }
-                  }}
-                  className={cn(
-                    "rounded-md px-4 py-1.5 text-sm font-medium transition-colors",
-                    view === "before"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground hover:bg-muted/80",
-                  )}
-                >
-                  Trước
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setView("after");
-                    if (!loadedImages.current.has(currentPair.after)) {
-                      setLoading(true);
-                    }
-                  }}
-                  className={cn(
-                    "rounded-md px-4 py-1.5 text-sm font-medium transition-colors",
-                    view === "after"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground hover:bg-muted/80",
-                  )}
-                >
-                  Sau
-                </button>
-              </div>
+              {hasMultiple && (
+                <div className="flex items-center gap-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={goPrev}
+                    disabled={currentIndex === 0}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="text-xs text-muted-foreground tabular-nums">
+                    {currentIndex + 1} / {samples.length}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={goNext}
+                    disabled={currentIndex === samples.length - 1}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
             </>
           )}
         </div>

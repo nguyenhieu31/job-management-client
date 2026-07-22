@@ -313,7 +313,7 @@ export default function VideosPage() {
       return;
     }
 
-    if (roleName === "MANAGER") {
+    if (roleName === "MANAGER" || roleName === "SALER") {
       dispatch(
         GetAllVideosAction({
           pageNumber: pagination.currentPage - 1,
@@ -321,15 +321,17 @@ export default function VideosPage() {
           fromDate: getFirstDayOfMonth(),
         }),
       );
-    } else if (roleName === "SALER") {
-      dispatch(
-        GetAllVideosBySalerAssigneeAction({
-          pageNumber: pagination.currentPage - 1,
-          pageSize: pagination.pageSize,
-          fromDate: getFirstDayOfMonth(),
-        }),
-      );
-    } else if (roleName === "QA") {
+    } 
+    // else if (roleName === "SALER") {
+    //   dispatch(
+    //     GetAllVideosBySalerAssigneeAction({
+    //       pageNumber: pagination.currentPage - 1,
+    //       pageSize: pagination.pageSize,
+    //       fromDate: getFirstDayOfMonth(),
+    //     }),
+    //   );
+    // } 
+    else if (roleName === "QA") {
       dispatch(
         GetAllVideosByAssigneeAction({
           pageNumber: pagination.currentPage - 1,
@@ -402,7 +404,7 @@ export default function VideosPage() {
         pagination={pagination}
         onPageChange={handlePageChange}
         employees={employeeList.filter((e) => e.isVideoAccount === true)}
-        customers={filteredCustomerList.filter((c) => c.isVideoAccount === true)}
+        customers={customerList.filter((c) => c.isVideoAccount === true)}
         salers={salerList}
         onFiltersChange={setActiveFilters}
       />
@@ -418,8 +420,12 @@ export default function VideosPage() {
           videos={videos ? videos.data : []}
           userRole={userRole}
           employees={employeeList.filter((e) => e.isVideoAccount === true)}
-          customers={filteredCustomerList.filter((c) => c.isVideoAccount === true)}
+          customers={customerList.filter((c) => c.isVideoAccount === true)}
           onVideoAction={handleVideoAction}
+          onEdit={(video) => {
+            setEditingJob(video);
+            setFormOpen(true);
+          }}
           />
 
           {/* Pagination */}
@@ -457,7 +463,7 @@ export default function VideosPage() {
           }
         }}
         editingVideo={editingVideo}
-        customers={filteredCustomerList.filter((c) => c.isVideoAccount === true)}
+        customers={customerList.filter((c) => c.isVideoAccount === true)}
         employees={employeeList.filter((e) => e.isVideoAccount === true)}
         qaList={qaList}
         workRequests={workRequestList}

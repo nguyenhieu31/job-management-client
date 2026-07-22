@@ -83,6 +83,7 @@ export interface VideoRequest {
   workRequestId: number | null;
   assignedSaleId?: number | null;
   isDeleteAssignee?: boolean;
+  totalPayPerFile?: number;
   fileStoragesNeedRemove?: FileStorage[];
 }
 
@@ -176,10 +177,11 @@ export const ROLE_COLUMNS = {
     "jobStatus",
     "linkDone",
     "totalPayPerFile",
-    "assignedSale",
+    // "assignedSale",
     "assignedEmployee",
     "note",
-    "paymentStatus",
+    "relatedWork",
+    // "paymentStatus",
     "actions",
   ],
   employee: [
@@ -189,9 +191,10 @@ export const ROLE_COLUMNS = {
     "linkInput",
     "linkDone",
     "inputCount",
-    "jobStatus",
     "totalPayPerFile",
+    "jobStatus",
     "note",
+    "relatedWork",
     "actions",
   ],
   special: [
@@ -201,11 +204,12 @@ export const ROLE_COLUMNS = {
     "linkInput",
     "linkDone",
     "inputCount",
-    "jobStatus",
     "totalPayPerFile",
+    "jobStatus",
     "note",
     "employeeNote",
     "paymentEmployee",
+    "relatedWork",
     "actions",
   ],
   saler: [
@@ -219,10 +223,11 @@ export const ROLE_COLUMNS = {
     "totalPrice",
     "jobStatus",
     "linkDone",
-    "assignedSale",
-    // "assignedEmployee",
+    // "assignedSale",
+    "assignedEmployee",
     "note",
+    "relatedWork",
     // "paymentStatus",
-    "actions",
+    // "actions",
   ],
 } as const;

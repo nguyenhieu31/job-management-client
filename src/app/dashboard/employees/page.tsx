@@ -87,7 +87,6 @@ export default function EmployeesPage() {
     setPagination((prev) => ({ ...prev, currentPage: 1 }));
   };
 
-  // Handle pagination actions
   const handlePageChange = (page: number) => {
     setPagination((prev) => ({ ...prev, currentPage: page }));
   };
@@ -150,11 +149,9 @@ export default function EmployeesPage() {
   }
 
   const handleDeleteEmployee = async (id: number) => {
-    // TODO: Call API to delete employee
     console.log("Deleting employee:", id);
     if (!id) return
     await dispatch(DeleteEmployeeAction(id));
-    // Refresh the employee list
     fetchEmployees();
   };
 
@@ -189,7 +186,6 @@ export default function EmployeesPage() {
     fetchEmployees();
   }, [fetchEmployees]);
 
-  // Update pagination totals when employees data changes
   useEffect(() => {
     if (employees) {
       setPagination((prev) => ({
@@ -202,7 +198,6 @@ export default function EmployeesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
@@ -226,7 +221,6 @@ export default function EmployeesPage() {
         </div>
       </div>
 
-      {/* Filters */}
       <EmployeeFilterBar
         filters={filters}
         onFilterChange={setFilters}
@@ -235,7 +229,6 @@ export default function EmployeesPage() {
         roles={rolesList}
       />
 
-      {/* Table */}
       {loading ? (
         <div className="flex justify-center items-center h-40">
           <Loader width={50} height={50} />
@@ -250,7 +243,6 @@ export default function EmployeesPage() {
             pageSize={pagination.pageSize}
           />
 
-          {/* Pagination */}
           <Pagination
             pagination={pagination}
             totalElements={employees?.totalElements || 0}
@@ -261,7 +253,6 @@ export default function EmployeesPage() {
         </>
       )}
 
-      {/* Form Dialog */}
       <EmployeeForm
         open={formOpen}
         onOpenChange={handleFormClose}

@@ -116,12 +116,12 @@ export const searchVideoByConditions = async (
       params: {
         pageNumber: data.pageNumber,
         pageSize: data.pageSize,
-        keyword: data.keyword,
-        videoStatus: data.videoStatus,
-        paymentStatus: data.paymentStatus,
-        paymentEmployee: data.paymentEmployee,
-        startDate: data.startDate,
-        endDate: data.endDate,
+        keyword: data.keyword ?? undefined,
+        videoStatus: data.videoStatus ?? undefined,
+        paymentStatus: data.paymentStatus ?? undefined,
+        paymentEmployee: data.paymentEmployee ?? undefined,
+        startDate: data.startDate ?? undefined,
+        endDate: data.endDate ?? undefined,
         selectedEmployeeIds: data.selectedEmployeeIds
           ? data.selectedEmployeeIds
           : undefined,
@@ -169,6 +169,7 @@ export const updateGridViewVideo = async (data: {
   paymentEmployee?: string | null;
   doneLink?: string | null;
   payPerFile?: number | null;
+  totalPayPerFile?: number | null;
   payPerFileQa?: number | null;
   assignedSaleId?: number | null;
   isDeleteAssignee?: boolean;
@@ -195,9 +196,11 @@ export const updateGridViewVideo = async (data: {
     if (data.paymentEmployee != null) formData.append("paymentEmployee", data.paymentEmployee);
     if (data.doneLink != null) formData.append("doneLink", data.doneLink);
     if (data.payPerFile != null) formData.append("payPerFile", String(data.payPerFile));
+    if (data.totalPayPerFile != null) formData.append("totalPayPerFile", String(data.totalPayPerFile));
     if (data.payPerFileQa != null) formData.append("payPerFileQa", String(data.payPerFileQa));
     if (data.isDeleteAssignee != null) formData.append("isDeleteAssignee", String(data.isDeleteAssignee));
-    if (data.assignedSaleId != null) formData.append("assignedSaleId", String(data.assignedSaleId));
+  if (data.assignedSaleId != null) formData.append("assignedSaleId", String(data.assignedSaleId));
+  if (data.totalPayPerFile != null) formData.append("totalPayPerFile", String(data.totalPayPerFile));
 
     // Append fileStoragesNeedRemove as JSON string
     if (data.fileStoragesNeedRemove && data.fileStoragesNeedRemove.length > 0) {
@@ -259,6 +262,7 @@ const buildVideoFormData = (
   if (data.fileCount != null) formData.append("fileCount", String(data.fileCount));
   if (data.filePrice != null) formData.append("filePrice", String(data.filePrice));
   if (data.payPerFile != null) formData.append("payPerFile", String(data.payPerFile));
+  if (data.totalPayPerFile != null) formData.append("totalPayPerFile", String(data.totalPayPerFile));
   if (data.inputNumber != null) formData.append("inputNumber", String(data.inputNumber));
   if (data.outputNumber != null) formData.append("outputNumber", String(data.outputNumber));
   if (data.editedNumber != null) formData.append("editedNumber", String(data.editedNumber));
