@@ -228,10 +228,14 @@ export function RelatedWorkSection({
                   }
                 >
                   {item.type === "video" ? (
-                    <Film className="mr-1 h-3 w-3" onClick={(e) => {
-                      e.stopPropagation();
-                      openInNewTab(item.doneLink || "#");
-                    }} />
+                    <a
+                      href={item.doneLink || "#"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Film className="mr-1 h-3 w-3 cursor-pointer" />
+                    </a>
                   ) : (
                     <Briefcase className="mr-1 h-3 w-3" />
                   )}
