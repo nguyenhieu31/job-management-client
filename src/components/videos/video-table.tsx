@@ -1416,6 +1416,10 @@ console.log("editValue: ", editValue)
             size="sm"
             onClick={(e) => {
               e.stopPropagation();
+              if (userRole === "employee" && video.jobStatus === "PENDING") {
+                toast.warning("Bạn cần nhận công việc trước khi xem video tương tự");
+                return;
+              }
               setRelatedWorkVideo(video);
             }}
             className="h-8 gap-1"

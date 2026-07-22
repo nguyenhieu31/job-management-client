@@ -1088,6 +1088,10 @@ export function JobTable({
             size="sm"
             onClick={(e) => {
               e.stopPropagation();
+              if (userRole === "employee" && job.jobStatus === "PENDING") {
+                toast.warning("Bạn cần nhận công việc trước khi xem công việc tương tự");
+                return;
+              }
               setRelatedWorkJob(job);
             }}
             className="h-8 gap-1"
