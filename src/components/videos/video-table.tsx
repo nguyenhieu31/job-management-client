@@ -297,9 +297,6 @@ console.log("editValue: ", editValue)
         baseColumns.push("totalPayPerFile");
       }
     }
-    if (!canEditTotalPayPerFile) {
-      return baseColumns.filter((col) => col !== "totalPayPerFile");
-    }
     // Special saler needs actions column to save totalPayPerFile edits
     if (
       userRole === "saler" &&
