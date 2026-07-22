@@ -16,6 +16,7 @@ export interface CustomerResponse {
     sales?: SaleInfo[];
     isJobAccount: boolean;
     isVideoAccount: boolean;
+    customerNote?: string;
 }
 
 export interface CustomerRequest {
@@ -29,6 +30,7 @@ export interface CustomerRequest {
     primarySaleId?: number;
     isJobAccount: boolean;
     isVideoAccount: boolean;
+    customerNote?: string;
 }
 
 export interface CustomerFilters {
