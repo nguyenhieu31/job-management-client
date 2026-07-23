@@ -134,3 +134,18 @@ export const submitOrder = async (
     throw new Error(err.message);
   }
 };
+
+export const requestRevision = async (orderId: number, revisionNote: string) => {
+  try {
+    const res = await axiosInstance.put(
+      `/orders/${orderId}/request-revision`,
+      null,
+      {
+        params: { revisionNote },
+      },
+    );
+    return res as unknown as ApiResponse<OrderResponse>;
+  } catch (err: any) {
+    throw new Error(err.message);
+  }
+};

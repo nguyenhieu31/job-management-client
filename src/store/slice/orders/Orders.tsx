@@ -2,6 +2,7 @@ import { PageRequest, PageResponse } from "@/components/types/Page";
 import {
   getAllOrders,
   getMyOrders,
+  requestRevision,
   searchAdminOrdersByConditions,
   searchMyOrdersByConditions,
   submitOrder,
@@ -102,6 +103,18 @@ export const updateOrderStatusAction = createAsyncThunk<
 >("updateOrderStatusAction", async (data) => {
   try {
     const response = await updateOrderStatus(data);
+    return response.data as OrderResponse;
+  } catch (err: any) {
+    throw new Error(err.message);
+  }
+});
+
+export const requestRevisionAction = createAsyncThunk<
+  OrderResponse,
+  { id: number; revisionNote: string }
+>("requestRevisionAction", async (data) => {
+  try {
+    const response = await requestRevision(data.id, data.revisionNote);
     return response.data as OrderResponse;
   } catch (err: any) {
     throw new Error(err.message);
@@ -231,6 +244,26 @@ const OrdersSlice = createSlice({
         state.loading = false;
         state.error =
           action.error.message || "Không thể cập nhật trạng thái đơn hàng.";
+      })
+      .addCase(requestRevisionAction.pending, (state) => {
+        state.loading = true;
+        state.error = "";
+      })
+      .addCase(
+        requestRevisionAction.fulfilled,
+        (state, action: PayloadAction<OrderResponse>) => {
+          state.loading = false;
+          if (state.orders?.data) {
+            state.orders.data = state.orders.data.map((o) =>
+              o.id === action.payload.id ? action.payload : o,
+            );
+          }
+        },
+      )
+      .addCase(requestRevisionAction.rejected, (state, action) => {
+        state.loading = false;
+        state.error =
+          action.error.message || "Không thể gửi yêu cầu chỉnh sửa.";
       });
   },
 });

@@ -15,10 +15,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { CustomerJobSummary } from "@/types/invoices";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ChevronDown, ChevronRight, Filter } from "lucide-react";
+import { ChevronDown, ChevronRight, Filter, FileDown } from "lucide-react";
 import { CustomerInfo, JobResponse } from "@/types/jobs";
 import { Label } from "@/components/ui/label";
 import MultiSelectDropdown from "@/components/ui/multi-select-dropdown";
+import { generatePdfInvoice } from "@/lib/pdf/generate-invoice-pdf";
+import { toast } from "react-toastify";
 
 interface InvoiceListProps {
   jobsByCustomer: CustomerJobSummary[];
@@ -87,6 +89,31 @@ export function InvoiceList({
       const customer = jobsByCustomer.find((c) => c.customer.id === customerId);
       return customer?.jobs.some((j) => j.id === jobId);
     });
+  };
+
+  const handleExportPdf = (customerInfo: CustomerInfo, allJobs: JobResponse[]) => {
+    const selectedJobIds = getSelectedJobsByCustomer(customerInfo.id);
+    const selectedJobsToExport = allJobs.filter((j) => selectedJobIds.includes(j.id));
+    if (selectedJobsToExport.length === 0) {
+      toast.warn("Vui lòng chọn ít nhất một công việc để xuất hóa đơn PDF!");
+      return;
+    }
+
+    const invalidJob = selectedJobsToExport.find(
+      (job) => job.filePrice === null || job.outputNumber === null || job.outputNumber === 0 || job.filePrice === 0
+    );
+    if (invalidJob) {
+      toast.error(`Công việc "${invalidJob.caseName}" chưa có tổng tiền. Vui lòng cập nhật trước khi xuất PDF.`);
+      return;
+    }
+
+    try {
+      generatePdfInvoice(customerInfo, selectedJobsToExport);
+      toast.success(`Đã tải xuống hóa đơn PDF cho ${customerInfo.name}!`);
+    } catch (err: any) {
+      console.error("PDF export error:", err);
+      toast.error("Xuất hóa đơn PDF thất bại!");
+    }
   };
 
   if (jobsByCustomer.length === 0) {
@@ -176,13 +203,27 @@ export function InvoiceList({
                   )}
                 </div>
               </div>
-              <div className="text-right mr-4">
-                <p className="text-lg font-bold">
-                  {formatCurrency(customer.totalAmount)}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {customer.jobs.length} công việc
-                </p>
+              <div className="flex items-center gap-4 text-right">
+                <div>
+                  <p className="text-lg font-bold">
+                    {formatCurrency(customer.totalAmount)}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {customer.jobs.length} công việc
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-1.5 border-orange-500 text-orange-600 hover:bg-orange-500/10 dark:text-orange-400 dark:border-orange-400 font-medium transition-colors"
+                  onClick={() => handleExportPdf(customer.customer, customer.jobs)}
+                  disabled={
+                    getSelectedJobsByCustomer(customer.customer.id).length === 0 || loading
+                  }
+                >
+                  <FileDown className="h-4 w-4" />
+                  Xuất PDF ({getSelectedJobsByCustomer(customer.customer.id).length})
+                </Button>
               </div>
             </div>
           </div>

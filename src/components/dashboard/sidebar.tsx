@@ -11,10 +11,9 @@ import { useAppDispatch, useAppSelector } from "@/store/store"
 import { LogoutAction } from "@/store/slice/authentication/Authentication"
 import NotificationBell from "@/components/notifications/notification-bell"
 import LogoImage from "@/assets/logo.png"
+import { MANAGER_USERS } from "@/types/authentication"
 
 const navigation = [
-  { name: "Tổng Quan", href: "/dashboard/overview", icon: BarChart3 },
-  // { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Công Việc Photo", href: "/dashboard/job", icon: Briefcase },
   { name: "Công Việc Video", href: "/dashboard/video", icon: Briefcase },
   { name: "Nhân Viên", href: "/dashboard/employees", icon: Users },
@@ -28,6 +27,7 @@ const navigation = [
   // { name: "Cấu Hình Thư Mục", href: "/dashboard/settings", icon: Folder },
   { name: "Thay Đổi Mật Khẩu", href: "/dashboard/change-password", icon: Lock },
   { name: "Dịch Vụ", href: "/dashboard/order-service", icon: Briefcase },
+  { name: "Tổng Quan", href: "/dashboard/overview", icon: BarChart3 },
   { name: "Quản lý đơn hàng", href: "/dashboard/orders", icon: FileText },
 ]
 
@@ -52,7 +52,7 @@ export function Sidebar() {
           item.href === '/dashboard/my-payroll' ||
           item.href === '/dashboard/change-password'
         )
-      : roleName === 'MANAGER'
+      : roleName === 'MANAGER' && MANAGER_USERS.includes(email)
       ? navigation.filter(item =>
           item.href !== '/dashboard/my-payroll' &&
           item.href !== '/dashboard/order-service'
@@ -63,6 +63,13 @@ export function Sidebar() {
           item.href === '/dashboard/video' ||
           item.href === '/dashboard/customers' ||
           item.href === '/dashboard/change-password'
+        )
+      : roleName === 'MANAGER' && !MANAGER_USERS.includes(email)
+      ? navigation.filter(item =>
+          item.href !== '/dashboard/my-payroll' &&
+          item.href !== '/dashboard/order-service' &&
+          item.href !== '/dashboard/payroll' &&
+          item.href !== '/dashboard/overview'
         )
       : navigation.filter(item => item.href !== '/dashboard/orders');
   }
