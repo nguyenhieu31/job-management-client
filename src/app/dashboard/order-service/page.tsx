@@ -14,6 +14,7 @@ import {
 import { useAppDispatch, useAppSelector } from "@/store/store";
 import {
   getMyOrdersAction,
+  requestRevisionAction,
   searchMyOrdersAction,
   submitOrderAction,
 } from "@/store/slice/orders/Orders";
@@ -140,6 +141,17 @@ export default function OrderServicePage() {
     );
   };
 
+  const handleRequestRevision = async (orderId: number, revisionNote: string) => {
+    try {
+      await dispatch(
+        requestRevisionAction({ id: orderId, revisionNote }),
+      ).unwrap();
+      toast.success("Revision request submitted. The team will review it.");
+    } catch (err: any) {
+      toast.error(err?.message || "Cannot request revision. Please try again.");
+    }
+  };
+
   if (!roleName) {
     return (
       <div className="flex justify-center items-center h-40">
@@ -197,6 +209,7 @@ export default function OrderServicePage() {
           totalItems={totalItems}
           onApply={handleApplyFilters}
           onReset={handleResetFilters}
+          onRequestRevision={handleRequestRevision}
         />
 
         <Dialog

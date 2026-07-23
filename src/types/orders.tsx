@@ -30,6 +30,15 @@ export interface OrderResponse {
    managerRejectNote?: string | null;
    linkDone?: string | null;
    doneNote?: string | null;
+   customerRevisionNote?: string | null;
+   orderHistory?: Array<{
+     type: string;
+     note?: string | null;
+     linkDone?: string | null;
+     doneNote?: string | null;
+     updatedBy: string;
+     timestamp: string;
+   }> | null;
    attachments?: OrderAttachment[];
   createdAt: string;
   updatedAt: string;

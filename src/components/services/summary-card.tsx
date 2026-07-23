@@ -15,6 +15,7 @@ import {
   PHOTO_ADDON_OPTIONS,
   VIRTUAL_STAGING_ROOMS,
   VIRTUAL_STAGING_STYLES,
+  AI_SCENE_PRICE,
   isVideoServiceSelected,
   isNonVirtualStagingPhotoSelected,
   isVirtualStagingSelected,
@@ -220,8 +221,16 @@ export function SummaryCard({ state, mobile = false }: SummaryCardProps) {
             )}
             {state.aiOption && (
               <li>
-                AI Option (+$20)
+                AI Voiceover (+$20)
                 {state.aiNote ? `: ${state.aiNote}` : ""}
+              </li>
+            )}
+            {state.aiSceneCount > 0 && (
+              <li className="flex justify-between gap-2">
+                <span>AI Scenes</span>
+                <span className="tabular-nums text-muted-foreground">
+                  {state.aiSceneCount} × {formatCurrency(AI_SCENE_PRICE)} = {formatCurrency(state.aiSceneCount * AI_SCENE_PRICE)}
+                </span>
               </li>
             )}
             {state.boundaryDrawOption && (

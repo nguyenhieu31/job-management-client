@@ -46,6 +46,7 @@ export interface AddServiceFormState {
   transitionsNote: string;
   aiOption: boolean;
   aiNote: string;
+  aiSceneCount: number;
   boundaryDrawOption: boolean;
   boundaryDrawNote: string;
   uploadMethods: string[];
@@ -97,6 +98,7 @@ export const VIDEO_DURATION_OPTIONS = [
 
 export const DURATION_EXTEND_PRICE = 10;
 export const DURATION_EXTEND_UNIT_SECONDS = 15;
+export const AI_SCENE_PRICE = 20;
 
 export const VIDEO_STYLE_OPTIONS = [
   { value: "clean-simple", label: "Clean & Simple" },
@@ -523,6 +525,7 @@ export function computeEstimatedPrice(state: AddServiceFormState): number {
     }
 
     if (state.aiOption) total += 20;
+    if (state.aiSceneCount > 0) total += state.aiSceneCount * AI_SCENE_PRICE;
     if (state.boundaryDrawOption) total += 10;
 
     total += sumArrayPrices(TEXT_CAPTIONS_OPTIONS, state.textCaptions);
@@ -561,6 +564,7 @@ export function getInitialFormState(): AddServiceFormState {
     transitionsNote: "",
     aiOption: false,
     aiNote: "",
+    aiSceneCount: 0,
     boundaryDrawOption: false,
     boundaryDrawNote: "",
     uploadMethods: [],

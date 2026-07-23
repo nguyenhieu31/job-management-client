@@ -31,3 +31,5 @@ export type GoogleAuthResponse = {
     roleName: string;
     isNewUser: boolean;
 }
+
+export const MANAGER_USERS = ['linh@gmail.com', 'hieupo@gmail.com']

@@ -15,6 +15,7 @@ import {
   VIRTUAL_STAGING_STYLES,
   PHOTO_ADDON_OPTIONS,
   PHOTO_QTY_MAX,
+  AI_SCENE_PRICE,
   isVideoServiceSelected,
   isVirtualStagingSelected,
   isNonVirtualStagingPhotoSelected,
@@ -343,7 +344,7 @@ export function ServiceDetailsStep({
                       {renderCheckboxOption(
                         {
                           value: opt.key,
-                          label: `${opt.label}`,
+                          label: `${opt.label}${opt.price ? ` (+$${opt.price}/photo)` : ""}`,
                         },
                         checked,
                         (v) => setAddon(opt.key, v),
@@ -626,6 +627,21 @@ export function ServiceDetailsStep({
                     onChange={(v) => onChange("aiNote", v)}
                     rows={2}
                   />
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <QuantityStepper
+                  id="aiSceneCount"
+                  label={`AI Scenes (${formatCurrency(AI_SCENE_PRICE)}/scene)`}
+                  gloss="Number of AI-generated scenes to process"
+                  value={state.aiSceneCount}
+                  onValueChange={(n) => onChange("aiSceneCount", n)}
+                />
+                {state.aiSceneCount > 0 && (
+                  <p className="text-xs text-muted-foreground pl-1">
+                    {state.aiSceneCount} × {formatCurrency(AI_SCENE_PRICE)} = {formatCurrency(state.aiSceneCount * AI_SCENE_PRICE)}
+                  </p>
                 )}
               </div>
 

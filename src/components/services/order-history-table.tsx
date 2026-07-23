@@ -37,9 +37,10 @@ import {
 import type { OrderResponse, OrderStatus } from "@/types/orders";
 import {
   ASPECT_RATIO_OPTIONS,
+  AI_SCENE_PRICE,
+  DURATION_EXTEND_PRICE,
   MUSIC_OPTIONS,
   PHOTO_SERVICES,
-  PHOTO_QUANTITY_FIELDS,
   PHOTO_ADDON_OPTIONS,
   TEXT_CAPTIONS_OPTIONS,
   TRANSITIONS_OPTIONS,
@@ -50,6 +51,9 @@ import {
   VIRTUAL_STAGING_ROOMS,
   VIRTUAL_STAGING_STYLES,
   VIRTUAL_STAGING_LEGACY_ROOM_LABELS,
+  isVideoServiceSelected,
+  isNonVirtualStagingPhotoSelected,
+  isVirtualStagingSelected,
 } from "@/types/services";
 import {
   ChevronLeft,
@@ -252,54 +256,74 @@ function isFilledString(v: unknown): v is string {
   return typeof v === "string" && v.trim().length > 0;
 }
 
-function ConfigSection({ title, children }: { title: string; children: React.ReactNode }) {
+function isUrl(v: string): boolean {
+  return v.startsWith("http://") || v.startsWith("https://");
+}
+
+function linkifyText(text: string): React.ReactNode {
+  const urlRegex = /(https?:\/\/[^\s<]+[^\s<.,;:!?)}\]'"])/g;
+  const parts = text.split(urlRegex);
+  if (parts.length === 1) return text;
+  return parts.map((part, i) =>
+    part.startsWith("http://") || part.startsWith("https://")
+      ? <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="text-primary underline underline-offset-2 hover:text-primary/80">{part}</a>
+      : part,
+  );
+}
+
+function SectionHeading({ title }: { title: string }) {
   return (
-    <section className="space-y-3 rounded-lg border bg-card p-4 sm:p-6">
+    <div className="flex items-center gap-2">
+      <div className="h-2 w-2 rounded-full bg-primary" />
       <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
         {title}
       </h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
-        {children}
-      </div>
-    </section>
-  );
-}
-
-function ConfigRow({ label, value, highlight }: { label: string; value: string | null | undefined; highlight?: boolean }) {
-  if (!value) return null;
-  return (
-    <div className={highlight ? "col-span-full rounded-md border border-amber-200 bg-amber-50/60 p-2" : ""}>
-      <ConfigLabel label={label} />
-      <p className="text-sm whitespace-pre-wrap">{value}</p>
     </div>
   );
 }
 
-function ConfigListRow({ label, values, highlight }: { label: string; values: string[] | null | undefined; highlight?: boolean }) {
+function DetailRow({ label, value, highlight }: { label: string; value: string | null | undefined; highlight?: boolean }) {
+  const display = value || "N/A";
+  return (
+    <div className={highlight ? "rounded-md border border-amber-200 bg-amber-50/60 p-2" : ""}>
+      <span className="text-xs font-medium text-muted-foreground">{label}</span>
+      {value && isUrl(value) ? (
+        <p className="text-sm">
+          <a href={value} target="_blank" rel="noopener noreferrer" className="text-primary underline underline-offset-2 hover:text-primary/80">
+            {value}
+          </a>
+        </p>
+      ) : (
+        <p className="text-sm whitespace-pre-wrap">{value ? linkifyText(value) : display}</p>
+      )}
+    </div>
+  );
+}
+
+function DetailList({ label, values }: { label: string; values: string[] | null | undefined }) {
   if (!values || values.length === 0) return null;
   return (
-    <div className={highlight ? "col-span-full rounded-md border border-amber-200 bg-amber-50/60 p-2" : ""}>
-      <ConfigLabel label={label} />
-      <ul className="mt-0.5 list-inside list-disc text-sm">
-        {values.map((item, i) => (
-          <li key={i}>{item}</li>
-        ))}
-      </ul>
+    <div>
+      <span className="text-xs font-medium text-muted-foreground">{label}</span>
+      {values.map((v, i) => (
+        <p key={i} className="text-sm">&bull; {v}</p>
+      ))}
     </div>
   );
-}
-
-function ConfigLabel({ label }: { label: string }) {
-  return <span className="text-xs font-medium text-muted-foreground">{label}</span>;
 }
 
 function ConfigurationDetails({ config }: { config: unknown }) {
   if (!config || typeof config !== "object") return null;
   const obj = config as Record<string, unknown>;
 
-  const serviceLabels = Array.isArray(obj.selectedServices)
-    ? (obj.selectedServices as string[]).map((id) => SERVICE_LABEL_LOOKUP.get(id) ?? id)
+  const selectedServices = Array.isArray(obj.selectedServices)
+    ? (obj.selectedServices as string[])
     : [];
+  const serviceLabels = selectedServices.map((id) => SERVICE_LABEL_LOOKUP.get(id) ?? id);
+  const hasVideo = isVideoServiceSelected(selectedServices);
+  const hasNonVSPhoto = isNonVirtualStagingPhotoSelected(selectedServices);
+  const hasVirtualStaging = isVirtualStagingSelected(selectedServices);
+
   const textCaptionLabels = Array.isArray(obj.textCaptions)
     ? (obj.textCaptions as string[]).map((v) => lookupLabel(TEXT_CAPTIONS_OPTIONS, v) ?? v)
     : [];
@@ -312,6 +336,7 @@ function ConfigurationDetails({ config }: { config: unknown }) {
   const realEstateAddress = obj.realEstateAddress as string | undefined;
   const instagramHandle = obj.instagramHandle as string | undefined;
   const websiteUrl = obj.websiteUrl as string | undefined;
+
   const videoDuration = isFilledString(obj.videoDuration)
     ? (lookupLabel(VIDEO_DURATION_OPTIONS, obj.videoDuration) ?? obj.videoDuration)
     : null;
@@ -330,6 +355,7 @@ function ConfigurationDetails({ config }: { config: unknown }) {
     ? (lookupLabel(TRANSITIONS_OPTIONS, obj.transitions) ?? obj.transitions)
     : null;
   const aiOption = !!obj.aiOption;
+  const aiSceneCount = Number(obj.aiSceneCount) || 0;
   const boundaryDrawOption = !!obj.boundaryDrawOption;
   const confirmRequirements = !!obj.confirmRequirements;
   const confirmExtraCharges = !!obj.confirmExtraCharges;
@@ -373,6 +399,12 @@ function ConfigurationDetails({ config }: { config: unknown }) {
     : [];
   const hasPhotoQty = photoQtyTotal > 0 || legacyPhotoQtyLine.length > 0;
 
+  const photoServiceId = selectedServices.find((id) =>
+    PHOTO_SERVICES.some((s) => s.id === id),
+  );
+  const photoServiceObj = PHOTO_SERVICES.find((s) => s.id === photoServiceId);
+  const unitPrice = photoServiceObj?.price ?? 0;
+
   const photoAddOns =
     obj.photoAddOns && typeof obj.photoAddOns === "object"
       ? (obj.photoAddOns as Record<string, unknown>)
@@ -382,7 +414,8 @@ function ConfigurationDetails({ config }: { config: unknown }) {
   if (photoAddOns) {
     for (const opt of PHOTO_ADDON_OPTIONS) {
       if (photoAddOns[opt.key]) {
-        addonLines.push(opt.label);
+        const priceSuffix = opt.price ? ` (+$${opt.price}/photo)` : "";
+        addonLines.push(`${opt.label}${priceSuffix}`);
         const note = photoAddOns[opt.noteKey];
         if (isFilledString(note)) {
           addonNotes.push({ label: `${opt.label} note`, note: String(note) });
@@ -446,129 +479,240 @@ function ConfigurationDetails({ config }: { config: unknown }) {
     isFilledString(vsRoomsNote) ||
     roomNoteEntries.length > 0;
 
-  const hasNotes =
-    configOrderNotes ||
-    aiNote ||
-    musicNote ||
-    textCaptionsNote ||
-    transitionsNote ||
-    boundaryDrawNote ||
-    photoServiceNote ||
-    vsStyleNote ||
-    vsRoomsNote ||
-    roomNoteEntries.length > 0 ||
-    addonNotes.length > 0;
   const hasUpload =
     uploadMethodLabels.length > 0 || dropboxLink || googleDriveLink || wetransferLink;
+  const hasAnyCustomer = customerName || customerEmail || realEstateAddress || instagramHandle || websiteUrl;
+
+  const vsPrice = PHOTO_SERVICES.find((s) => s.id === "virtual-staging")?.price ?? 0;
+  const vsTotal = roomCountLines.length > 0
+    ? roomCountLines.reduce((sum, line) => {
+        const match = line.match(/— (\d+) photos/);
+        return sum + (match ? parseInt(match[1], 10) : 0);
+      }, 0)
+    : legacyRoomLabels.length;
+
+  /* ---- price calculation helpers ---- */
+
+  const customDurationPrice = (() => {
+    if (videoDuration !== "Custom" && videoDuration !== "custom") return null;
+    const secs = parseInt(customVideoDuration ?? "", 10);
+    if (!Number.isFinite(secs) || secs < 1) return null;
+    if (secs < 60) return { secs, extra: 0, cost: 0, free: true };
+    const extra = Math.floor((secs - 60) / 15);
+    return { secs, extra, cost: extra * DURATION_EXTEND_PRICE, free: false };
+  })();
+
+  const durationPriceLine = (videoDurationExtended ?? 0) > 0
+    ? `${videoDurationExtended} × 15s = +$${(videoDurationExtended ?? 0) * DURATION_EXTEND_PRICE}`
+    : null;
+
+  const aiScenePriceLine = aiSceneCount > 0
+    ? `${aiSceneCount} × $${AI_SCENE_PRICE} = $${aiSceneCount * AI_SCENE_PRICE}`
+    : null;
+
+  const aspectPriceLine = aspectRatios === "Both" || aspectRatios === "both"
+    ? `${aspectRatios} +$15`
+    : aspectRatios;
 
   return (
     <div className="space-y-5">
-      {(customerName || customerEmail || realEstateAddress || instagramHandle || websiteUrl) && (
-        <ConfigSection title="Customer & Property">
-          <ConfigRow label="Customer Name" value={customerName} />
-          <ConfigRow label="Customer Email" value={customerEmail} />
-          <ConfigRow label="Real Estate Address" value={realEstateAddress} />
-          <ConfigRow label="Instagram" value={instagramHandle} />
-          <ConfigRow label="Website URL" value={websiteUrl} />
-        </ConfigSection>
+      {/* ====== 1. Customer & Property ====== */}
+      {hasAnyCustomer && (
+        <section className="space-y-4 rounded-lg border bg-card p-4 sm:p-6">
+          <SectionHeading title="Customer & Property" />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <DetailRow label="Full Name" value={customerName} />
+            <DetailRow label="Paypal Email" value={customerEmail} />
+            <DetailRow label="Real Estate Address" value={realEstateAddress} />
+            <DetailRow label="Instagram" value={instagramHandle} />
+            <DetailRow label="Website" value={websiteUrl} />
+          </div>
+        </section>
       )}
 
-      {(serviceLabels.length > 0 ||
-        videoDuration ||
-        videoStyle ||
-        aspectRatios ||
-        music ||
-        textCaptionLabels.length > 0 ||
-        transitions ||
-        customVideoDuration ||
-        (videoDurationExtended != null && videoDurationExtended > 0)) && (
-        <ConfigSection title="Services & Configuration">
-          <ConfigListRow label="Selected Services" values={serviceLabels} />
-          <ConfigRow label="Video Duration" value={videoDuration} />
-          {videoDuration === "Custom" || videoDuration === "custom" ? (
-            <ConfigRow
-              label="Custom Duration"
-              value={customVideoDuration ? `${customVideoDuration}s` : undefined}
+      {/* ====== 2. Photo Quantities (non-VS photo) ====== */}
+      {hasNonVSPhoto && hasPhotoQty && (
+        <section className="space-y-4 rounded-lg border bg-card p-4 sm:p-6">
+          <SectionHeading title="Photo Quantities" />
+          <div className="space-y-3">
+            <div className="rounded-lg border p-3">
+              <span className="text-xs font-medium text-muted-foreground">
+                {photoServiceObj?.label ?? "Photo"} Quantity
+              </span>
+              <p className="text-sm font-medium">{photoQtyTotal} photos</p>
+              {unitPrice > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  {photoQtyTotal} × {formatCurrency(unitPrice)} = {formatCurrency(photoQtyTotal * unitPrice)}
+                </p>
+              )}
+            </div>
+            {legacyPhotoQtyLine.length > 0 && (
+              <DetailList label="Legacy Quantities" values={legacyPhotoQtyLine} />
+            )}
+            {hasAddons ? (
+              <div className="space-y-2">
+                <span className="text-xs font-medium text-muted-foreground">Replacement Add-ons</span>
+                <div className="space-y-2">
+                  {addonLines.map((line, i) => (
+                    <div key={i} className="rounded-lg border p-3">
+                      <p className="text-sm">{line}</p>
+                    </div>
+                  ))}
+                  {addonNotes.map((n, i) => (
+                    <p key={i} className="text-xs text-muted-foreground pl-1">{n.label}: {n.note}</p>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <DetailRow label="Photo service notes" value={photoServiceNote} />
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* ====== 3. Video Editing Options ====== */}
+      {hasVideo && (
+        <section className="space-y-4 rounded-lg border bg-card p-4 sm:p-6">
+          <SectionHeading title="Video Editing Options" />
+          <div className="grid gap-4 md:grid-cols-2">
+            {/* Video Duration */}
+            <div className="rounded-lg border p-4 space-y-2">
+              <span className="text-xs font-medium text-muted-foreground">Video Duration</span>
+              <p className="text-sm">{videoDuration ?? "N/A"}</p>
+              {videoDuration === "Custom" && customDurationPrice && (
+                <p className="text-xs text-muted-foreground">
+                  {customDurationPrice.secs}s
+                  {customDurationPrice.free
+                    ? " · Free (under 60s)"
+                    : ` · First 60s free · ${customDurationPrice.extra} × 15s = +$${customDurationPrice.cost}`}
+                </p>
+              )}
+              {(videoDurationExtended ?? 0) > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Extended Duration: {durationPriceLine ?? `${videoDurationExtended} × 15s`}
+                </p>
+              )}
+            </div>
+
+            {/* Video Style */}
+            <div className="rounded-lg border p-4 space-y-2">
+              <span className="text-xs font-medium text-muted-foreground">Video Editing Style</span>
+              <p className="text-sm">{videoStyle ?? "N/A"}</p>
+            </div>
+
+            {/* Aspect Ratio */}
+            <div className="rounded-lg border p-4 space-y-2">
+              <span className="text-xs font-medium text-muted-foreground">Aspect Ratio</span>
+              <p className="text-sm">{aspectPriceLine ?? "N/A"}</p>
+            </div>
+
+            {/* Background Music */}
+            <div className="rounded-lg border p-4 space-y-2">
+              <span className="text-xs font-medium text-muted-foreground">Background Music</span>
+              <p className="text-sm">{music ?? "N/A"}</p>
+              {musicNote && <p className="text-xs text-muted-foreground">{musicNote}</p>}
+              {music === "I will provide" && (
+                <p className="text-xs text-muted-foreground">Music file: N/A (not stored in config)</p>
+              )}
+            </div>
+
+            {/* Text & Captions */}
+            <div className="rounded-lg border p-4 space-y-2">
+              <span className="text-xs font-medium text-muted-foreground">Text & Captions</span>
+              {textCaptionLabels.length > 0 ? (
+                <div className="space-y-0.5">
+                  {textCaptionLabels.map((label, i) => (
+                    <p key={i} className="text-sm">&bull; {label}</p>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">N/A</p>
+              )}
+              {textCaptionsNote && <p className="text-xs text-muted-foreground">{textCaptionsNote}</p>}
+            </div>
+
+            {/* Transitions */}
+            <div className="rounded-lg border p-4 space-y-2">
+              <span className="text-xs font-medium text-muted-foreground">Transitions</span>
+              <p className="text-sm">{transitions ?? "N/A"}</p>
+              {transitionsNote && <p className="text-xs text-muted-foreground">{transitionsNote}</p>}
+            </div>
+          </div>
+
+          {/* Additional Options */}
+          <div className="rounded-lg border p-4 space-y-3">
+            <span className="text-xs font-medium text-muted-foreground">Additional Options</span>
+            <div className="space-y-2">
+              <p className="text-sm">
+                AI Voiceover: {aiOption ? "Yes (+$20)" : "N/A"}
+              </p>
+              {aiNote && <p className="text-xs text-muted-foreground pl-3">{aiNote}</p>}
+              {aiSceneCount > 0 && (
+                <p className="text-sm">AI Scenes: {aiScenePriceLine}</p>
+              )}
+              <p className="text-sm">
+                Boundary Draw: {boundaryDrawOption ? "Yes (+$10)" : "N/A"}
+              </p>
+              {boundaryDrawNote && <p className="text-xs text-muted-foreground pl-3">{boundaryDrawNote}</p>}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ====== 4. Virtual Staging ====== */}
+      {hasVirtualStaging && hasVS && (
+        <section className="space-y-4 rounded-lg border bg-card p-4 sm:p-6">
+          <SectionHeading title="Virtual Staging" />
+          <div className="space-y-3">
+            <DetailRow label="Style" value={virtualStagingStyle} />
+            <DetailRow label="Style notes" value={vsStyleNote} highlight />
+            <DetailList
+              label="Rooms"
+              values={roomCountLines.length > 0 ? roomCountLines : legacyRoomLabels}
             />
-          ) : null}
-          {videoDurationExtended != null && videoDurationExtended > 0 ? (
-            <ConfigRow
-              label="Extended Duration"
-              value={`+${videoDurationExtended} × 15s`}
-            />
-          ) : null}
-          <ConfigRow label="Editing Style" value={videoStyle} />
-          <ConfigRow label="Aspect Ratio" value={aspectRatios} />
-          <ConfigRow label="Background Music" value={music} />
-          <ConfigListRow label="Text & Captions" values={textCaptionLabels} />
-          <ConfigRow label="Transitions" value={transitions} />
-          {aiOption && <ConfigRow label="AI Voiceover (+$20)" value="Yes" />}
-          {boundaryDrawOption && (
-            <ConfigRow label="Boundary Draw (+$10)" value="Yes" />
-          )}
-          {confirmRequirements && (
-            <ConfigRow label="Requirements Confirmed" value="Yes" />
-          )}
-          {confirmExtraCharges && (
-            <ConfigRow label="Extra Charges Confirmed" value="Yes" />
-          )}
-        </ConfigSection>
+            {vsTotal > 0 && (
+              <p className="text-sm font-medium">
+                Total staged photos: {vsTotal} · {formatCurrency(vsPrice)}/photo = {formatCurrency(vsTotal * vsPrice)}
+              </p>
+            )}
+            {roomNoteEntries.map((r) => (
+              <DetailRow key={r.roomLabel} label={`${r.roomLabel} note`} value={r.note} highlight />
+            ))}
+            <DetailRow label="Room notes" value={vsRoomsNote} highlight />
+          </div>
+        </section>
       )}
 
-      {hasPhotoQty && (
-        <ConfigSection title="Photo Quantities">
-          <ConfigListRow label="Quantity" values={legacyPhotoQtyLine} />
-          {photoQtyTotal > 0 && (
-            <ConfigRow label="Total photos" value={String(photoQtyTotal)} />
-          )}
-        </ConfigSection>
-      )}
-
-      {hasAddons && (
-        <ConfigSection title="Replacement Add-ons">
-          <ConfigListRow label="Enabled" values={addonLines} />
-          {addonNotes.map((n) => (
-            <ConfigRow key={n.label} label={n.label} value={n.note} highlight />
-          ))}
-        </ConfigSection>
-      )}
-
-      {hasVS && (
-        <ConfigSection title="Virtual Staging">
-          <ConfigRow label="Style" value={virtualStagingStyle} />
-          <ConfigListRow
-            label="Rooms"
-            values={
-              roomCountLines.length > 0 ? roomCountLines : legacyRoomLabels
-            }
-          />
-          <ConfigRow label="Style notes" value={vsStyleNote} highlight />
-          {roomNoteEntries.map((r) => (
-            <ConfigRow key={r.roomLabel} label={`${r.roomLabel} note`} value={r.note} highlight />
-          ))}
-          <ConfigRow label="Room notes" value={vsRoomsNote} highlight />
-        </ConfigSection>
-      )}
-
+      {/* ====== 5. Upload Methods ====== */}
       {hasUpload && (
-        <ConfigSection title="Upload Methods">
-          <ConfigListRow label="Upload Method" values={uploadMethodLabels} />
-          <ConfigRow label="Dropbox Link" value={dropboxLink} />
-          <ConfigRow label="Google Drive Link" value={googleDriveLink} />
-          <ConfigRow label="WeTransfer Link" value={wetransferLink} />
-        </ConfigSection>
+        <section className="space-y-4 rounded-lg border bg-card p-4 sm:p-6">
+          <SectionHeading title="Upload Files" />
+          <div className="space-y-3">
+            <DetailList label="Upload Method" values={uploadMethodLabels} />
+            <DetailRow label="Dropbox Link" value={dropboxLink} />
+            <DetailRow label="Google Drive Link" value={googleDriveLink} />
+            <DetailRow label="WeTransfer Link" value={wetransferLink} />
+          </div>
+        </section>
       )}
 
-      {hasNotes && (
-        <ConfigSection title="Notes & Instructions">
-          <ConfigRow label="Order Notes" value={configOrderNotes} highlight />
-          <ConfigRow label="Photo service notes" value={photoServiceNote} highlight />
-          <ConfigRow label="AI Voiceover Note" value={aiNote} highlight />
-          <ConfigRow label="Music Note" value={musicNote} highlight />
-          <ConfigRow label="Text Captions Note" value={textCaptionsNote} highlight />
-          <ConfigRow label="Transitions Note" value={transitionsNote} highlight />
-          <ConfigRow label="Boundary Draw Note" value={boundaryDrawNote} highlight />
-        </ConfigSection>
+      {/* ====== 6. Order Notes ====== */}
+      {configOrderNotes && (
+        <section className="space-y-4 rounded-lg border bg-card p-4 sm:p-6">
+          <SectionHeading title="Order Notes" />
+          <p className="text-sm whitespace-pre-wrap">{linkifyText(configOrderNotes)}</p>
+        </section>
+      )}
+
+      {/* ====== 7. Confirmation ====== */}
+      {(confirmRequirements || confirmExtraCharges) && (
+        <section className="space-y-4 rounded-lg border bg-card p-4 sm:p-6">
+          <SectionHeading title="Confirm Revision Policy" />
+          <div className="space-y-1">
+            {confirmRequirements && <p className="text-sm">&bull; Requirements confirmed: Yes</p>}
+            {confirmExtraCharges && <p className="text-sm">&bull; Extra charges confirmed: Yes</p>}
+          </div>
+        </section>
       )}
     </div>
   );
@@ -681,6 +825,15 @@ export function OrderDetailDialog({
             </div>
           )}
 
+          {order.customerRevisionNote && (
+            <div className="space-y-2">
+              <h3 className="font-semibold text-amber-700">Revision Request</h3>
+              <p className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm whitespace-pre-wrap text-amber-800">
+                {order.customerRevisionNote}
+              </p>
+            </div>
+          )}
+
           {order.linkDone && (
             <div className="space-y-2">
               <h3 className="font-semibold text-emerald-700">Link Done</h3>
@@ -698,6 +851,40 @@ export function OrderDetailDialog({
               <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm whitespace-pre-wrap text-emerald-800">
                 {order.doneNote}
               </p>
+            </div>
+          )}
+
+          {order.orderHistory && order.orderHistory.length > 0 && (
+            <div className="space-y-3">
+              <h3 className="font-semibold">Order History</h3>
+              <div className="space-y-2">
+                {order.orderHistory.map((event, idx) => (
+                  <div key={idx} className="rounded-lg border p-3 text-sm space-y-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-medium">
+                        {event.type === "COMPLETED" ? "Completed" : "Revision Requested"}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(event.timestamp).toLocaleString("en-US")} &middot; {event.updatedBy}
+                      </span>
+                    </div>
+                    {event.linkDone && (
+                      <div>
+                        <span className="text-xs text-muted-foreground">Link: </span>
+                        <a href={event.linkDone} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline">
+                          {event.linkDone}
+                        </a>
+                      </div>
+                    )}
+                    {event.doneNote && (
+                      <p className="text-xs text-muted-foreground">{event.doneNote}</p>
+                    )}
+                    {event.note && (
+                      <p className="text-xs text-amber-700">{event.note}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
@@ -815,6 +1002,7 @@ interface OrderHistoryTableProps {
     linkDone?: string,
     doneNote?: string,
   ) => void | Promise<void>;
+  onRequestRevision?: (orderId: number, revisionNote: string) => void | Promise<void>;
   onApply: (filters: {
     keyword: string;
     status: OrderStatus | null;
@@ -834,6 +1022,7 @@ export function OrderHistoryTable({
   mode = "customer",
   actionLoading = false,
   onStatusChange,
+  onRequestRevision,
   onApply,
   onReset,
 }: OrderHistoryTableProps) {
@@ -854,6 +1043,11 @@ export function OrderHistoryTable({
   }>({ open: false, orderId: null });
   const [completeLinkDone, setCompleteLinkDone] = useState("");
   const [completeDoneNote, setCompleteDoneNote] = useState("");
+  const [revisionDialog, setRevisionDialog] = useState<{
+    open: boolean;
+    orderId: number | null;
+  }>({ open: false, orderId: null });
+  const [revisionNote, setRevisionNote] = useState("");
 
   const isBusy = loading || searching || actionLoading;
   const isManager = mode === "manager";
@@ -1039,6 +1233,9 @@ export function OrderHistoryTable({
                     <TableHead>Created</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Est. Price</TableHead>
+                    {!isManager && (
+                      <TableHead className="text-right">Actions</TableHead>
+                    )}
                     {isManager && (
                       <TableHead className="text-right">Actions</TableHead>
                     )}
@@ -1084,6 +1281,27 @@ export function OrderHistoryTable({
                             ? `${VND_FORMATTER.format(order.estimatedPrice)}`
                             : "\u2014"}
                         </TableCell>
+                        {!isManager && (
+                          <TableCell
+                            className="text-right"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {order.status === "COMPLETED" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={isBusy}
+                                className="h-8 border-amber-500 text-amber-700 hover:bg-amber-50"
+                                onClick={() => {
+                                  setRevisionDialog({ open: true, orderId: order.id });
+                                  setRevisionNote("");
+                                }}
+                              >
+                                Request Revision
+                              </Button>
+                            )}
+                          </TableCell>
+                        )}
                         {isManager && (
                           <TableCell
                             className="text-right"
@@ -1299,6 +1517,58 @@ export function OrderHistoryTable({
               }}
             >
               Confirm Complete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={revisionDialog.open}
+        onOpenChange={(open) => {
+          if (!open) {
+            setRevisionDialog({ open: false, orderId: null });
+            setRevisionNote("");
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Request Revision</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Describe what changes you would like made to the delivered work.
+            </p>
+            <Textarea
+              placeholder="Describe the changes you need..."
+              value={revisionNote}
+              onChange={(e) => setRevisionNote(e.target.value)}
+              className="min-h-[120px]"
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setRevisionDialog({ open: false, orderId: null });
+                setRevisionNote("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              disabled={actionLoading || revisionDialog.orderId == null || !revisionNote.trim()}
+              onClick={async () => {
+                if (revisionDialog.orderId == null) return;
+                await onRequestRevision?.(
+                  revisionDialog.orderId,
+                  revisionNote.trim(),
+                );
+                setRevisionDialog({ open: false, orderId: null });
+                setRevisionNote("");
+              }}
+            >
+              Submit Revision Request
             </Button>
           </DialogFooter>
         </DialogContent>

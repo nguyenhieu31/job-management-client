@@ -156,11 +156,6 @@ export function RelatedWorkSection({
     setLoading(false);
   }, [customerCode, currentItemId, currentItemType]);
 
-  const openInNewTab = (url: string) => {
-    const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
-    if (newWindow) newWindow.opener = null;
-  };
-
   useEffect(() => {
     fetchRelated();
   }, [fetchRelated]);
@@ -227,19 +222,19 @@ export function RelatedWorkSection({
                       : "bg-emerald-500/10 text-emerald-700 border-emerald-500/20 shrink-0"
                   }
                 >
-                  {item.type === "video" ? (
-                    <a
+                  <a
                       href={item.doneLink || "#"}
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
-                    >
+                  >
+                    {item.type === "video" ? (
                       <Film className="mr-1 h-3 w-3 cursor-pointer" />
-                    </a>
-                  ) : (
-                    <Briefcase className="mr-1 h-3 w-3" />
-                  )}
-                  {item.type === "video" ? "Video" : "Photo"}
+                    ) : (
+                      <Briefcase className="mr-1 h-3 w-3" />
+                    )}
+                    {item.type === "video" ? "Video" : "Photo"}
+                  </a>
                 </Badge>
 
                 <div className="min-w-0 flex-1">
