@@ -227,6 +227,7 @@ export function RelatedWorkSection({
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
+                      className="flex items-center gap-1"
                   >
                     {item.type === "video" ? (
                       <Film className="mr-1 h-3 w-3 cursor-pointer" />

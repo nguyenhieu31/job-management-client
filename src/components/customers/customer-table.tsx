@@ -48,6 +48,7 @@ export function CustomerTable({
         <TableHeader>
           <TableRow>
             <TableHead className="w-12">STT</TableHead>
+            <TableHead>Mã Khách Hàng</TableHead>
             <TableHead>Họ Tên</TableHead>
             <TableHead>Email Invoice</TableHead>
             <TableHead>Ghi Chú</TableHead>
@@ -60,7 +61,7 @@ export function CustomerTable({
         <TableBody>
           {customers.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={roleName === "MANAGER" ? 6 : 5} className="text-center py-8">
+              <TableCell colSpan={roleName === "MANAGER" ? 7 : 6} className="text-center py-8">
                 <p className="text-muted-foreground">
                   Không tìm thấy khách hàng
                 </p>
@@ -76,6 +77,7 @@ export function CustomerTable({
                 <TableCell className="text-muted-foreground">
                   {(currentPage - 1) * pageSize + index + 1}
                 </TableCell>
+                <TableCell className="font-mono text-sm font-semibold">{customer.customerCode || "—"}</TableCell>
                 <TableCell className="font-medium">{customer.name}</TableCell>
                 <TableCell>{customer.email}</TableCell>
                 <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">

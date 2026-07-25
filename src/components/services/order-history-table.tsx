@@ -38,6 +38,7 @@ import type { OrderResponse, OrderStatus } from "@/types/orders";
 import {
   ASPECT_RATIO_OPTIONS,
   AI_SCENE_PRICE,
+  TEXT_2D_3D_PRICE,
   DURATION_EXTEND_PRICE,
   MUSIC_OPTIONS,
   PHOTO_SERVICES,
@@ -356,6 +357,7 @@ function ConfigurationDetails({ config }: { config: unknown }) {
     : null;
   const aiOption = !!obj.aiOption;
   const aiSceneCount = Number(obj.aiSceneCount) || 0;
+  const text2d3dCount = Number(obj.text2d3dCount) || 0;
   const boundaryDrawOption = !!obj.boundaryDrawOption;
   const confirmRequirements = !!obj.confirmRequirements;
   const confirmExtraCharges = !!obj.confirmExtraCharges;
@@ -509,6 +511,9 @@ function ConfigurationDetails({ config }: { config: unknown }) {
   const aiScenePriceLine = aiSceneCount > 0
     ? `${aiSceneCount} × $${AI_SCENE_PRICE} = $${aiSceneCount * AI_SCENE_PRICE}`
     : null;
+  const text2d3dPriceLine = text2d3dCount > 0
+    ? `${text2d3dCount} × $${TEXT_2D_3D_PRICE} = $${text2d3dCount * TEXT_2D_3D_PRICE}`
+    : null;
 
   const aspectPriceLine = aspectRatios === "Both" || aspectRatios === "both"
     ? `${aspectRatios} +$15`
@@ -610,7 +615,7 @@ function ConfigurationDetails({ config }: { config: unknown }) {
             <div className="rounded-lg border p-4 space-y-2">
               <span className="text-xs font-medium text-muted-foreground">Background Music</span>
               <p className="text-sm">{music ?? "N/A"}</p>
-              {musicNote && <p className="text-xs text-muted-foreground">{musicNote}</p>}
+              {musicNote && <p className="text-xs text-muted-foreground">{linkifyText(musicNote)}</p>}
               {music === "I will provide" && (
                 <p className="text-xs text-muted-foreground">Music file: N/A (not stored in config)</p>
               )}
@@ -628,14 +633,14 @@ function ConfigurationDetails({ config }: { config: unknown }) {
               ) : (
                 <p className="text-sm text-muted-foreground">N/A</p>
               )}
-              {textCaptionsNote && <p className="text-xs text-muted-foreground">{textCaptionsNote}</p>}
+              {textCaptionsNote && <p className="text-xs text-muted-foreground">{linkifyText(textCaptionsNote)}</p>}
             </div>
 
             {/* Transitions */}
             <div className="rounded-lg border p-4 space-y-2">
               <span className="text-xs font-medium text-muted-foreground">Transitions</span>
               <p className="text-sm">{transitions ?? "N/A"}</p>
-              {transitionsNote && <p className="text-xs text-muted-foreground">{transitionsNote}</p>}
+              {transitionsNote && <p className="text-xs text-muted-foreground">{linkifyText(transitionsNote)}</p>}
             </div>
           </div>
 
@@ -646,14 +651,17 @@ function ConfigurationDetails({ config }: { config: unknown }) {
               <p className="text-sm">
                 AI Voiceover: {aiOption ? "Yes (+$20)" : "N/A"}
               </p>
-              {aiNote && <p className="text-xs text-muted-foreground pl-3">{aiNote}</p>}
+              {aiNote && <p className="text-xs text-muted-foreground pl-3">{linkifyText(aiNote)}</p>}
               {aiSceneCount > 0 && (
                 <p className="text-sm">AI Scenes: {aiScenePriceLine}</p>
+              )}
+              {text2d3dCount > 0 && (
+                <p className="text-sm">Transfer Text 2D/3D: {text2d3dPriceLine}</p>
               )}
               <p className="text-sm">
                 Boundary Draw: {boundaryDrawOption ? "Yes (+$10)" : "N/A"}
               </p>
-              {boundaryDrawNote && <p className="text-xs text-muted-foreground pl-3">{boundaryDrawNote}</p>}
+              {boundaryDrawNote && <p className="text-xs text-muted-foreground pl-3">{linkifyText(boundaryDrawNote)}</p>}
             </div>
           </div>
         </section>
@@ -829,7 +837,7 @@ export function OrderDetailDialog({
             <div className="space-y-2">
               <h3 className="font-semibold text-amber-700">Revision Request</h3>
               <p className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm whitespace-pre-wrap text-amber-800">
-                {order.customerRevisionNote}
+                {linkifyText(order.customerRevisionNote)}
               </p>
             </div>
           )}
@@ -849,7 +857,7 @@ export function OrderDetailDialog({
             <div className="space-y-2">
               <h3 className="font-semibold text-emerald-700">Done Note</h3>
               <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm whitespace-pre-wrap text-emerald-800">
-                {order.doneNote}
+                {linkifyText(order.doneNote)}
               </p>
             </div>
           )}
@@ -877,10 +885,10 @@ export function OrderDetailDialog({
                       </div>
                     )}
                     {event.doneNote && (
-                      <p className="text-xs text-muted-foreground">{event.doneNote}</p>
+                      <p className="text-xs text-muted-foreground">{linkifyText(event.doneNote)}</p>
                     )}
                     {event.note && (
-                      <p className="text-xs text-amber-700">{event.note}</p>
+                      <p className="text-xs text-amber-700">{linkifyText(event.note)}</p>
                     )}
                   </div>
                 ))}

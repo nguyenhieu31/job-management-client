@@ -33,6 +33,7 @@ import { CustomerResponse } from "@/types/customers";
 import type { FileStorage } from "@/types/jobs";
 import SearchableDropdown from "../ui/search-able-dropdown";
 import { filePriceOptions } from "./video-table";
+import { formatCurrency } from "@/lib/utils";
 
 interface VideoFormProps {
   open: boolean;
@@ -607,13 +608,29 @@ export function VideoForm({
                 <SearchableDropdown
                   options={filePriceOptions}
                   placeholder="Nhập giá mỗi file"
-                  onChange={(e) =>
-                    (formRef.current.filePrice = e?.name.toString() || "")
-                  }
+                  onChange={(e) => {
+                    formRef.current.filePrice = e?.name.toString() || "";
+                    forceUpdate();
+                  }}
                   defaultValue={{ id: 0, name: formRef.current.filePrice }}
                   type="number"
                 />
               </div>
+
+              {/* Total Price Display (Read-Only) */}
+              {(editingVideo?.totalPrice !== undefined || (formRef.current.outputNumber && formRef.current.filePrice)) && (
+                <div className="grid gap-2">
+                  <Label>Tổng giá (Tính toán)</Label>
+                  <div className="text-lg font-semibold text-primary">
+                    {formatCurrency(
+                      editingVideo?.totalPrice !== undefined && !formRef.current.filePrice
+                        ? editingVideo.totalPrice
+                        : (parseFloat(formRef.current.outputNumber || "0") *
+                            parseFloat(formRef.current.filePrice || "0")) || editingVideo?.totalPrice || 0
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Total Pay Per File (editable) */}
               <div className="grid gap-2">

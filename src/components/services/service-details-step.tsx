@@ -16,6 +16,7 @@ import {
   PHOTO_ADDON_OPTIONS,
   PHOTO_QTY_MAX,
   AI_SCENE_PRICE,
+  TEXT_2D_3D_PRICE,
   isVideoServiceSelected,
   isVirtualStagingSelected,
   isNonVirtualStagingPhotoSelected,
@@ -281,7 +282,7 @@ export function ServiceDetailsStep({
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="websiteUrl">Website</Label>
             <Input
               id="websiteUrl"
@@ -546,53 +547,50 @@ export function ServiceDetailsStep({
               )}
             </div>
 
-            {/* Text & Captions */}
-            <div className="rounded-lg border p-4 space-y-3">
-              <fieldset className="space-y-3">
-                <legend className="text-sm font-medium">Text & Captions</legend>
-                <div className="grid gap-2">
-                  {TEXT_CAPTIONS_OPTIONS.map((option) =>
-                    renderCheckboxOption(
-                      option,
-                      state.textCaptions.includes(option.value),
-                      (checked) => {
-                        if (checked) {
-                          onChange("textCaptions", [
-                            ...state.textCaptions,
-                            option.value,
-                          ]);
-                        } else {
-                          onChange(
-                            "textCaptions",
-                            state.textCaptions.filter((v) => v !== option.value),
-                          );
-                        }
-                      },
-                    ),
-                  )}
-                </div>
-                {state.textCaptions.length > 0 && (
-                  <TextareaField
-                    id="textCaptionsNote"
-                    label="Text & Captions Note"
-                    placeholder="Specify text content, font style, positioning..."
-                    value={state.textCaptionsNote}
-                    onChange={(v) => onChange("textCaptionsNote", v)}
-                    rows={2}
-                  />
-                )}
-              </fieldset>
-            </div>
+            {/* Text & Captions — hidden from customers, visible to managers in order preview */}
 
-            {/* Transitions */}
-            <div className="rounded-lg border p-4 space-y-3">
-              <RadioGroupField
-                name="transitions"
-                legend="Transitions"
-                options={TRANSITIONS_OPTIONS}
-                value={state.transitions}
-                onChange={(v) => onChange("transitions", v)}
-              />
+            {/* Transitions — full width when text & captions are hidden */}
+            <div className="rounded-lg border p-4 space-y-3 md:col-span-2">
+              <fieldset className="space-y-3">
+                <legend className="text-sm font-medium">Transitions</legend>
+                <div className="grid grid-cols-2 gap-2">
+                  {TRANSITIONS_OPTIONS.map((option) => (
+                    <label
+                      key={option.value}
+                      htmlFor={`transition-${option.value}`}
+                      className={cn(
+                        "flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-all duration-200",
+                        state.transitions === option.value
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:border-muted-foreground/30",
+                      )}
+                    >
+                      <div
+                        className={cn(
+                          "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-all duration-200",
+                          state.transitions === option.value
+                            ? "border-primary"
+                            : "border-input",
+                        )}
+                      >
+                        {state.transitions === option.value && (
+                          <div className="h-2.5 w-2.5 rounded-full bg-primary" />
+                        )}
+                      </div>
+                      <input
+                        type="radio"
+                        id={`transition-${option.value}`}
+                        name="transitions"
+                        value={option.value}
+                        checked={state.transitions === option.value}
+                        onChange={() => onChange("transitions", option.value)}
+                        className="sr-only"
+                      />
+                      <span className="text-sm leading-tight">{option.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
 
               {state.transitions && (
                 <TextareaField
@@ -641,6 +639,21 @@ export function ServiceDetailsStep({
                 {state.aiSceneCount > 0 && (
                   <p className="text-xs text-muted-foreground pl-1">
                     {state.aiSceneCount} × {formatCurrency(AI_SCENE_PRICE)} = {formatCurrency(state.aiSceneCount * AI_SCENE_PRICE)}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <QuantityStepper
+                  id="text2d3dCount"
+                  label={`2D/3D Text (${formatCurrency(TEXT_2D_3D_PRICE)}/text)`}
+                  gloss="Convert spoken words into animated 2D/3D text elements"
+                  value={state.text2d3dCount}
+                  onValueChange={(n) => onChange("text2d3dCount", n)}
+                />
+                {state.text2d3dCount > 0 && (
+                  <p className="text-xs text-muted-foreground pl-1">
+                    {state.text2d3dCount} × {formatCurrency(TEXT_2D_3D_PRICE)} = {formatCurrency(state.text2d3dCount * TEXT_2D_3D_PRICE)}
                   </p>
                 )}
               </div>
