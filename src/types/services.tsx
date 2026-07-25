@@ -47,6 +47,7 @@ export interface AddServiceFormState {
   aiOption: boolean;
   aiNote: string;
   aiSceneCount: number;
+  text2d3dCount: number;
   boundaryDrawOption: boolean;
   boundaryDrawNote: string;
   uploadMethods: string[];
@@ -83,7 +84,7 @@ export const VIDEO_SERVICES: ServiceOption[] = [
   { id: "property-tour-video", label: "Property Tour Video", subtitle: "Video tham quan bất động sản", price: 40, samplesAvailable: true },
   { id: "social-media-reel", label: "Social Media Reel", subtitle: "Video ngắn cho mạng xã hội", price: 40, samplesAvailable: true },
   { id: "luxury-cinematic-video", label: "Luxury Cinematic Video", subtitle: "Video điện ảnh cao cấp", price: 45, samplesAvailable: true },
-  { id: "agent-introduction-video", label: "Agent Introduction Video", subtitle: "Video giới thiệu môi giới", price: 60, samplesAvailable: true },
+  { id: "agent-introduction-video", label: "Agent Introduction Video", subtitle: "Video giới thiệu môi giới", price: 50, samplesAvailable: true },
 ];
 
 export const PHOTO_SERVICE_IDS = PHOTO_SERVICES.map((s) => s.id);
@@ -99,6 +100,7 @@ export const VIDEO_DURATION_OPTIONS = [
 export const DURATION_EXTEND_PRICE = 10;
 export const DURATION_EXTEND_UNIT_SECONDS = 15;
 export const AI_SCENE_PRICE = 20;
+export const TEXT_2D_3D_PRICE = 5;
 
 export const VIDEO_STYLE_OPTIONS = [
   { value: "clean-simple", label: "Clean & Simple" },
@@ -135,7 +137,6 @@ export const TEXT_CAPTIONS_OPTIONS = [
   { value: "logo", label: "Logo"},
   { value: "contact-info", label: "Contact information" },
   { value: "social-media", label: "Social media handles"},
-  { value: "3d-2d-text", label: "3D/2D Text"},
 ];
 
 export const TRANSITIONS_OPTIONS = [
@@ -526,6 +527,7 @@ export function computeEstimatedPrice(state: AddServiceFormState): number {
 
     if (state.aiOption) total += 20;
     if (state.aiSceneCount > 0) total += state.aiSceneCount * AI_SCENE_PRICE;
+    if (state.text2d3dCount > 0) total += state.text2d3dCount * TEXT_2D_3D_PRICE;
     if (state.boundaryDrawOption) total += 10;
 
     total += sumArrayPrices(TEXT_CAPTIONS_OPTIONS, state.textCaptions);
@@ -565,6 +567,7 @@ export function getInitialFormState(): AddServiceFormState {
     aiOption: false,
     aiNote: "",
     aiSceneCount: 0,
+    text2d3dCount: 0,
     boundaryDrawOption: false,
     boundaryDrawNote: "",
     uploadMethods: [],

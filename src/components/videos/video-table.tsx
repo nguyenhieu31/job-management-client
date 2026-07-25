@@ -2044,7 +2044,7 @@ console.log("editValue: ", editValue)
 
       {/* Related Work Dialog */}
       <Dialog open={!!relatedWorkVideo} onOpenChange={(open) => { if (!open) setRelatedWorkVideo(null); }}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] !max-w-[60%] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Video tương tự</DialogTitle>
             <DialogDescription>

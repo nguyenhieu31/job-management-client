@@ -16,6 +16,7 @@ import {
   VIRTUAL_STAGING_ROOMS,
   VIRTUAL_STAGING_STYLES,
   AI_SCENE_PRICE,
+  TEXT_2D_3D_PRICE,
   isVideoServiceSelected,
   isNonVirtualStagingPhotoSelected,
   isVirtualStagingSelected,
@@ -230,6 +231,14 @@ export function SummaryCard({ state, mobile = false }: SummaryCardProps) {
                 <span>AI Scenes</span>
                 <span className="tabular-nums text-muted-foreground">
                   {state.aiSceneCount} × {formatCurrency(AI_SCENE_PRICE)} = {formatCurrency(state.aiSceneCount * AI_SCENE_PRICE)}
+                </span>
+              </li>
+            )}
+            {state.text2d3dCount > 0 && (
+              <li className="flex justify-between gap-2">
+                <span>Transfer Text 2D/3D</span>
+                <span className="tabular-nums text-muted-foreground">
+                  {state.text2d3dCount} × {formatCurrency(TEXT_2D_3D_PRICE)} = {formatCurrency(state.text2d3dCount * TEXT_2D_3D_PRICE)}
                 </span>
               </li>
             )}

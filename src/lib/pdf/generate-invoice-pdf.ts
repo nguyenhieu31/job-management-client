@@ -32,7 +32,7 @@ export function generatePdfInvoice(
   // 2. Company Brand & Title
   doc.setFont("helvetica", "bold");
   doc.setFontSize(22);
-  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.setTextColor(textColor[0], textColor[1], textColor[2]);
   doc.text("PHOTO24H", margin, 20);
 
   doc.setFontSize(9);
@@ -205,7 +205,7 @@ export function generatePdfInvoice(
   const cleanCustomerName = (customer.name || "Customer")
     .replace(/[^a-zA-Z0-9_\-]/g, "_")
     .toLowerCase();
-  const fileName = `Hoa_Don_${cleanCustomerName}_${today
+  const fileName = `Invoice_${cleanCustomerName}_${today
     .toISOString()
     .slice(0, 10)}.pdf`;
 
