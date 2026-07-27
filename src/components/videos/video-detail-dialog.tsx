@@ -287,13 +287,6 @@ export function VideoDetailDialog({
                     <p className="font-medium">{video.customer.email}</p>
                   </div>
 
-                  <div>
-                    <label className="text-sm text-muted-foreground">
-                      Số Điện Thoại
-                    </label>
-                    <p className="font-medium">{video.customer.phone}</p>
-                  </div>
-
                   {video.customer.company && (
                     <div>
                       <label className="text-sm text-muted-foreground">

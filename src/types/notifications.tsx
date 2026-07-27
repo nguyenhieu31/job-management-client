@@ -1,4 +1,4 @@
-export type NotificationType = "JOB_DONE" | "REVIEW_SUBMITTED" | "JOB_ASSIGNED" | "REVIEW_ASSIGNED" | "JOB_REJECTED"
+export type NotificationType = "JOB_DONE" | "REVIEW_SUBMITTED" | "JOB_ASSIGNED" | "REVIEW_ASSIGNED" | "JOB_REJECTED" | "ORDER_SUBMITTED" | "ORDER_COMPLETED" | "ORDER_REVISION_REQUESTED"
 
 export interface Notification {
   id: number
@@ -39,5 +39,20 @@ export const NOTIFICATION_TEMPLATES = {
     title: "Yêu cầu review công việc",
     getMessage: (employeeName: string, jobCode: string) =>
       `Công việc ${jobCode} của ${employeeName} đang chờ review`,
+  },
+  "ORDER_SUBMITTED": {
+    title: "Đơn hàng đã được tạo",
+    getMessage: (orderCode: string) =>
+      `Đơn hàng ${orderCode} của bạn đã được gửi thành công`,
+  },
+  "ORDER_COMPLETED": {
+    title: "Đơn hàng hoàn thành",
+    getMessage: (orderCode: string) =>
+      `Đơn hàng ${orderCode} của bạn đã hoàn thành`,
+  },
+  "ORDER_REVISION_REQUESTED": {
+    title: "Yêu cầu chỉnh sửa đơn hàng",
+    getMessage: (customerName: string, orderCode: string) =>
+      `Khách hàng ${customerName} yêu cầu chỉnh sửa cho đơn hàng ${orderCode}`,
   },
 }

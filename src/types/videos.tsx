@@ -228,7 +228,7 @@ export const ROLE_COLUMNS = {
     "assignedEmployee",
     "note",
     "relatedWork",
-    // "paymentStatus",
+    "paymentStatus",
     // "actions",
   ],
 } as const;
