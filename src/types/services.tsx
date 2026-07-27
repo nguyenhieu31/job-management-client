@@ -16,6 +16,7 @@ export interface PhotoAddOns {
   skyReplacement: boolean;
   tvScreenReplacement: boolean;
   grassReplacement: boolean;
+  grassReplacementCount: number;
   skyReplacementNote: string;
   tvScreenReplacementNote: string;
   grassReplacementNote: string;
@@ -47,7 +48,9 @@ export interface AddServiceFormState {
   aiOption: boolean;
   aiNote: string;
   aiSceneCount: number;
+  aiSceneNote: string;
   text2d3dCount: number;
+  text2d3dNote: string;
   boundaryDrawOption: boolean;
   boundaryDrawNote: string;
   uploadMethods: string[];
@@ -173,22 +176,28 @@ export const CONFIRMATION_OPTIONS = [
 
 export const PHOTO_QUANTITY_FIELDS = [] as const;
 
-export const PHOTO_ADDON_OPTIONS = [
+export const PHOTO_ADDON_OPTIONS: Array<{
+  key: "skyReplacement" | "tvScreenReplacement" | "grassReplacement";
+  noteKey: "skyReplacementNote" | "tvScreenReplacementNote" | "grassReplacementNote";
+  label: string;
+  price?: number;
+  helper: string;
+}> = [
   {
-    key: "skyReplacement" as const,
-    noteKey: "skyReplacementNote" as const,
+    key: "skyReplacement",
+    noteKey: "skyReplacementNote",
     label: "Sky Replacement",
     helper: "Preferred sky style / time of day…",
   },
   {
-    key: "tvScreenReplacement" as const,
-    noteKey: "tvScreenReplacementNote" as const,
+    key: "tvScreenReplacement",
+    noteKey: "tvScreenReplacementNote",
     label: "TV Screen Replacement",
     helper: "Screen content or color preference…",
   },
   {
-    key: "grassReplacement" as const,
-    noteKey: "grassReplacementNote" as const,
+    key: "grassReplacement",
+    noteKey: "grassReplacementNote",
     label: "Grass Replacement",
     price: 1,
     helper: "Per-photo grass fix on this order — different from the Lawn Replacement service.",
@@ -286,6 +295,7 @@ export function emptyPhotoAddOns(): PhotoAddOns {
     skyReplacement: false,
     tvScreenReplacement: false,
     grassReplacement: false,
+    grassReplacementCount: 0,
     skyReplacementNote: "",
     tvScreenReplacementNote: "",
     grassReplacementNote: "",
@@ -293,6 +303,9 @@ export function emptyPhotoAddOns(): PhotoAddOns {
 }
 
 export function getPhotoAddOnPrice(state: AddServiceFormState, key: keyof PhotoAddOns): number {
+  if (key === "grassReplacement") {
+    return (state.photoAddOns?.grassReplacementCount ?? 0) * 1.0;
+  }
   const opt = PHOTO_ADDON_OPTIONS.find((o) => o.key === key);
   return opt?.price ?? 0;
 }
@@ -487,8 +500,12 @@ export function computeEstimatedPrice(state: AddServiceFormState): number {
     if (isPhotoAddonEligible(selected) && totalQty > 0) {
       const addOns = state.photoAddOns;
       for (const opt of PHOTO_ADDON_OPTIONS) {
-        if (addOns?.[opt.key] && opt.price) {
-          total += opt.price * totalQty;
+        if (addOns?.[opt.key]) {
+          if (opt.key === "grassReplacement") {
+            total += (addOns.grassReplacementCount ?? 0) * 1.0;
+          } else if (opt.price) {
+            total += opt.price * totalQty;
+          }
         }
       }
     }
@@ -515,7 +532,7 @@ export function computeEstimatedPrice(state: AddServiceFormState): number {
         const extra = Math.floor((secs - 60) / 15);
         total += extra * DURATION_EXTEND_PRICE;
       }
-    } else if (state.videoDurationExtended > 0) {
+    } else if (state.videoDuration === "60s" && state.videoDurationExtended > 0) {
       total += state.videoDurationExtended * DURATION_EXTEND_PRICE;
     }
 
@@ -567,7 +584,9 @@ export function getInitialFormState(): AddServiceFormState {
     aiOption: false,
     aiNote: "",
     aiSceneCount: 0,
+    aiSceneNote: "",
     text2d3dCount: 0,
+    text2d3dNote: "",
     boundaryDrawOption: false,
     boundaryDrawNote: "",
     uploadMethods: [],

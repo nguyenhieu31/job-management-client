@@ -148,10 +148,14 @@ export function SummaryCard({ state, mobile = false }: SummaryCardProps) {
             <ul className="mt-2 space-y-0.5 text-sm">
               {PHOTO_ADDON_OPTIONS.map((opt) => {
                 if (!state.photoAddOns?.[opt.key]) return null;
-                const cost = (opt.price ?? 0) * totalQty;
+                const isGrass = opt.key === "grassReplacement";
+                const count = isGrass ? (state.photoAddOns.grassReplacementCount ?? 0) : totalQty;
+                const cost = isGrass ? count * 1.0 : (opt.price ?? 0) * totalQty;
                 return (
                   <li key={opt.key} className="flex justify-between gap-2">
-                    <span>{opt.label}</span>
+                    <span>
+                      {opt.label} {isGrass ? `(${count} photos)` : ""}
+                    </span>
                     <span className="tabular-nums text-muted-foreground">
                       +{formatCurrency(cost)}
                     </span>
@@ -209,6 +213,11 @@ export function SummaryCard({ state, mobile = false }: SummaryCardProps) {
               <li>
                 Duration:{" "}
                 {getOptionLabel(state.videoDuration, VIDEO_DURATION_OPTIONS)}
+                {state.videoDuration === "60s" && (state.videoDurationExtended || 0) > 0 && (
+                  <span className="text-xs text-muted-foreground ml-1">
+                    (+{state.videoDurationExtended * 15}s = {60 + state.videoDurationExtended * 15}s total, +${state.videoDurationExtended * 10})
+                  </span>
+                )}
               </li>
             )}
             {state.videoStyle && (
@@ -227,19 +236,29 @@ export function SummaryCard({ state, mobile = false }: SummaryCardProps) {
               </li>
             )}
             {state.aiSceneCount > 0 && (
-              <li className="flex justify-between gap-2">
-                <span>AI Scenes</span>
-                <span className="tabular-nums text-muted-foreground">
-                  {state.aiSceneCount} × {formatCurrency(AI_SCENE_PRICE)} = {formatCurrency(state.aiSceneCount * AI_SCENE_PRICE)}
-                </span>
+              <li className="flex flex-col gap-0.5">
+                <div className="flex justify-between gap-2">
+                  <span>AI Scenes</span>
+                  <span className="tabular-nums text-muted-foreground">
+                    {state.aiSceneCount} × {formatCurrency(AI_SCENE_PRICE)} = {formatCurrency(state.aiSceneCount * AI_SCENE_PRICE)}
+                  </span>
+                </div>
+                {state.aiSceneNote && (
+                  <p className="text-xs text-muted-foreground">Note: {state.aiSceneNote}</p>
+                )}
               </li>
             )}
             {state.text2d3dCount > 0 && (
-              <li className="flex justify-between gap-2">
-                <span>Transfer Text 2D/3D</span>
-                <span className="tabular-nums text-muted-foreground">
-                  {state.text2d3dCount} × {formatCurrency(TEXT_2D_3D_PRICE)} = {formatCurrency(state.text2d3dCount * TEXT_2D_3D_PRICE)}
-                </span>
+              <li className="flex flex-col gap-0.5">
+                <div className="flex justify-between gap-2">
+                  <span>Transfer Text 2D/3D</span>
+                  <span className="tabular-nums text-muted-foreground">
+                    {state.text2d3dCount} × {formatCurrency(TEXT_2D_3D_PRICE)} = {formatCurrency(state.text2d3dCount * TEXT_2D_3D_PRICE)}
+                  </span>
+                </div>
+                {state.text2d3dNote && (
+                  <p className="text-xs text-muted-foreground">Note: {state.text2d3dNote}</p>
+                )}
               </li>
             )}
             {state.boundaryDrawOption && (

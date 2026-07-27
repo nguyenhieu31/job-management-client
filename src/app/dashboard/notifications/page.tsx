@@ -24,6 +24,9 @@ const NOTIFICATION_COLORS = {
   "JOB_REJECTED": "bg-red-50 border-red-200",
   "JOB_ASSIGNED": "bg-purple-50 border-purple-200",
   "REVIEW_ASSIGNED": "bg-orange-50 border-orange-200",
+  "ORDER_SUBMITTED": "bg-sky-50 border-sky-200",
+  "ORDER_COMPLETED": "bg-emerald-50 border-emerald-200",
+  "ORDER_REVISION_REQUESTED": "bg-amber-50 border-amber-200",
 };
 
 const NOTIFICATION_BADGE_COLORS = {
@@ -32,6 +35,9 @@ const NOTIFICATION_BADGE_COLORS = {
   "JOB_ASSIGNED": "bg-purple-100 text-purple-800",
   "REVIEW_ASSIGNED": "bg-orange-100 text-orange-800",
   "JOB_REJECTED": "bg-red-100 text-red-800",
+  "ORDER_SUBMITTED": "bg-sky-100 text-sky-800",
+  "ORDER_COMPLETED": "bg-emerald-100 text-emerald-800",
+  "ORDER_REVISION_REQUESTED": "bg-amber-100 text-amber-800",
 };
 
 const NOTIFICATION_LABELS = {
@@ -39,7 +45,10 @@ const NOTIFICATION_LABELS = {
   "REVIEW_SUBMITTED": "Review hoàn thành",
   "JOB_ASSIGNED": "Giao công việc",
   "REVIEW_ASSIGNED": "Chờ review",
-  "JOB_REJECTED": "Công việc bị từ chối"
+  "JOB_REJECTED": "Công việc bị từ chối",
+  "ORDER_SUBMITTED": "Đơn hàng đã được tạo",
+  "ORDER_COMPLETED": "Đơn hàng hoàn thành",
+  "ORDER_REVISION_REQUESTED": "Yêu cầu chỉnh sửa đơn",
 };
 
 export default function NotificationsPage() {

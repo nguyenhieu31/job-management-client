@@ -211,13 +211,13 @@ export function getPrimaryOrderAction(
 ): { next: OrderStatus; label: string } | null {
   switch (status) {
     case "PENDING":
-      return { next: "REVIEWED", label: "Review" };
+      return { next: "CONFIRMED", label: "Accept Job" };
     case "REVIEWED":
-      return { next: "CONFIRMED", label: "Confirm" };
+      return { next: "CONFIRMED", label: "Accept Job" };
     case "CONFIRMED":
-      return { next: "IN_PROGRESS", label: "Accept" };
+      return { next: "IN_PROGRESS", label: "Start Work" };
     case "IN_PROGRESS":
-      return { next: "COMPLETED", label: "Complete" };
+      return { next: "COMPLETED", label: "Complete Order" };
     default:
       return null;
   }
@@ -276,7 +276,7 @@ function SectionHeading({ title }: { title: string }) {
   return (
     <div className="flex items-center gap-2">
       <div className="h-2 w-2 rounded-full bg-primary" />
-      <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+      <h3 className="text-lg font-bold uppercase tracking-wide text-muted-foreground !text-[#000]">
         {title}
       </h3>
     </div>
@@ -381,6 +381,8 @@ function ConfigurationDetails({ config }: { config: unknown }) {
 
   const configOrderNotes = obj.orderNotes as string | undefined;
   const aiNote = obj.aiNote as string | undefined;
+  const aiSceneNote = obj.aiSceneNote as string | undefined;
+  const text2d3dNote = obj.text2d3dNote as string | undefined;
   const musicNote = obj.musicNote as string | undefined;
   const textCaptionsNote = obj.textCaptionsNote as string | undefined;
   const transitionsNote = obj.transitionsNote as string | undefined;
@@ -416,7 +418,13 @@ function ConfigurationDetails({ config }: { config: unknown }) {
   if (photoAddOns) {
     for (const opt of PHOTO_ADDON_OPTIONS) {
       if (photoAddOns[opt.key]) {
-        const priceSuffix = opt.price ? ` (+$${opt.price}/photo)` : "";
+        const isGrass = opt.key === "grassReplacement";
+        const grassCount = Number(photoAddOns.grassReplacementCount || 0);
+        const priceSuffix = isGrass
+          ? ` (${grassCount} photos, +$${grassCount * 1.0})`
+          : opt.price
+          ? ` (+$${opt.price}/photo)`
+          : "";
         addonLines.push(`${opt.label}${priceSuffix}`);
         const note = photoAddOns[opt.noteKey];
         if (isFilledString(note)) {
@@ -505,7 +513,7 @@ function ConfigurationDetails({ config }: { config: unknown }) {
   })();
 
   const durationPriceLine = (videoDurationExtended ?? 0) > 0
-    ? `${videoDurationExtended} × 15s = +$${(videoDurationExtended ?? 0) * DURATION_EXTEND_PRICE}`
+    ? `60s + ${(videoDurationExtended ?? 0) * 15}s = ${60 + (videoDurationExtended ?? 0) * 15}s (+ $${(videoDurationExtended ?? 0) * DURATION_EXTEND_PRICE})`
     : null;
 
   const aiScenePriceLine = aiSceneCount > 0
@@ -564,7 +572,7 @@ function ConfigurationDetails({ config }: { config: unknown }) {
                     </div>
                   ))}
                   {addonNotes.map((n, i) => (
-                    <p key={i} className="text-xs text-muted-foreground pl-1">{n.label}: {n.note}</p>
+                    <p key={i} className="text-xs text-muted-foreground pl-1">{n.label}: {linkifyText(n.note)}</p>
                   ))}
                 </div>
               </div>
@@ -653,10 +661,16 @@ function ConfigurationDetails({ config }: { config: unknown }) {
               </p>
               {aiNote && <p className="text-xs text-muted-foreground pl-3">{linkifyText(aiNote)}</p>}
               {aiSceneCount > 0 && (
-                <p className="text-sm">AI Scenes: {aiScenePriceLine}</p>
+                <div>
+                  <p className="text-sm">AI Scenes: {aiScenePriceLine}</p>
+                  {aiSceneNote && <p className="text-xs text-muted-foreground pl-3">{linkifyText(aiSceneNote)}</p>}
+                </div>
               )}
               {text2d3dCount > 0 && (
-                <p className="text-sm">Transfer Text 2D/3D: {text2d3dPriceLine}</p>
+                <div>
+                  <p className="text-sm">Transfer Text 2D/3D: {text2d3dPriceLine}</p>
+                  {text2d3dNote && <p className="text-xs text-muted-foreground pl-3">{linkifyText(text2d3dNote)}</p>}
+                </div>
               )}
               <p className="text-sm">
                 Boundary Draw: {boundaryDrawOption ? "Yes (+$10)" : "N/A"}
@@ -770,12 +784,6 @@ export function OrderDetailDialog({
                   <span className="text-muted-foreground">Email: </span>
                   <span className="font-medium">{order.customerEmail}</span>
                 </div>
-                <div>
-                  <span className="text-muted-foreground">Phone: </span>
-                  <span className="font-medium">
-                    {order.customerPhone || "\u2014"}
-                  </span>
-                </div>
               </div>
             </div>
 
@@ -810,7 +818,7 @@ export function OrderDetailDialog({
             <div className="space-y-2">
               <h3 className="font-semibold">Notes</h3>
               <p className="rounded-lg border bg-amber-50/50 p-4 text-sm whitespace-pre-wrap">
-                {order.orderNotes}
+                {linkifyText(order.orderNotes)}
               </p>
             </div>
           )}
@@ -1294,20 +1302,40 @@ export function OrderHistoryTable({
                             className="text-right"
                             onClick={(e) => e.stopPropagation()}
                           >
-                            {order.status === "COMPLETED" && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                disabled={isBusy}
-                                className="h-8 border-amber-500 text-amber-700 hover:bg-amber-50"
-                                onClick={() => {
-                                  setRevisionDialog({ open: true, orderId: order.id });
-                                  setRevisionNote("");
-                                }}
-                              >
-                                Request Revision
-                              </Button>
-                            )}
+                            <div className="flex flex-wrap justify-end gap-1">
+                              {order.status === "PENDING" && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  disabled={isBusy}
+                                  className="h-8 border-red-500 text-red-700 hover:bg-red-50"
+                                  onClick={() => {
+                                    setRejectDialog({
+                                      open: true,
+                                      orderId: order.id,
+                                      status: "CANCELLED",
+                                    });
+                                    setRejectNote("");
+                                  }}
+                                >
+                                  Cancel Order
+                                </Button>
+                              )}
+                              {order.status === "COMPLETED" && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  disabled={isBusy}
+                                  className="h-8 border-amber-500 text-amber-700 hover:bg-amber-50"
+                                  onClick={() => {
+                                    setRevisionDialog({ open: true, orderId: order.id });
+                                    setRevisionNote("");
+                                  }}
+                                >
+                                  Request Revision
+                                </Button>
+                              )}
+                            </div>
                           </TableCell>
                         )}
                         {isManager && (
@@ -1336,40 +1364,22 @@ export function OrderHistoryTable({
                                 </Button>
                               )}
                               {canTerminal && (
-                                <>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    disabled={actionLoading}
-                                    className="h-8 border-orange-500 text-orange-700 hover:bg-orange-50"
-                                    onClick={() => {
-                                      setRejectDialog({
-                                        open: true,
-                                        orderId: order.id,
-                                        status: "CANCELLED",
-                                      });
-                                      setRejectNote("");
-                                    }}
-                                  >
-                                    Cancel
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    disabled={actionLoading}
-                                    className="h-8 border-red-500 text-red-700 hover:bg-red-50"
-                                    onClick={() => {
-                                      setRejectDialog({
-                                        open: true,
-                                        orderId: order.id,
-                                        status: "REJECTED",
-                                      });
-                                      setRejectNote("");
-                                    }}
-                                  >
-                                    Reject
-                                  </Button>
-                                </>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  disabled={actionLoading}
+                                  className="h-8 border-red-500 text-red-700 hover:bg-red-50"
+                                  onClick={() => {
+                                    setRejectDialog({
+                                      open: true,
+                                      orderId: order.id,
+                                      status: "REJECTED",
+                                    });
+                                    setRejectNote("");
+                                  }}
+                                >
+                                  Refuse
+                                </Button>
                               )}
                             </div>
                           </TableCell>

@@ -149,3 +149,15 @@ export const requestRevision = async (orderId: number, revisionNote: string) => 
     throw new Error(err.message);
   }
 };
+
+export const cancelMyOrder = async (id: number, cancelNote?: string | null) => {
+  try {
+    const res = await axiosInstance.put(`/orders/${id}`, {
+      status: "CANCELLED",
+      customerRejectNote: cancelNote || undefined,
+    });
+    return res as unknown as ApiResponse<OrderResponse>;
+  } catch (err: any) {
+    throw new Error(err.message);
+  }
+};

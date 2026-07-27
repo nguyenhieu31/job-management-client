@@ -234,7 +234,6 @@ export function ServiceDetailsStep({
               placeholder="e.g. John Doe"
               value={state.customerName}
               onChange={(e) => onChange("customerName", e.target.value)}
-              disabled={disableCustomerFields}
               className={errors.customerName ? "border-destructive" : ""}
             />
             {errors.customerName && (
@@ -273,23 +272,35 @@ export function ServiceDetailsStep({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="instagramHandle">Instagram</Label>
+            <Label htmlFor="instagramHandle">
+              Instagram <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="instagramHandle"
               placeholder="Instagram username"
               value={state.instagramHandle}
               onChange={(e) => onChange("instagramHandle", e.target.value)}
+              className={errors.instagramHandle ? "border-destructive" : ""}
             />
+            {errors.instagramHandle && (
+              <p className="text-xs text-destructive">{errors.instagramHandle}</p>
+            )}
           </div>
 
           <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="websiteUrl">Website</Label>
+            <Label htmlFor="websiteUrl">
+              Website <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="websiteUrl"
               placeholder="https://yourwebsite.com"
               value={state.websiteUrl}
               onChange={(e) => onChange("websiteUrl", e.target.value)}
+              className={errors.websiteUrl ? "border-destructive" : ""}
             />
+            {errors.websiteUrl && (
+              <p className="text-xs text-destructive">{errors.websiteUrl}</p>
+            )}
           </div>
         </div>
       </section>
@@ -354,6 +365,17 @@ export function ServiceDetailsStep({
                         <p className="text-[11px] text-muted-foreground pl-1">
                           Add photo quantities above to price this add-on.
                         </p>
+                      )}
+                      {checked && opt.key === "grassReplacement" && (
+                        <div className="pt-1 pb-1">
+                          <QuantityStepper
+                            id="grass-replacement-count"
+                            label="Grass Replacement Photo Count (+$1.00/photo)"
+                            gloss="Number of photos to apply grass replacement to"
+                            value={state.photoAddOns?.grassReplacementCount ?? 0}
+                            onValueChange={(n) => setAddon("grassReplacementCount", clampPhotoQty(n))}
+                          />
+                        </div>
                       )}
                       {checked && (
                         <TextareaField
@@ -433,10 +455,10 @@ export function ServiceDetailsStep({
                 </div>
               )}
 
-              {state.videoDuration !== "custom" && (
+              {state.videoDuration === "60s" && (
                 <div className="rounded-lg bg-muted/30 p-3 space-y-2">
-                  <p className="text-xs font-medium text-muted-foreground">Extended Duration</p>
-                  <p className="text-[11px] text-muted-foreground">First 60s free. Each extra 15s: +$10</p>
+                  <p className="text-xs font-medium text-muted-foreground">Extended Duration (+15s per +1 step)</p>
+                  <p className="text-[11px] text-muted-foreground">Requires 15s added for every +1 (+ $10.00 / step). Total duration: {60 + (state.videoDurationExtended || 0) * 15}s</p>
                   <div className="flex items-center gap-3">
                     <Button
                       type="button"
@@ -471,7 +493,7 @@ export function ServiceDetailsStep({
                       +
                     </Button>
                     <span className="text-xs text-muted-foreground">
-                      × 15s = ${(state.videoDurationExtended || 0) * 10}
+                      +{(state.videoDurationExtended || 0) * 15}s = ${(state.videoDurationExtended || 0) * 10}
                     </span>
                   </div>
                 </div>
@@ -637,9 +659,19 @@ export function ServiceDetailsStep({
                   onValueChange={(n) => onChange("aiSceneCount", n)}
                 />
                 {state.aiSceneCount > 0 && (
-                  <p className="text-xs text-muted-foreground pl-1">
-                    {state.aiSceneCount} × {formatCurrency(AI_SCENE_PRICE)} = {formatCurrency(state.aiSceneCount * AI_SCENE_PRICE)}
-                  </p>
+                  <div className="space-y-2 pt-1">
+                    <p className="text-xs text-muted-foreground pl-1">
+                      {state.aiSceneCount} × {formatCurrency(AI_SCENE_PRICE)} = {formatCurrency(state.aiSceneCount * AI_SCENE_PRICE)}
+                    </p>
+                    <TextareaField
+                      id="aiSceneNote"
+                      label="AI Scene Annotation & Note"
+                      placeholder="Describe specific scenes, locations, or requirements for AI scenes..."
+                      value={state.aiSceneNote ?? ""}
+                      onChange={(v) => onChange("aiSceneNote", v)}
+                      rows={2}
+                    />
+                  </div>
                 )}
               </div>
 
@@ -652,9 +684,19 @@ export function ServiceDetailsStep({
                   onValueChange={(n) => onChange("text2d3dCount", n)}
                 />
                 {state.text2d3dCount > 0 && (
-                  <p className="text-xs text-muted-foreground pl-1">
-                    {state.text2d3dCount} × {formatCurrency(TEXT_2D_3D_PRICE)} = {formatCurrency(state.text2d3dCount * TEXT_2D_3D_PRICE)}
-                  </p>
+                  <div className="space-y-2 pt-1">
+                    <p className="text-xs text-muted-foreground pl-1">
+                      {state.text2d3dCount} × {formatCurrency(TEXT_2D_3D_PRICE)} = {formatCurrency(state.text2d3dCount * TEXT_2D_3D_PRICE)}
+                    </p>
+                    <TextareaField
+                      id="text2d3dNote"
+                      label="2D/3D Text Annotation & Note"
+                      placeholder="Enter text strings, positioning, or style notes for 2D/3D text..."
+                      value={state.text2d3dNote ?? ""}
+                      onChange={(v) => onChange("text2d3dNote", v)}
+                      rows={2}
+                    />
+                  </div>
                 )}
               </div>
 

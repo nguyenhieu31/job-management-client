@@ -277,13 +277,6 @@ export function JobDetailDialog({
                     <p className="font-medium">{job.customer.email}</p>
                   </div>
 
-                  <div>
-                    <label className="text-sm text-muted-foreground">
-                      Số Điện Thoại
-                    </label>
-                    <p className="font-medium">{job.customer.phone}</p>
-                  </div>
-
                   {job.customer.company && (
                     <div>
                       <label className="text-sm text-muted-foreground">
