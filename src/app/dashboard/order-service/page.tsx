@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { useAppDispatch, useAppSelector } from "@/store/store";
 import {
+  cancelMyOrderAction,
   getMyOrdersAction,
   requestRevisionAction,
   searchMyOrdersAction,
@@ -141,6 +142,29 @@ export default function OrderServicePage() {
     );
   };
 
+  const handleStatusChange = async (
+    orderId: number,
+    status: OrderStatus,
+    rejectNote?: string,
+  ) => {
+    if (status === "CANCELLED") {
+      try {
+        await dispatch(
+          cancelMyOrderAction({ id: orderId, cancelNote: rejectNote }),
+        ).unwrap();
+        toast.success("Order cancelled successfully");
+        dispatch(
+          getMyOrdersAction({
+            pageNumber: DEFAULT_PAGE_NUMBER,
+            pageSize: DEFAULT_PAGE_SIZE,
+          }),
+        );
+      } catch (err: any) {
+        toast.error(err?.message || "Cannot cancel order");
+      }
+    }
+  };
+
   const handleRequestRevision = async (orderId: number, revisionNote: string) => {
     try {
       await dispatch(
@@ -209,6 +233,7 @@ export default function OrderServicePage() {
           totalItems={totalItems}
           onApply={handleApplyFilters}
           onReset={handleResetFilters}
+          onStatusChange={handleStatusChange}
           onRequestRevision={handleRequestRevision}
         />
 

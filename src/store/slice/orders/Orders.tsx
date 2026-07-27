@@ -1,5 +1,6 @@
 import { PageRequest, PageResponse } from "@/components/types/Page";
 import {
+  cancelMyOrder,
   getAllOrders,
   getMyOrders,
   requestRevision,
@@ -8,6 +9,18 @@ import {
   submitOrder,
   updateOrderStatus,
 } from "@/services/OrderApi";
+
+export const cancelMyOrderAction = createAsyncThunk<
+  OrderResponse,
+  { id: number; cancelNote?: string | null }
+>("cancelMyOrderAction", async (data) => {
+  try {
+    const response = await cancelMyOrder(data.id, data.cancelNote);
+    return response.data as OrderResponse;
+  } catch (err: any) {
+    throw new Error(err.message);
+  }
+});
 import type {
   CreateOrderRequestBody,
   OrderResponse,
