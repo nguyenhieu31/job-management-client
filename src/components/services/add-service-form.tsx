@@ -92,6 +92,14 @@ export function AddServiceForm({
       newErrors.customerEmail = "Invalid email format.";
     }
 
+    if (!state.instagramHandle.trim()) {
+      newErrors.instagramHandle = "Please enter your Instagram handle.";
+    }
+
+    if (!state.websiteUrl.trim()) {
+      newErrors.websiteUrl = "Please enter your website URL.";
+    }
+
     if (isNonVirtualStagingPhotoSelected(state.selectedServices)) {
       if (getTotalPhotoQuantity(state) < 1) {
         newErrors.photoQuantities =
