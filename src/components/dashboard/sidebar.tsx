@@ -14,21 +14,21 @@ import LogoImage from "@/assets/logo.png"
 import { MANAGER_USERS } from "@/types/authentication"
 
 const navigation = [
-  { name: "Công Việc Photo", href: "/dashboard/job", icon: Briefcase },
-  { name: "Công Việc Video", href: "/dashboard/video", icon: Briefcase },
-  { name: "Nhân Viên", href: "/dashboard/employees", icon: Users },
-  { name: "Tài Khoản Khách Hàng", href: "/dashboard/customer-accounts", icon: Users },
-  { name: "Khách Hàng", href: "/dashboard/customers", icon: Users },
-  { name: "Yêu Cầu Công Việc", href: "/dashboard/work-requests", icon: Settings },
-  { name: "Hoá Đơn", href: "/dashboard/invoices", icon: FileText },
-  { name: "Bảng Lương Tháng", href: "/dashboard/payroll", icon: Banknote },
-  { name: "Bảng Lương Ngày", href: "/dashboard/payroll-day", icon: Banknote },
-  { name: "Bảng Lương Của Tôi", href: "/dashboard/my-payroll", icon: Banknote },
+  { name: "Công Việc Photo", nameEn: "Photo Jobs", href: "/dashboard/job", icon: Briefcase },
+  { name: "Công Việc Video", nameEn: "Video Jobs", href: "/dashboard/video", icon: Briefcase },
+  { name: "Nhân Viên", nameEn: "Employees", href: "/dashboard/employees", icon: Users },
+  { name: "Tài Khoản Khách Hàng", nameEn: "Customer Accounts", href: "/dashboard/customer-accounts", icon: Users },
+  { name: "Khách Hàng", nameEn: "Customers", href: "/dashboard/customers", icon: Users },
+  { name: "Yêu Cầu Công Việc", nameEn: "Work Requests", href: "/dashboard/work-requests", icon: Settings },
+  { name: "Hoá Đơn", nameEn: "Invoices", href: "/dashboard/invoices", icon: FileText },
+  { name: "Bảng Lương Tháng", nameEn: "Monthly Payroll", href: "/dashboard/payroll", icon: Banknote },
+  { name: "Bảng Lương Ngày", nameEn: "Daily Payroll", href: "/dashboard/payroll-day", icon: Banknote },
+  { name: "Bảng Lương Của Tôi", nameEn: "My Payroll", href: "/dashboard/my-payroll", icon: Banknote },
   // { name: "Cấu Hình Thư Mục", href: "/dashboard/settings", icon: Folder },
-  { name: "Thay Đổi Mật Khẩu", href: "/dashboard/change-password", icon: Lock },
-  { name: "Dịch Vụ", href: "/dashboard/order-service", icon: Briefcase },
-  { name: "Tổng Quan", href: "/dashboard/overview", icon: BarChart3 },
-  { name: "Quản lý đơn hàng", href: "/dashboard/orders", icon: FileText },
+  { name: "Dịch Vụ", nameEn: "Services", href: "/dashboard/order-service", icon: Briefcase },
+  { name: "Tổng Quan", nameEn: "Overview", href: "/dashboard/overview", icon: BarChart3 },
+  { name: "Quản lý đơn hàng", nameEn: "Order Management", href: "/dashboard/orders", icon: FileText },
+  { name: "Thay Đổi Mật Khẩu", nameEn: "Change Password", href: "/dashboard/change-password", icon: Lock },
 ]
 
 export function Sidebar() {
@@ -40,7 +40,8 @@ export function Sidebar() {
   let filteredNavigation;
   if(roleName === 'CUSTOMER'){
     filteredNavigation = navigation.filter(item =>
-      item.href === '/dashboard/order-service'
+      item.href === '/dashboard/order-service' || 
+      item.href === '/dashboard/change-password'
     );
   }else{
     // Filter navigation based on role
@@ -129,7 +130,7 @@ export function Sidebar() {
                   )}
                 >
                   <Icon className="h-5 w-5" />
-                  {item.name}
+                  {roleName === 'CUSTOMER' ? item.nameEn : item.name}
                 </Link>
               )
             })}
@@ -154,7 +155,7 @@ export function Sidebar() {
               className="w-full"
               onClick={handleClickLogout}
             >
-              Đăng Xuất
+              {roleName === 'CUSTOMER' ? 'Logout' : 'Đăng Xuất'}
             </Button>
           </div>
         </div>

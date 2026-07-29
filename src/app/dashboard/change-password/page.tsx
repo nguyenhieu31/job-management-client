@@ -12,7 +12,8 @@ import { SendUpdatePasswordAction } from "@/store/slice/authentication/Authentic
 
 export default function ChangePasswordPage() {
   const dispatch = useAppDispatch();
-  const { email } = useAppSelector((state) => state.authenticate);
+  const { email, roleName } = useAppSelector((state) => state.authenticate);
+  const isCustomer = roleName === 'CUSTOMER';
   
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -50,9 +51,9 @@ export default function ChangePasswordPage() {
 
   const getPasswordStrengthText = (strength: number): string => {
     if (strength === 0) return "";
-    if (strength <= 2) return "Yếu";
-    if (strength <= 4) return "Trung bình";
-    return "Mạnh";
+    if (strength <= 2) return isCustomer ? "Weak" : "Yếu";
+    if (strength <= 4) return isCustomer ? "Medium" : "Trung bình";
+    return isCustomer ? "Strong" : "Mạnh";
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -60,27 +61,27 @@ export default function ChangePasswordPage() {
     
     // Validation
     if (!currentPassword) {
-      toast.error("Vui lòng nhập mật khẩu hiện tại");
+      toast.error(isCustomer ? "Please enter your current password" : "Vui lòng nhập mật khẩu hiện tại");
       return;
     }
     
     if (!newPassword) {
-      toast.error("Vui lòng nhập mật khẩu mới");
+      toast.error(isCustomer ? "Please enter a new password" : "Vui lòng nhập mật khẩu mới");
       return;
     }
     
     if (newPassword.length < 8) {
-      toast.error("Mật khẩu mới phải có ít nhất 8 ký tự");
+      toast.error(isCustomer ? "New password must be at least 8 characters" : "Mật khẩu mới phải có ít nhất 8 ký tự");
       return;
     }
     
     if (newPassword !== confirmPassword) {
-      toast.error("Mật khẩu xác nhận không trùng khớp");
+      toast.error(isCustomer ? "Passwords do not match" : "Mật khẩu xác nhận không trùng khớp");
       return;
     }
     
     if (currentPassword === newPassword) {
-      toast.error("Mật khẩu mới phải khác mật khẩu hiện tại");
+      toast.error(isCustomer ? "New password must be different from current password" : "Mật khẩu mới phải khác mật khẩu hiện tại");
       return;
     }
 
@@ -102,7 +103,7 @@ export default function ChangePasswordPage() {
       setConfirmPassword("");
       setPasswordStrength(0);
     } catch (error: any) {
-      toast.error(error.message || "Lỗi khi thay đổi mật khẩu");
+      toast.error(error.message || (isCustomer ? "Error changing password" : "Lỗi khi thay đổi mật khẩu"));
     } finally {
       setIsLoading(false);
     }
@@ -118,21 +119,21 @@ export default function ChangePasswordPage() {
               <Lock className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">Thay đổi mật khẩu</h1>
-              <p className="text-sm text-muted-foreground">Cập nhật mật khẩu tài khoản của bạn</p>
+              <h1 className="text-2xl font-bold">{isCustomer ? "Change Password" : "Thay đổi mật khẩu"}</h1>
+              <p className="text-sm text-muted-foreground">{isCustomer ? "Update your account password" : "Cập nhật mật khẩu tài khoản của bạn"}</p>
             </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Current Password */}
             <div className="space-y-2">
-              <Label htmlFor="currentPassword">Mật khẩu hiện tại</Label>
+              <Label htmlFor="currentPassword">{isCustomer ? "Current Password" : "Mật khẩu hiện tại"}</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   id="currentPassword"
                   type={showCurrentPassword ? "text" : "password"}
-                  placeholder="Nhập mật khẩu hiện tại"
+                  placeholder={isCustomer ? "Enter current password" : "Nhập mật khẩu hiện tại"}
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   className="pl-10 pr-10"
@@ -155,13 +156,13 @@ export default function ChangePasswordPage() {
 
             {/* New Password */}
             <div className="space-y-2">
-              <Label htmlFor="newPassword">Mật khẩu mới</Label>
+              <Label htmlFor="newPassword">{isCustomer ? "New Password" : "Mật khẩu mới"}</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   id="newPassword"
                   type={showNewPassword ? "text" : "password"}
-                  placeholder="Nhập mật khẩu mới"
+                  placeholder={isCustomer ? "Enter new password" : "Nhập mật khẩu mới"}
                   value={newPassword}
                   onChange={handleNewPasswordChange}
                   className="pl-10 pr-10"
@@ -197,7 +198,7 @@ export default function ChangePasswordPage() {
                     ))}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Độ mạnh: {getPasswordStrengthText(passwordStrength)}
+                    {isCustomer ? "Strength:" : "Độ mạnh:"} {getPasswordStrengthText(passwordStrength)}
                   </p>
                 </div>
               )}
@@ -211,7 +212,7 @@ export default function ChangePasswordPage() {
                     <X className="w-4 h-4 text-muted-foreground" />
                   )}
                   <span className={newPassword.length >= 8 ? "text-foreground" : "text-muted-foreground"}>
-                    Ít nhất 8 ký tự
+                    {isCustomer ? "At least 8 characters" : "Ít nhất 8 ký tự"}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -221,7 +222,7 @@ export default function ChangePasswordPage() {
                     <X className="w-4 h-4 text-muted-foreground" />
                   )}
                   <span className={/[A-Z]/.test(newPassword) && /[a-z]/.test(newPassword) ? "text-foreground" : "text-muted-foreground"}>
-                    Chữ hoa và chữ thường
+                    {isCustomer ? "Uppercase and lowercase" : "Chữ hoa và chữ thường"}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -231,7 +232,7 @@ export default function ChangePasswordPage() {
                     <X className="w-4 h-4 text-muted-foreground" />
                   )}
                   <span className={/[0-9]/.test(newPassword) ? "text-foreground" : "text-muted-foreground"}>
-                    Chứa số
+                    {isCustomer ? "Contains numbers" : "Chứa số"}
                   </span>
                 </div>
               </div>
@@ -239,13 +240,13 @@ export default function ChangePasswordPage() {
 
             {/* Confirm Password */}
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Xác nhận mật khẩu mới</Label>
+              <Label htmlFor="confirmPassword">{isCustomer ? "Confirm New Password" : "Xác nhận mật khẩu mới"}</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   id="confirmPassword"
                   type={showConfirmPassword ? "text" : "password"}
-                  placeholder="Nhập lại mật khẩu mới"
+                  placeholder={isCustomer ? "Re-enter new password" : "Nhập lại mật khẩu mới"}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className="pl-10 pr-10"
@@ -271,12 +272,12 @@ export default function ChangePasswordPage() {
                   {newPassword === confirmPassword ? (
                     <>
                       <Check className="w-4 h-4 text-green-500" />
-                      <span className="text-green-600">Mật khẩu trùng khớp</span>
+                      <span className="text-green-600">{isCustomer ? "Passwords match" : "Mật khẩu trùng khớp"}</span>
                     </>
                   ) : (
                     <>
                       <X className="w-4 h-4 text-red-500" />
-                      <span className="text-red-600">Mật khẩu không trùng khớp</span>
+                      <span className="text-red-600">{isCustomer ? "Passwords do not match" : "Mật khẩu không trùng khớp"}</span>
                     </>
                   )}
                 </div>
@@ -297,17 +298,17 @@ export default function ChangePasswordPage() {
                 passwordStrength < 3
               }
             >
-              {isLoading ? "Đang cập nhật..." : "Thay đổi mật khẩu"}
+              {isLoading ? (isCustomer ? "Updating..." : "Đang cập nhật...") : (isCustomer ? "Change Password" : "Thay đổi mật khẩu")}
             </Button>
           </form>
 
           {/* Info */}
           <div className="bg-blue-50 dark:bg-blue-950 p-3 rounded-md text-xs text-blue-900 dark:text-blue-100 space-y-1">
-            <p className="font-semibold">💡 Gợi ý bảo mật:</p>
+            <p className="font-semibold">{isCustomer ? "💡 Security Tips:" : "💡 Gợi ý bảo mật:"}</p>
             <ul className="list-disc list-inside space-y-0.5">
-              <li>Sử dụng mật khẩu mạnh với chữ hoa, chữ thường, số và ký tự đặc biệt</li>
-              <li>Không chia sẻ mật khẩu của bạn với bất kỳ ai</li>
-              <li>Thay đổi mật khẩu định kỳ để bảo vệ tài khoản</li>
+              <li>{isCustomer ? "Use a strong password with uppercase, lowercase, numbers and special characters" : "Sử dụng mật khẩu mạnh với chữ hoa, chữ thường, số và ký tự đặc biệt"}</li>
+              <li>{isCustomer ? "Do not share your password with anyone" : "Không chia sẻ mật khẩu của bạn với bất kỳ ai"}</li>
+              <li>{isCustomer ? "Change your password regularly to protect your account" : "Thay đổi mật khẩu định kỳ để bảo vệ tài khoản"}</li>
             </ul>
           </div>
         </Card>

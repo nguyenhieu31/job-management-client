@@ -67,9 +67,9 @@ export function ServiceCard({
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 space-y-1">
           <p className="text-sm font-medium leading-tight">{label}</p>
-          <p className="text-xs text-muted-foreground leading-snug">
+          {/* <p className="text-xs text-muted-foreground leading-snug">
             {subtitle}
-          </p>
+          </p> */}
         </div>
         <div
           className={cn(
