@@ -29,7 +29,7 @@ import useRouter from "@/hooks/use-router";
 import Loader from "@/components/ui/loader";
 
 const DEFAULT_PAGE_NUMBER = 0;
-const DEFAULT_PAGE_SIZE = 16;
+const DEFAULT_PAGE_SIZE = 10;
 
 export default function OrderServicePage() {
   const dispatch = useAppDispatch();

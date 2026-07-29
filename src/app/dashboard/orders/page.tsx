@@ -12,7 +12,7 @@ import type { OrderStatus } from "@/types/orders";
 import { toast } from "react-toastify";
 
 const DEFAULT_PAGE_NUMBER = 0;
-const DEFAULT_PAGE_SIZE = 16;
+const DEFAULT_PAGE_SIZE = 10;
 
 export default function ManagerOrdersPage() {
   const dispatch = useAppDispatch();
