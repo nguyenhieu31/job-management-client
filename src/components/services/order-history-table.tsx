@@ -277,7 +277,7 @@ function SectionHeading({ title }: { title: string }) {
   return (
     <div className="flex items-center gap-2">
       <div className="h-2 w-2 rounded-full bg-primary" />
-      <h3 className="text-xl font-extrabold uppercase tracking-wide text-muted-foreground !text-[#000]">
+      <h3 className="text-sm font-extrabold uppercase tracking-wide text-muted-foreground !text-[#000]">
         {title}
       </h3>
     </div>
@@ -582,7 +582,7 @@ function ConfigurationDetails({ config }: { config: unknown }) {
                         <p className="text-sm">{entry.line}</p>
                       </div>
                       {entry.note && (
-                        <p className="text-base text-muted-foreground pl-1 mt-1"><span className="text-red-500 font-semibold">Note: </span>{linkifyText(entry.note)}</p>
+                        <p className="text-sm text-muted-foreground pl-1 mt-1"><span className="text-red-500 font-semibold">Note: </span>{linkifyText(entry.note)}</p>
                       )}
                     </div>
                   ))}
@@ -635,7 +635,7 @@ function ConfigurationDetails({ config }: { config: unknown }) {
             <div className="rounded-lg border p-4 space-y-2">
               <span className="text-xs font-medium text-muted-foreground">Background Music</span>
               <p className="text-sm">{music ?? ""}</p>
-              {musicNote && <p className="text-base text-muted-foreground"><span className="text-red-500 font-semibold">Note: </span>{linkifyText(musicNote)}</p>}
+              {musicNote && <p className="text-sm text-muted-foreground"><span className="text-red-500 font-semibold">Note: </span>{linkifyText(musicNote)}</p>}
               {music === "I will provide" && (
                 <p className="text-xs text-muted-foreground">Music file: N/A (not stored in config)</p>
               )}
@@ -651,14 +651,14 @@ function ConfigurationDetails({ config }: { config: unknown }) {
                   ))}
                 </div>
               )}
-              {textCaptionsNote && <p className="text-base text-muted-foreground"><span className="text-red-500 font-semibold">Note: </span>{linkifyText(textCaptionsNote)}</p>}
+              {textCaptionsNote && <p className="text-sm text-muted-foreground"><span className="text-red-500 font-semibold">Note: </span>{linkifyText(textCaptionsNote)}</p>}
             </div>
 
             {/* Transitions */}
             <div className="rounded-lg border p-4 space-y-2">
               <span className="text-xs font-medium text-muted-foreground">Transitions</span>
               <p className="text-sm">{transitions ?? ""}</p>
-              {transitionsNote && <p className="text-base text-muted-foreground"><span className="text-red-500 font-semibold">Note: </span>{linkifyText(transitionsNote)}</p>}
+              {transitionsNote && <p className="text-sm text-muted-foreground"><span className="text-red-500 font-semibold">Note: </span>{linkifyText(transitionsNote)}</p>}
             </div>
           </div>
 
@@ -669,23 +669,23 @@ function ConfigurationDetails({ config }: { config: unknown }) {
               <p className="text-sm">
                 AI Voiceover: {aiOption ? "Yes (+$20)" : ""}
               </p>
-              {aiNote && <p className="text-base text-muted-foreground pl-3"><span className="text-red-500 font-semibold">Note: </span>{linkifyText(aiNote)}</p>}
+              {aiNote && <p className="text-sm text-muted-foreground pl-3"><span className="text-red-500 font-semibold">Note: </span>{linkifyText(aiNote)}</p>}
               {aiSceneCount > 0 && (
                 <div>
                   <p className="text-sm">AI Scenes: {aiScenePriceLine}</p>
-                  {aiSceneNote && <p className="text-base text-muted-foreground pl-3"><span className="text-red-500 font-semibold">Note: </span>{linkifyText(aiSceneNote)}</p>}
+                  {aiSceneNote && <p className="text-sm text-muted-foreground pl-3"><span className="text-red-500 font-semibold">Note: </span>{linkifyText(aiSceneNote)}</p>}
                 </div>
               )}
               {text2d3dCount > 0 && (
                 <div>
                   <p className="text-sm">Add 2D/3D animated text: {text2d3dPriceLine}</p>
-                  {text2d3dNote && <p className="text-base text-muted-foreground pl-3"><span className="text-red-500 font-semibold">Note: </span>{linkifyText(text2d3dNote)}</p>}
+                  {text2d3dNote && <p className="text-sm text-muted-foreground pl-3"><span className="text-red-500 font-semibold">Note: </span>{linkifyText(text2d3dNote)}</p>}
                 </div>
               )}
               <p className="text-sm">
                 Boundary Draw: {boundaryDrawOption ? "Yes (+$10)" : ""}
               </p>
-              {boundaryDrawNote && <p className="text-base text-muted-foreground pl-3"><span className="text-red-500 font-semibold">Note: </span>{linkifyText(boundaryDrawNote)}</p>}
+              {boundaryDrawNote && <p className="text-sm text-muted-foreground pl-3"><span className="text-red-500 font-semibold">Note: </span>{linkifyText(boundaryDrawNote)}</p>}
             </div>
           </div>
         </section>
@@ -732,7 +732,7 @@ function ConfigurationDetails({ config }: { config: unknown }) {
       {configOrderNotes && (
         <section className="space-y-4 rounded-lg border bg-card p-4 sm:p-6">
           <SectionHeading title="Order Notes" />
-          <p className="text-xl whitespace-pre-wrap">{linkifyText(configOrderNotes)}</p>
+          <p className="text-sm whitespace-pre-wrap">{linkifyText(configOrderNotes)}</p>
         </section>
       )}
 
@@ -894,10 +894,10 @@ export function OrderDetailDialog({
                       </div>
                     )}
                     {event.doneNote && (
-                      <p className="text-base text-muted-foreground"><span className="text-red-500 font-semibold">Note: </span>{linkifyText(event.doneNote)}</p>
+                      <p className="text-sm text-muted-foreground"><span className="text-red-500 font-semibold">Note: </span>{linkifyText(event.doneNote)}</p>
                     )}
                     {event.note && (
-                      <p className="text-base text-amber-700"><span className="text-red-500 font-semibold">Note: </span>{linkifyText(event.note)}</p>
+                      <p className="text-sm text-amber-700"><span className="text-red-500 font-semibold">Note: </span>{linkifyText(event.note)}</p>
                     )}
                   </div>
                 ))}
