@@ -194,6 +194,7 @@ const ORDER_STATUS_BADGE_VARIANT: Record<
 const ORDER_STATUS_BADGE_CLASS: Partial<Record<OrderStatus, string>> = {
   CONFIRMED: "bg-blue-100 text-blue-700 border-blue-200",
   IN_PROGRESS: "bg-amber-100 text-amber-700 border-amber-200",
+  COMPLETED: "bg-green-100 text-green-700 border-green-200",
 };
 
 const VND_FORMATTER = new Intl.NumberFormat("en-US");
@@ -276,7 +277,7 @@ function SectionHeading({ title }: { title: string }) {
   return (
     <div className="flex items-center gap-2">
       <div className="h-2 w-2 rounded-full bg-primary" />
-      <h3 className="text-lg font-bold uppercase tracking-wide text-muted-foreground !text-[#000]">
+      <h3 className="text-xl font-extrabold uppercase tracking-wide text-muted-foreground !text-[#000]">
         {title}
       </h3>
     </div>
@@ -413,8 +414,7 @@ function ConfigurationDetails({ config }: { config: unknown }) {
     obj.photoAddOns && typeof obj.photoAddOns === "object"
       ? (obj.photoAddOns as Record<string, unknown>)
       : null;
-  const addonLines: string[] = [];
-  const addonNotes: { label: string; note: string }[] = [];
+  const addonEntries: { line: string; note?: string }[] = [];
   if (photoAddOns) {
     for (const opt of PHOTO_ADDON_OPTIONS) {
       if (photoAddOns[opt.key]) {
@@ -425,11 +425,11 @@ function ConfigurationDetails({ config }: { config: unknown }) {
           : opt.price
           ? ` (+$${opt.price}/photo)`
           : "";
-        addonLines.push(`${opt.label}${priceSuffix}`);
         const note = photoAddOns[opt.noteKey];
-        if (isFilledString(note)) {
-          addonNotes.push({ label: `${opt.label} note`, note: String(note) });
-        }
+        addonEntries.push({
+          line: `${opt.label}${priceSuffix}`,
+          note: isFilledString(note) ? String(note) : undefined,
+        });
       }
     }
   }
@@ -480,7 +480,7 @@ function ConfigurationDetails({ config }: { config: unknown }) {
     }
   }
 
-  const hasAddons = addonLines.length > 0;
+  const hasAddons = addonEntries.length > 0;
   const hasVS =
     !!virtualStagingStyle ||
     roomCountLines.length > 0 ||
@@ -576,13 +576,15 @@ function ConfigurationDetails({ config }: { config: unknown }) {
               <div className="space-y-2">
                 <span className="text-xs font-medium text-muted-foreground">Replacement Add-ons</span>
                 <div className="space-y-2">
-                  {addonLines.map((line, i) => (
-                    <div key={i} className="rounded-lg border p-3">
-                      <p className="text-sm">{line}</p>
+                  {addonEntries.map((entry, i) => (
+                    <div key={i}>
+                      <div className="rounded-lg border p-3">
+                        <p className="text-sm">{entry.line}</p>
+                      </div>
+                      {entry.note && (
+                        <p className="text-base text-muted-foreground pl-1 mt-1"><span className="text-red-500 font-semibold">Note: </span>{linkifyText(entry.note)}</p>
+                      )}
                     </div>
-                  ))}
-                  {addonNotes.map((n, i) => (
-                    <p key={i} className="text-xs text-muted-foreground pl-1">{n.label}: {linkifyText(n.note)}</p>
                   ))}
                 </div>
               </div>
@@ -633,7 +635,7 @@ function ConfigurationDetails({ config }: { config: unknown }) {
             <div className="rounded-lg border p-4 space-y-2">
               <span className="text-xs font-medium text-muted-foreground">Background Music</span>
               <p className="text-sm">{music ?? ""}</p>
-              {musicNote && <p className="text-xs text-muted-foreground">{linkifyText(musicNote)}</p>}
+              {musicNote && <p className="text-base text-muted-foreground"><span className="text-red-500 font-semibold">Note: </span>{linkifyText(musicNote)}</p>}
               {music === "I will provide" && (
                 <p className="text-xs text-muted-foreground">Music file: N/A (not stored in config)</p>
               )}
@@ -649,14 +651,14 @@ function ConfigurationDetails({ config }: { config: unknown }) {
                   ))}
                 </div>
               )}
-              {textCaptionsNote && <p className="text-xs text-muted-foreground">{linkifyText(textCaptionsNote)}</p>}
+              {textCaptionsNote && <p className="text-base text-muted-foreground"><span className="text-red-500 font-semibold">Note: </span>{linkifyText(textCaptionsNote)}</p>}
             </div>
 
             {/* Transitions */}
             <div className="rounded-lg border p-4 space-y-2">
               <span className="text-xs font-medium text-muted-foreground">Transitions</span>
               <p className="text-sm">{transitions ?? ""}</p>
-              {transitionsNote && <p className="text-xs text-muted-foreground">{linkifyText(transitionsNote)}</p>}
+              {transitionsNote && <p className="text-base text-muted-foreground"><span className="text-red-500 font-semibold">Note: </span>{linkifyText(transitionsNote)}</p>}
             </div>
           </div>
 
@@ -667,23 +669,23 @@ function ConfigurationDetails({ config }: { config: unknown }) {
               <p className="text-sm">
                 AI Voiceover: {aiOption ? "Yes (+$20)" : ""}
               </p>
-              {aiNote && <p className="text-xs text-muted-foreground pl-3">{linkifyText(aiNote)}</p>}
+              {aiNote && <p className="text-base text-muted-foreground pl-3"><span className="text-red-500 font-semibold">Note: </span>{linkifyText(aiNote)}</p>}
               {aiSceneCount > 0 && (
                 <div>
                   <p className="text-sm">AI Scenes: {aiScenePriceLine}</p>
-                  {aiSceneNote && <p className="text-xs text-muted-foreground pl-3">{linkifyText(aiSceneNote)}</p>}
+                  {aiSceneNote && <p className="text-base text-muted-foreground pl-3"><span className="text-red-500 font-semibold">Note: </span>{linkifyText(aiSceneNote)}</p>}
                 </div>
               )}
               {text2d3dCount > 0 && (
                 <div>
                   <p className="text-sm">Add 2D/3D animated text: {text2d3dPriceLine}</p>
-                  {text2d3dNote && <p className="text-xs text-muted-foreground pl-3">{linkifyText(text2d3dNote)}</p>}
+                  {text2d3dNote && <p className="text-base text-muted-foreground pl-3"><span className="text-red-500 font-semibold">Note: </span>{linkifyText(text2d3dNote)}</p>}
                 </div>
               )}
               <p className="text-sm">
                 Boundary Draw: {boundaryDrawOption ? "Yes (+$10)" : ""}
               </p>
-              {boundaryDrawNote && <p className="text-xs text-muted-foreground pl-3">{linkifyText(boundaryDrawNote)}</p>}
+              {boundaryDrawNote && <p className="text-base text-muted-foreground pl-3"><span className="text-red-500 font-semibold">Note: </span>{linkifyText(boundaryDrawNote)}</p>}
             </div>
           </div>
         </section>
@@ -730,7 +732,7 @@ function ConfigurationDetails({ config }: { config: unknown }) {
       {configOrderNotes && (
         <section className="space-y-4 rounded-lg border bg-card p-4 sm:p-6">
           <SectionHeading title="Order Notes" />
-          <p className="text-sm whitespace-pre-wrap">{linkifyText(configOrderNotes)}</p>
+          <p className="text-xl whitespace-pre-wrap">{linkifyText(configOrderNotes)}</p>
         </section>
       )}
 
@@ -892,10 +894,10 @@ export function OrderDetailDialog({
                       </div>
                     )}
                     {event.doneNote && (
-                      <p className="text-xs text-muted-foreground">{linkifyText(event.doneNote)}</p>
+                      <p className="text-base text-muted-foreground"><span className="text-red-500 font-semibold">Note: </span>{linkifyText(event.doneNote)}</p>
                     )}
                     {event.note && (
-                      <p className="text-xs text-amber-700">{linkifyText(event.note)}</p>
+                      <p className="text-base text-amber-700"><span className="text-red-500 font-semibold">Note: </span>{linkifyText(event.note)}</p>
                     )}
                   </div>
                 ))}
