@@ -28,8 +28,6 @@ interface AddServiceFormProps {
     state: AddServiceFormState,
     attachments: { file: File; type: "image" | "video" }[],
   ) => void;
-  initial?: Partial<AddServiceFormState>;
-  disableCustomerFields?: boolean;
   submitting?: boolean;
 }
 
@@ -37,14 +35,11 @@ type SubmitAttachment = { file: File; type: "image" | "video" };
 
 export function AddServiceForm({
   onSubmit,
-  initial,
-  disableCustomerFields,
   submitting = false,
 }: AddServiceFormProps) {
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
   const formRef = useRef<AddServiceFormState>({
     ...getInitialFormState(),
-    ...(initial || {}),
   });
   const [currentStep, setCurrentStep] = useState(1);
   const [errors, setErrors] = useState<Partial<Record<keyof AddServiceFormState, string>>>({});
@@ -94,6 +89,10 @@ export function AddServiceForm({
 
     if (!state.instagramHandle.trim()) {
       newErrors.instagramHandle = "Please enter your Instagram handle.";
+    }
+
+    if (!state.realEstateAddress.trim()) {
+      newErrors.realEstateAddress = "Please enter the real estate address.";
     }
 
     if (!state.websiteUrl.trim()) {
@@ -153,7 +152,6 @@ export function AddServiceForm({
     const selectedServices = formRef.current.selectedServices;
     formRef.current = {
       ...getInitialFormState(),
-      ...(initial || {}),
       selectedServices,
     };
     setErrors({});
@@ -284,7 +282,6 @@ export function AddServiceForm({
               onMusicFileChange={setMusicFiles}
               attachmentFiles={attachmentFiles}
               onAttachmentFilesChange={setAttachmentFiles}
-              disableCustomerFields={disableCustomerFields}
             />
           )}
 

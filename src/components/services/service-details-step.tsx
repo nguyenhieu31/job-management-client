@@ -51,7 +51,6 @@ interface ServiceDetailsStepProps {
   onMusicFileChange: (files: UploadedFile[]) => void;
   attachmentFiles: UploadedFile[];
   onAttachmentFilesChange: (files: UploadedFile[]) => void;
-  disableCustomerFields?: boolean;
 }
 
 const SINGLE_ONLY = ["talking-on-camera", "start-with-agent", "end-with-agent", "agent-voice-over", "no-agent"];
@@ -153,7 +152,6 @@ export function ServiceDetailsStep({
   onMusicFileChange,
   attachmentFiles,
   onAttachmentFilesChange,
-  disableCustomerFields,
 }: ServiceDetailsStepProps) {
   const hasVideo = isVideoServiceSelected(state.selectedServices);
   const hasVirtualStaging = isVirtualStagingSelected(state.selectedServices);
@@ -250,19 +248,15 @@ export function ServiceDetailsStep({
               placeholder="john@example.com"
               value={state.customerEmail}
               onChange={(e) => onChange("customerEmail", e.target.value)}
-              // disabled={disableCustomerFields}
               className={errors.customerEmail ? "border-destructive" : ""}
             />
             {errors.customerEmail && (
               <p className="text-xs text-destructive">{errors.customerEmail}</p>
             )}
-            {disableCustomerFields && (
-              <p className="text-xs text-muted-foreground">Auto-filled from your account.</p>
-            )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="realEstateAddress">Real Estate Address</Label>
+            <Label htmlFor="realEstateAddress">Real Estate Address <span className="text-destructive">*</span></Label>
             <Input
               id="realEstateAddress"
               placeholder="e.g. 123 Main St, City"

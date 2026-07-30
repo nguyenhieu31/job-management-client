@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { AddServiceForm } from "@/components/services/add-service-form";
 import { OrderHistoryTable } from "@/components/services/order-history-table";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -20,10 +19,7 @@ import {
   submitOrderAction,
 } from "@/store/slice/orders/Orders";
 import type { CreateOrderRequestBody, OrderStatus } from "@/types/orders";
-import {
-  computeEstimatedPrice,
-  type AddServiceFormState,
-} from "@/types/services";
+import { AddServiceFormState, computeEstimatedPrice } from "@/types/services";
 import { toast } from "react-toastify";
 import useRouter from "@/hooks/use-router";
 import Loader from "@/components/ui/loader";
@@ -34,7 +30,7 @@ const DEFAULT_PAGE_SIZE = 10;
 export default function OrderServicePage() {
   const dispatch = useAppDispatch();
   const router = useRouter();
-  const { fullName, email, phoneNumber, roleName } = useAppSelector(
+  const { roleName } = useAppSelector(
     (state) => state.authenticate,
   );
   const { orders: ordersPage, loading, searching, error, submitting, submitError } =
@@ -59,16 +55,6 @@ export default function OrderServicePage() {
       );
     }
   }, [dispatch, roleName, router]);
-
-  const initialValues = useMemo<
-    Partial<AddServiceFormState> | undefined
-  >(() => {
-    if (!fullName || !email) return undefined;
-    return {
-      customerName: fullName,
-      customerEmail: email,
-    };
-  }, [fullName, email]);
 
   const handleFormSubmit = async (
     state: AddServiceFormState,
@@ -246,13 +232,8 @@ export default function OrderServicePage() {
           <DialogContent className="sm:max-w-[1100px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
                 <DialogTitle>Book New Service</DialogTitle>
-                <DialogDescription>
-                  Your personal information is auto-filled from your account.
-                </DialogDescription>
             </DialogHeader>
             <AddServiceForm
-              initial={initialValues}
-              disableCustomerFields
               submitting={submitting}
               onSubmit={handleFormSubmit}
             />

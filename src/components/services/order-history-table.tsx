@@ -284,7 +284,7 @@ function SectionHeading({ title }: { title: string }) {
 }
 
 function DetailRow({ label, value, highlight }: { label: string; value: string | null | undefined; highlight?: boolean }) {
-  const display = value || "N/A";
+  const display = value || "";
   return (
     <div className={highlight ? "rounded-md border border-amber-200 bg-amber-50/60 p-2" : ""}>
       <span className="text-xs font-medium text-muted-foreground">{label}</span>
@@ -543,7 +543,17 @@ function ConfigurationDetails({ config }: { config: unknown }) {
         </section>
       )}
 
-      {/* ====== 2. Photo Quantities (non-VS photo) ====== */}
+      {/* ====== 2. Selected Services ====== */}
+      <section className="space-y-4 rounded-lg border bg-card p-4 sm:p-6">
+        <SectionHeading title="Selected Services" />
+        <div className="space-y-1">
+          {serviceLabels.map((label, i) => (
+            <p key={i} className="text-sm">&bull; {label}</p>
+          ))}
+        </div>
+      </section>
+
+      {/* ====== 3. Photo Quantities (non-VS photo) ====== */}
       {hasNonVSPhoto && hasPhotoQty && (
         <section className="space-y-4 rounded-lg border bg-card p-4 sm:p-6">
           <SectionHeading title="Photo Quantities" />
@@ -583,7 +593,7 @@ function ConfigurationDetails({ config }: { config: unknown }) {
         </section>
       )}
 
-      {/* ====== 3. Video Editing Options ====== */}
+      {/* ====== 4. Video Editing Options ====== */}
       {hasVideo && (
         <section className="space-y-4 rounded-lg border bg-card p-4 sm:p-6">
           <SectionHeading title="Video Editing Options" />
@@ -591,7 +601,7 @@ function ConfigurationDetails({ config }: { config: unknown }) {
             {/* Video Duration */}
             <div className="rounded-lg border p-4 space-y-2">
               <span className="text-xs font-medium text-muted-foreground">Video Duration</span>
-              <p className="text-sm">{videoDuration ?? "N/A"}</p>
+              <p className="text-sm">{videoDuration ?? ""}</p>
               {videoDuration === "Custom" && customDurationPrice && (
                 <p className="text-xs text-muted-foreground">
                   {customDurationPrice.secs}s
@@ -610,19 +620,19 @@ function ConfigurationDetails({ config }: { config: unknown }) {
             {/* Video Style */}
             <div className="rounded-lg border p-4 space-y-2">
               <span className="text-xs font-medium text-muted-foreground">Video Editing Style</span>
-              <p className="text-sm">{videoStyle ?? "N/A"}</p>
+              <p className="text-sm">{videoStyle ?? ""}</p>
             </div>
 
             {/* Aspect Ratio */}
             <div className="rounded-lg border p-4 space-y-2">
               <span className="text-xs font-medium text-muted-foreground">Aspect Ratio</span>
-              <p className="text-sm">{aspectPriceLine ?? "N/A"}</p>
+              <p className="text-sm">{aspectPriceLine ?? ""}</p>
             </div>
 
             {/* Background Music */}
             <div className="rounded-lg border p-4 space-y-2">
               <span className="text-xs font-medium text-muted-foreground">Background Music</span>
-              <p className="text-sm">{music ?? "N/A"}</p>
+              <p className="text-sm">{music ?? ""}</p>
               {musicNote && <p className="text-xs text-muted-foreground">{linkifyText(musicNote)}</p>}
               {music === "I will provide" && (
                 <p className="text-xs text-muted-foreground">Music file: N/A (not stored in config)</p>
@@ -632,14 +642,12 @@ function ConfigurationDetails({ config }: { config: unknown }) {
             {/* Text & Captions */}
             <div className="rounded-lg border p-4 space-y-2">
               <span className="text-xs font-medium text-muted-foreground">Text & Captions</span>
-              {textCaptionLabels.length > 0 ? (
+              {textCaptionLabels.length > 0 && (
                 <div className="space-y-0.5">
                   {textCaptionLabels.map((label, i) => (
                     <p key={i} className="text-sm">&bull; {label}</p>
                   ))}
                 </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">N/A</p>
               )}
               {textCaptionsNote && <p className="text-xs text-muted-foreground">{linkifyText(textCaptionsNote)}</p>}
             </div>
@@ -647,7 +655,7 @@ function ConfigurationDetails({ config }: { config: unknown }) {
             {/* Transitions */}
             <div className="rounded-lg border p-4 space-y-2">
               <span className="text-xs font-medium text-muted-foreground">Transitions</span>
-              <p className="text-sm">{transitions ?? "N/A"}</p>
+              <p className="text-sm">{transitions ?? ""}</p>
               {transitionsNote && <p className="text-xs text-muted-foreground">{linkifyText(transitionsNote)}</p>}
             </div>
           </div>
@@ -657,7 +665,7 @@ function ConfigurationDetails({ config }: { config: unknown }) {
             <span className="text-xs font-medium text-muted-foreground">Additional Options</span>
             <div className="space-y-2">
               <p className="text-sm">
-                AI Voiceover: {aiOption ? "Yes (+$20)" : "N/A"}
+                AI Voiceover: {aiOption ? "Yes (+$20)" : ""}
               </p>
               {aiNote && <p className="text-xs text-muted-foreground pl-3">{linkifyText(aiNote)}</p>}
               {aiSceneCount > 0 && (
@@ -668,12 +676,12 @@ function ConfigurationDetails({ config }: { config: unknown }) {
               )}
               {text2d3dCount > 0 && (
                 <div>
-                  <p className="text-sm">Transfer Text 2D/3D: {text2d3dPriceLine}</p>
+                  <p className="text-sm">Add 2D/3D animated text: {text2d3dPriceLine}</p>
                   {text2d3dNote && <p className="text-xs text-muted-foreground pl-3">{linkifyText(text2d3dNote)}</p>}
                 </div>
               )}
               <p className="text-sm">
-                Boundary Draw: {boundaryDrawOption ? "Yes (+$10)" : "N/A"}
+                Boundary Draw: {boundaryDrawOption ? "Yes (+$10)" : ""}
               </p>
               {boundaryDrawNote && <p className="text-xs text-muted-foreground pl-3">{linkifyText(boundaryDrawNote)}</p>}
             </div>
@@ -681,7 +689,7 @@ function ConfigurationDetails({ config }: { config: unknown }) {
         </section>
       )}
 
-      {/* ====== 4. Virtual Staging ====== */}
+      {/* ====== 5. Virtual Staging ====== */}
       {hasVirtualStaging && hasVS && (
         <section className="space-y-4 rounded-lg border bg-card p-4 sm:p-6">
           <SectionHeading title="Virtual Staging" />
@@ -705,7 +713,7 @@ function ConfigurationDetails({ config }: { config: unknown }) {
         </section>
       )}
 
-      {/* ====== 5. Upload Methods ====== */}
+      {/* ====== 6. Upload Methods ====== */}
       {hasUpload && (
         <section className="space-y-4 rounded-lg border bg-card p-4 sm:p-6">
           <SectionHeading title="Upload Files" />
@@ -718,7 +726,7 @@ function ConfigurationDetails({ config }: { config: unknown }) {
         </section>
       )}
 
-      {/* ====== 6. Order Notes ====== */}
+      {/* ====== 7. Order Notes ====== */}
       {configOrderNotes && (
         <section className="space-y-4 rounded-lg border bg-card p-4 sm:p-6">
           <SectionHeading title="Order Notes" />
@@ -726,7 +734,7 @@ function ConfigurationDetails({ config }: { config: unknown }) {
         </section>
       )}
 
-      {/* ====== 7. Confirmation ====== */}
+      {/* ====== 8. Confirmation ====== */}
       {(confirmRequirements || confirmExtraCharges) && (
         <section className="space-y-4 rounded-lg border bg-card p-4 sm:p-6">
           <SectionHeading title="Confirm Revision Policy" />
@@ -813,15 +821,6 @@ export function OrderDetailDialog({
               </div>
             </div>
           </div>
-
-          {order.orderNotes && (
-            <div className="space-y-2">
-              <h3 className="font-semibold">Notes</h3>
-              <p className="rounded-lg border bg-amber-50/50 p-4 text-sm whitespace-pre-wrap">
-                {linkifyText(order.orderNotes)}
-              </p>
-            </div>
-          )}
 
           {order.managerRejectNote && (
             <div className="space-y-2">

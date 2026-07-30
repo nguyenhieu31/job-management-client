@@ -251,7 +251,7 @@ export function SummaryCard({ state, mobile = false }: SummaryCardProps) {
             {state.text2d3dCount > 0 && (
               <li className="flex flex-col gap-0.5">
                 <div className="flex justify-between gap-2">
-                  <span>Transfer Text 2D/3D</span>
+                  <span>Add 2D/3D animated text</span>
                   <span className="tabular-nums text-muted-foreground">
                     {state.text2d3dCount} × {formatCurrency(TEXT_2D_3D_PRICE)} = {formatCurrency(state.text2d3dCount * TEXT_2D_3D_PRICE)}
                   </span>

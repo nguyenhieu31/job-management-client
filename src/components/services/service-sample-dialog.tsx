@@ -60,9 +60,9 @@ export function ServiceSampleDialog({
     <Dialog open={open} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>{label || (isVideo ? "Video mẫu" : "Ảnh mẫu")}</DialogTitle>
+          <DialogTitle>{label || (isVideo ? "Sample Video" : "Sample Image")}</DialogTitle>
           <DialogDescription>
-            {isVideo ? "Video mẫu cho dịch vụ này" : "So sánh kết quả trước và sau khi chỉnh sửa"}
+            {isVideo ? "Sample video for this service" : "Compare the results before and after editing"}
             {hasMultiple && ` (${currentIndex + 1}/${samples.length})`}
           </DialogDescription>
         </DialogHeader>
@@ -71,7 +71,7 @@ export function ServiceSampleDialog({
           {!currentPair ? (
             <div className="flex flex-col items-center gap-3 py-12 text-muted-foreground">
               <Monitor className="h-12 w-12" />
-              <p className="text-sm">Chưa có mẫu cho dịch vụ này</p>
+              <p className="text-sm">There are no templates available for this service.</p>
             </div>
           ) : (
             <>
@@ -85,7 +85,7 @@ export function ServiceSampleDialog({
                     poster={currentPair.before}
                     autoPlay
                   >
-                    Trình duyệt của bạn không hỗ trợ phát video.
+                    Your browser does not support the video tag.
                   </video>
                 </div>
               ) : (
