@@ -308,6 +308,7 @@ export const PAYROLL_DAY_COLUMN = [
   "payPerFile",
   "totalPayPerFile",
   "assignedEmployee",
+  "qa",
   "qaOutputNumber",
   "payPerFileQa",
   "totalPayPerFileQa"

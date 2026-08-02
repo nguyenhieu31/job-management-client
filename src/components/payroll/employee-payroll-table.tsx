@@ -170,7 +170,7 @@ export function EmployeePayrollTable({
                     <th className="px-3 py-2 text-left font-medium">Tên Job</th>
                     <th className="px-3 py-2 text-center font-medium">Số lượng</th>
                     <th className="px-3 py-2 text-center font-medium">Tiền</th>
-                    <th className="px-3 py-2 text-center font-medium">Phí Chỉnh Sửa</th>
+                    {/* <th className="px-3 py-2 text-center font-medium">Phí Chỉnh Sửa</th> */}
                     <th className="px-3 py-2 text-center font-medium">Tổng tiền</th>
                   </tr>
                 </thead>
@@ -182,7 +182,7 @@ export function EmployeePayrollTable({
                       <td className="px-3 py-2">{item.caseName}</td>
                       <td className="px-3 py-2 text-center">{item.outputNumber}</td>
                       <td className="px-3 py-2 text-center">{formatCurrencyVND(item.payPerFile)}</td>
-                      <td className="px-3 py-2 text-center">{formatCurrencyVND(calculateEditedFee(item.editedNumber))}</td>
+                      {/* <td className="px-3 py-2 text-center">{formatCurrencyVND(calculateEditedFee(item.editedNumber))}</td> */}
                       <td className="px-3 py-2 text-center font-medium">{formatCurrencyVND(item.amount)}</td>
                     </tr>
                   ))}

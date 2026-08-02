@@ -15,11 +15,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { CustomerJobSummary } from "@/types/invoices";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ChevronDown, ChevronRight, Filter, FileDown } from "lucide-react";
+import { ChevronDown, ChevronRight, Filter, FileSpreadsheet } from "lucide-react";
 import { CustomerInfo, JobResponse } from "@/types/jobs";
 import { Label } from "@/components/ui/label";
 import MultiSelectDropdown from "@/components/ui/multi-select-dropdown";
-import { generatePdfInvoice } from "@/lib/pdf/generate-invoice-pdf";
+import { generateExcelInvoice } from "@/lib/excel/generate-invoice-excel";
 import { toast } from "react-toastify";
 
 interface InvoiceListProps {
@@ -91,11 +91,11 @@ export function InvoiceList({
     });
   };
 
-  const handleExportPdf = (customerInfo: CustomerInfo, allJobs: JobResponse[]) => {
+  const handleExportExcel = async (customerInfo: CustomerInfo, allJobs: JobResponse[]) => {
     const selectedJobIds = getSelectedJobsByCustomer(customerInfo.id);
     const selectedJobsToExport = allJobs.filter((j) => selectedJobIds.includes(j.id));
     if (selectedJobsToExport.length === 0) {
-      toast.warn("Vui lòng chọn ít nhất một công việc để xuất hóa đơn PDF!");
+      toast.warn("Vui lòng chọn ít nhất một công việc để xuất hóa đơn Excel!");
       return;
     }
 
@@ -103,16 +103,16 @@ export function InvoiceList({
       (job) => job.filePrice === null || job.outputNumber === null || job.outputNumber === 0 || job.filePrice === 0
     );
     if (invalidJob) {
-      toast.error(`Công việc "${invalidJob.caseName}" chưa có tổng tiền. Vui lòng cập nhật trước khi xuất PDF.`);
+      toast.error(`Công việc "${invalidJob.caseName}" chưa có tổng tiền. Vui lòng cập nhật trước khi xuất Excel.`);
       return;
     }
 
     try {
-      generatePdfInvoice(customerInfo, selectedJobsToExport);
-      toast.success(`Đã tải xuống hóa đơn PDF cho ${customerInfo.name}!`);
+      await generateExcelInvoice(customerInfo, selectedJobsToExport);
+      toast.success(`Đã tải xuống hóa đơn Excel cho ${customerInfo.name}!`);
     } catch (err: any) {
-      console.error("PDF export error:", err);
-      toast.error("Xuất hóa đơn PDF thất bại!");
+      console.error("Excel export error:", err);
+      toast.error("Xuất hóa đơn Excel thất bại!");
     }
   };
 
@@ -215,14 +215,14 @@ export function InvoiceList({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex items-center gap-1.5 border-orange-500 text-orange-600 hover:bg-orange-500/10 dark:text-orange-400 dark:border-orange-400 font-medium transition-colors"
-                  onClick={() => handleExportPdf(customer.customer, customer.jobs)}
+                  className="flex items-center gap-1.5 border-emerald-600 text-emerald-600 hover:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500 font-medium transition-colors"
+                  onClick={() => handleExportExcel(customer.customer, customer.jobs)}
                   disabled={
                     getSelectedJobsByCustomer(customer.customer.id).length === 0 || loading
                   }
                 >
-                  <FileDown className="h-4 w-4" />
-                  Xuất PDF ({getSelectedJobsByCustomer(customer.customer.id).length})
+                  <FileSpreadsheet className="h-4 w-4" />
+                  Xuất Excel ({getSelectedJobsByCustomer(customer.customer.id).length})
                 </Button>
               </div>
             </div>

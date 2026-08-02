@@ -85,7 +85,7 @@ export default function PayrollDetailDialog({
                       <th className="text-left py-2 px-2">Tên job</th>
                       <th className="text-left py-2 px-2">Số lượng output</th>
                       <th className="text-right py-2 px-2">Số Tiền</th>
-                      <th className="text-right py-2 px-2">Phí Chỉnh Sửa</th>
+                      {/* <th className="text-right py-2 px-2">Phí Chỉnh Sửa</th> */}
                       <th className="text-right py-2 px-2">Tổng Tiền</th>
                     </tr>
                   </thead>
@@ -99,9 +99,9 @@ export default function PayrollDetailDialog({
                         <td className="py-2 px-2 text-right font-medium">
                           {formatCurrencyVND(item.payPerFile)}
                         </td>
-                        <td className="py-2 px-2 text-right font-medium">
+                        {/* <td className="py-2 px-2 text-right font-medium">
                           {formatCurrencyVND(calculateEditedFee(item.editedNumber))}
-                        </td>
+                        </td> */}
                         <td className="py-2 px-2 text-right font-medium">
                           {formatCurrencyVND(item.amount)}
                         </td>
