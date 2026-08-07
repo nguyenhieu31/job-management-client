@@ -29,6 +29,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { uploadMediaApi } from "@/services/JobApi";
 import {
   Eye,
   Trash2,
@@ -69,8 +71,6 @@ import {
   UpdatePaymentMultipleVideosAction,
 } from "@/store/slice/videos/Videos";
 import { toast } from "react-toastify";
-
-import { RichTextEditor } from "@/components/ui/rich-text-editor";
 
 interface VideoTableProps {
   videos: VideoResponse[];
@@ -1998,16 +1998,17 @@ console.log("editValue: ", editValue)
         open={rejectDialog.open}
         onOpenChange={(open) => setRejectDialog({ ...rejectDialog, open })}
       >
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Từ Chối Duyệt Video</DialogTitle>
+            <DialogTitle>Từ Chối Duyệt Video (Ghi chú QA)</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <Textarea
-              placeholder="Nhập lý do từ chối (tối thiểu 5 ký tự)..."
+          <div className="space-y-2 py-2">
+            <RichTextEditor
               value={rejectNote}
-              onChange={(e) => setRejectNote(e.target.value)}
-              className="min-h-[120px]"
+              onChange={setRejectNote}
+              onMediaUpload={uploadMediaApi}
+              placeholder="Nhập lý do từ chối (có thể chèn ảnh/video minh họa)..."
+              minHeight="180px"
             />
           </div>
           <DialogFooter>
@@ -2023,8 +2024,8 @@ console.log("editValue: ", editValue)
             <Button
               variant="destructive"
               onClick={() => {
-                if (!rejectNote.trim() || rejectNote.trim().length < 5) {
-                  toast.warning("Vui lòng nhập lý do từ chối (tối thiểu 5 ký tự)");
+                if (!rejectNote || !rejectNote.replace(/<[^>]*>/g, '').trim()) {
+                  toast.warning("Vui lòng nhập lý do từ chối");
                   return;
                 }
                 if (rejectDialog.videoId != null) {

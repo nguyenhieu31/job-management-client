@@ -90,6 +90,22 @@ export function JobDetailDialog({
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const handleRichContentClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    if (target.tagName === "IMG") {
+      const src = (target as HTMLImageElement).src;
+      if (src) {
+        setPreviewMedia({
+          id: Date.now(),
+          dropboxLink: src,
+          folderPath: "Xem ảnh minh họa",
+          isImage: true,
+          fileType: "IMAGE",
+        } as any);
+      }
+    }
+  };
   
   // Map role to UserRole type
   const getUserRole = (): UserRole => {
@@ -379,7 +395,8 @@ export function JobDetailDialog({
                     <div className="space-y-2 min-w-0">
                       <h3 className="font-semibold text-lg">Ghi Chú</h3>
                       <div
-                        className="rich-note-content text-sm bg-muted/50 p-4 rounded-lg break-words overflow-wrap-break-word max-w-full"
+                        className="rich-note-content text-sm bg-muted/50 p-4 rounded-lg break-words overflow-wrap-break-word max-w-full cursor-pointer"
+                        onClick={handleRichContentClick}
                         dangerouslySetInnerHTML={{ __html: renderHtmlWithLinks(job.note) }}
                       />
                     </div>
@@ -387,10 +404,12 @@ export function JobDetailDialog({
 
                   {job.qaNote && (
                     <div className="space-y-2 min-w-0">
-                      <h3 className="font-semibold text-lg">Ghi Chú QA</h3>
-                      <p className="text-sm whitespace-pre-wrap bg-red-500/10 p-4 rounded-lg border border-red-500/20 break-words overflow-wrap-break-word max-w-full">
-                        {renderTextWithLinks(job.qaNote)}
-                      </p>
+                      <h3 className="font-semibold text-lg text-red-600 dark:text-red-400">Ghi Chú QA</h3>
+                      <div
+                        className="rich-note-content text-sm bg-red-500/10 p-4 rounded-lg border border-red-500/20 break-words overflow-wrap-break-word max-w-full cursor-pointer"
+                        onClick={handleRichContentClick}
+                        dangerouslySetInnerHTML={{ __html: renderHtmlWithLinks(job.qaNote) }}
+                      />
                     </div>
                   )}
 

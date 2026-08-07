@@ -146,6 +146,22 @@ export function VideoDetailDialog({
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const handleRichContentClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    if (target.tagName === "IMG") {
+      const src = (target as HTMLImageElement).src;
+      if (src) {
+        setPreviewMedia({
+          id: Date.now(),
+          dropboxLink: src,
+          folderPath: "Xem ảnh minh họa",
+          isImage: true,
+          fileType: "IMAGE",
+        } as any);
+      }
+    }
+  };
   
   // Map role to UserRole type
   const getUserRole = (): UserRole => {
@@ -216,13 +232,15 @@ export function VideoDetailDialog({
           {/* Reject Reason */}
           {video.rejectReason && (
             <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg p-4">
-              <label className="text-sm font-medium text-red-700 dark:text-red-400 flex items-center gap-1">
+              <label className="text-sm font-medium text-red-700 dark:text-red-400 flex items-center gap-1 mb-2">
                 <XCircle className="h-4 w-4" />
-                Lý Do Từ Chối
+                Lý Do Từ Chối (Ghi chú QA)
               </label>
-              <p className="mt-1 text-sm text-red-600 dark:text-red-300 whitespace-pre-wrap">
-                {video.rejectReason}
-              </p>
+              <div 
+                className="prose dark:prose-invert max-w-none text-sm text-red-700 dark:text-red-300 rich-editor-content overflow-x-auto cursor-pointer"
+                onClick={handleRichContentClick}
+                dangerouslySetInnerHTML={{ __html: video.rejectReason }}
+              />
             </div>
           )}
 
@@ -393,7 +411,8 @@ export function VideoDetailDialog({
                       </div> */}
 
                       <div
-                        className="rich-note-content text-sm bg-muted/50 p-4 rounded-lg break-words overflow-wrap-break-word max-w-full"
+                        className="rich-note-content text-sm bg-muted/50 p-4 rounded-lg break-words overflow-wrap-break-word max-w-full cursor-pointer"
+                        onClick={handleRichContentClick}
                         dangerouslySetInnerHTML={{ __html: renderHtmlWithLinks(video.note) }}
                       />
                     </div>

@@ -251,7 +251,12 @@
   height: auto;
   border-radius: 0.5em;
   margin: 0.5em 0;
-  cursor: default;
+  cursor: pointer !important;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.rich-editor-image:hover {
+  opacity: 0.9;
 }
 
 .rich-editor-image.ProseMirror-selectednode {
@@ -344,10 +349,22 @@
   font-style: italic;
 }
 
-.rich-note-content img {
+.rich-note-content img,
+.rich-editor-content img,
+.rich-editor-content .rich-editor-image,
+.rich-note-content .rich-editor-image {
   max-width: 100%;
   height: auto;
   border-radius: 0.375em;
+  cursor: pointer !important;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.rich-note-content img:hover,
+.rich-editor-content img:hover,
+.rich-editor-content .rich-editor-image:hover,
+.rich-note-content .rich-editor-image:hover {
+  opacity: 0.9;
 }
 
 .rich-note-content video {

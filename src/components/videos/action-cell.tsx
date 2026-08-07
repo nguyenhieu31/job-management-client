@@ -20,6 +20,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { uploadMediaApi } from "@/services/JobApi";
 
 interface ActionCellProps {
   video: VideoResponse;
@@ -223,16 +225,17 @@ const ActionCellComponent = forwardRef<
 
         {/* Reject Dialog */}
         <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Từ Chối Công Việc</DialogTitle>
+              <DialogTitle>Từ Chối Video (Ghi chú QA)</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
-              <Textarea
-                placeholder="Nhập lý do từ chối (bắt buộc)..."
+            <div className="space-y-2 py-2">
+              <RichTextEditor
                 value={rejectNote}
-                onChange={(e) => setRejectNote(e.target.value)}
-                className="min-h-[120px]"
+                onChange={setRejectNote}
+                onMediaUpload={uploadMediaApi}
+                placeholder="Nhập lý do từ chối (có thể chèn ảnh/video minh họa)..."
+                minHeight="180px"
               />
             </div>
             <DialogFooter>
@@ -245,7 +248,20 @@ const ActionCellComponent = forwardRef<
               >
                 Hủy
               </Button>
-              
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  if (!rejectNote || !rejectNote.replace(/<[^>]*>/g, '').trim()) {
+                    toast.warning("Vui lòng nhập lý do từ chối");
+                    return;
+                  }
+                  onVideoAction?.(video.id, "reject-video", rejectNote);
+                  setRejectDialogOpen(false);
+                  setRejectNote("");
+                }}
+              >
+                Từ Chối
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

@@ -66,6 +66,37 @@ export const updateJobStatus = async (data: {id: number; status: string; qaNote?
     }
 }
 
+export const uploadMediaApi = async (file: File, type: 'image' | 'video'): Promise<string> => {
+    try {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("type", type);
+
+        const res = await axiosInstance.post(`/admin/upload/media`, formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        }) as unknown as ApiResponse<{ url: string }>;
+
+        return res.data?.url || res.data as unknown as string;
+    } catch (err: any) {
+        // Fallback to /admin/jobs/upload-media if needed
+        try {
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("type", type);
+            const res = await axiosInstance.post(`/admin/jobs/upload-media`, formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            }) as unknown as ApiResponse<{ url: string }>;
+            return res.data?.url || res.data as unknown as string;
+        } catch (fallbackErr: any) {
+            throw new Error(err.message || fallbackErr.message);
+        }
+    }
+}
+
 export const getRandomJob = async () =>{
     try {
         const res = await axiosInstance.get(`/admin/jobs/random`);
