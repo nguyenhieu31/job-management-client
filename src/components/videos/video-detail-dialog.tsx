@@ -305,14 +305,14 @@ export function VideoDetailDialog({
                     <p className="font-medium">{video.customer.email}</p>
                   </div>
 
-                  {video.customer.company && (
+                  {/* {video.customer.company && (
                     <div>
                       <label className="text-sm text-muted-foreground">
                         Công Ty
                       </label>
                       <p className="font-medium">{video.customer.company}</p>
                     </div>
-                  )}
+                  )} */}
 
                   {video.assignedSale && (
                     <div>

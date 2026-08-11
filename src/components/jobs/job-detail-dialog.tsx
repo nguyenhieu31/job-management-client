@@ -293,14 +293,14 @@ export function JobDetailDialog({
                     <p className="font-medium">{job.customer.email}</p>
                   </div>
 
-                  {job.customer.company && (
+                  {/* {job.customer.company && (
                     <div>
                       <label className="text-sm text-muted-foreground">
                         Công Ty
                       </label>
                       <p className="font-medium">{job.customer.company}</p>
                     </div>
-                  )}
+                  )} */}
 
                   {job.assignedSale && (
                     <div>
