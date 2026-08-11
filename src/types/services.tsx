@@ -34,6 +34,7 @@ export interface AddServiceFormState {
   photoQuantities: PhotoQuantities;
   photoServiceNote: string;
   photoAddOns: PhotoAddOns;
+  videoServiceNote: string;
   videoStyle: string;
   videoDuration: string;
   customVideoDuration: string;
@@ -84,10 +85,11 @@ export const PHOTO_SERVICES: ServiceOption[] = [
 ];
 
 export const VIDEO_SERVICES: ServiceOption[] = [
-  { id: "property-tour-video", label: "Property Tour Video", subtitle: "Video tham quan bất động sản", price: 40, samplesAvailable: true },
+  { id: "video-basic", label: "Video Basic", subtitle: "Video cơ bản", price: 40, samplesAvailable: true },
   { id: "social-media-reel", label: "Social Media Reel", subtitle: "Video ngắn cho mạng xã hội", price: 40, samplesAvailable: true },
-  { id: "luxury-cinematic-video", label: "Luxury Cinematic Video", subtitle: "Video điện ảnh cao cấp", price: 45, samplesAvailable: true },
-  { id: "agent-introduction-video", label: "Agent Introduction Video", subtitle: "Video giới thiệu môi giới", price: 50, samplesAvailable: true },
+  { id: "luxury-cinematic-video", label: "Luxury Cinematic Video", subtitle: "Video điện ảnh cao cấp", price: 55, samplesAvailable: true },
+  { id: "agent-introduction-video", label: "Agent Introduction Video", subtitle: "Video giới thiệu môi giới", price: 55, samplesAvailable: true },
+  { id: "property-tour-video", label: "Property Tour Video", subtitle: "Video tham quan bất động sản", price: 40, samplesAvailable: true },
 ];
 
 export const PHOTO_SERVICE_IDS = PHOTO_SERVICES.map((s) => s.id);
@@ -100,10 +102,17 @@ export const VIDEO_DURATION_OPTIONS = [
   { value: "custom", label: "Custom" },
 ];
 
+export const AGENT_INTRO_VIDEO_DURATION_OPTIONS = [
+  { value: "30s", label: "30 seconds" },
+  { value: "60s", label: "60 seconds", price: 30 },
+  { value: "custom", label: "Custom" },
+];
+
 export const DURATION_EXTEND_PRICE = 10;
 export const DURATION_EXTEND_UNIT_SECONDS = 15;
+export const AGENT_INTRO_DURATION_EXTEND_UNIT_SECONDS = 10;
 export const AI_SCENE_PRICE = 20;
-export const TEXT_2D_3D_PRICE = 5;
+export const TEXT_2D_3D_PRICE = 10;
 
 export const VIDEO_STYLE_OPTIONS = [
   { value: "clean-simple", label: "Clean & Simple" },
@@ -246,6 +255,14 @@ export const VIRTUAL_STAGING_STYLES = [
 
 export function isVideoServiceSelected(selectedServices: string[]): boolean {
   return selectedServices.some((id) => VIDEO_SERVICE_IDS.includes(id));
+}
+
+export function isVideoBasicSelected(selectedServices: string[]): boolean {
+  return selectedServices.includes("video-basic");
+}
+
+export function isAgentIntroVideoSelected(selectedServices: string[]): boolean {
+  return selectedServices.includes("agent-introduction-video");
 }
 
 export function isPhotoServiceSelected(selectedServices: string[]): boolean {
@@ -404,48 +421,59 @@ export const SERVICE_SAMPLE_IMAGES: Record<string, SampleImagePair[]> = {
       after: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783935060/DJI_0278_1_loqqyg.jpg",
     },
   ],
+  "video-basic": [
+    {
+      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1786199460/co_ban_3_ce3xkg.mp4",
+    },
+    {
+      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1786199348/c%C6%A1_ban_2_wzqtsz.mp4",
+    },
+    {
+      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1786198783/coban1_jxbjpc.mp4",
+    },
+  ],
   "property-tour-video": [
     {
-      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1784429627/Property_Tour_Video_3_gnej5s.mp4",
+      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1786197243/tham_quan_3_zmpqhu.mp4",
     },
     {
-      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1784429499/Property_Tour_Video_1_sjuev8.mp4",
+      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1786197506/socal_1_u1a02e.mp4",
     },
     {
-      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1784390083/reelsvideo.io_1784389957436_mmpl5x.mp4",
+      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1786197163/%C4%91%C3%A3_xu%E1%BA%A5t_tham_quan_ymy5zj.mp4",
     },
   ],
   "social-media-reel": [
     {
+      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1786199529/mang_xa_hoi_3_qljfsd.mp4",
+    },
+    {
+      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1786197506/socal_1_u1a02e.mp4",
+    },
+    {
       video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1784388671/VIDEO_Social_Media_Reel_ygwyqk.mp4",
-    },
-    {
-      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1784388101/reelsvideo.io_1784388074006_gc66xl.mp4",
-    },
-    {
-      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1784387918/reelsvideo.io_1784387884458_dvurmj.mp4",
     },
   ],
   "luxury-cinematic-video": [
+    {
+      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1784387976/reelsvideo.io_1784387876267_qpieh6.mp4",
+    },
     {
       video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1784389024/reelsvideo.io_1784388910644_jxuos7.mp4",
     },
     {
       video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1784388033/reelsvideo.io_1784388008169_kawu0l.mp4",
     },
-    {
-      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1784387976/reelsvideo.io_1784387876267_qpieh6.mp4",
-    },
   ],
   "agent-introduction-video": [
     {
-      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1784387691/1234543453355335_it30gq.mp4",
+      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1786198452/nii_2_k6g6sw.mp4",
     },
     {
-      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1784387422/2_fctfwq.mp4",
+      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1786198442/noi30725_bkpfff.mp4",
     },
     {
-      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1784386923/Agent_Introduction_Video_c1hult.mp4",
+      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1786198406/n%C3%B3i_1_pzd9cc.mp4",
     },
   ],
 };
@@ -522,15 +550,26 @@ export function computeEstimatedPrice(state: AddServiceFormState): number {
       0,
     );
 
-    if (state.videoStyle) {
+    const isVideoBasic = isVideoBasicSelected(selected);
+    const isAgentIntro = isAgentIntroVideoSelected(selected);
+
+    if (!isVideoBasic && state.videoStyle) {
       total += getOptionPrice(VIDEO_STYLE_OPTIONS, state.videoStyle);
     }
 
     if (state.videoDuration === "custom") {
       const secs = parseInt(state.customVideoDuration, 10);
-      if (Number.isFinite(secs) && secs >= 60) {
-        const extra = Math.floor((secs - 60) / 15);
+      const baseSecs = isAgentIntro ? 30 : 60;
+      const unitSecs = isAgentIntro ? AGENT_INTRO_DURATION_EXTEND_UNIT_SECONDS : DURATION_EXTEND_UNIT_SECONDS;
+      if (Number.isFinite(secs) && secs >= baseSecs) {
+        const extra = Math.floor((secs - baseSecs) / unitSecs);
         total += extra * DURATION_EXTEND_PRICE;
+      }
+    } else if (isAgentIntro) {
+      if (state.videoDuration === "30s" && state.videoDurationExtended > 0) {
+        total += state.videoDurationExtended * DURATION_EXTEND_PRICE;
+      } else if (state.videoDuration === "60s") {
+        total += 30 + (state.videoDurationExtended > 0 ? state.videoDurationExtended * DURATION_EXTEND_PRICE : 0);
       }
     } else if (state.videoDuration === "60s" && state.videoDurationExtended > 0) {
       total += state.videoDurationExtended * DURATION_EXTEND_PRICE;
@@ -542,15 +581,17 @@ export function computeEstimatedPrice(state: AddServiceFormState): number {
       total += getOptionPrice(MUSIC_OPTIONS, state.music);
     }
 
-    if (state.aiOption) total += 20;
-    if (state.aiSceneCount > 0) total += state.aiSceneCount * AI_SCENE_PRICE;
-    if (state.text2d3dCount > 0) total += state.text2d3dCount * TEXT_2D_3D_PRICE;
-    if (state.boundaryDrawOption) total += 10;
+    if (!isVideoBasic) {
+      if (state.aiOption) total += 20;
+      if (state.aiSceneCount > 0) total += state.aiSceneCount * AI_SCENE_PRICE;
+      if (state.text2d3dCount > 0) total += state.text2d3dCount * TEXT_2D_3D_PRICE;
+      if (state.boundaryDrawOption) total += 10;
 
-    total += sumArrayPrices(TEXT_CAPTIONS_OPTIONS, state.textCaptions);
+      total += sumArrayPrices(TEXT_CAPTIONS_OPTIONS, state.textCaptions);
 
-    if (state.transitions) {
-      total += getOptionPrice(TRANSITIONS_OPTIONS, state.transitions);
+      if (state.transitions) {
+        total += getOptionPrice(TRANSITIONS_OPTIONS, state.transitions);
+      }
     }
   }
 
@@ -570,6 +611,7 @@ export function getInitialFormState(): AddServiceFormState {
     photoQuantities: emptyPhotoQuantities(),
     photoServiceNote: "",
     photoAddOns: emptyPhotoAddOns(),
+    videoServiceNote: "",
     videoStyle: "",
     videoDuration: "",
     customVideoDuration: "",

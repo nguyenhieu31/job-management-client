@@ -6,6 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import {
   PHOTO_SERVICES,
   VIDEO_DURATION_OPTIONS,
+  AGENT_INTRO_VIDEO_DURATION_OPTIONS,
   VIDEO_STYLE_OPTIONS,
   ASPECT_RATIO_OPTIONS,
   MUSIC_OPTIONS,
@@ -18,6 +19,8 @@ import {
   AI_SCENE_PRICE,
   TEXT_2D_3D_PRICE,
   isVideoServiceSelected,
+  isVideoBasicSelected,
+  isAgentIntroVideoSelected,
   isVirtualStagingSelected,
   isNonVirtualStagingPhotoSelected,
   isPhotoAddonEligible,
@@ -154,6 +157,8 @@ export function ServiceDetailsStep({
   onAttachmentFilesChange,
 }: ServiceDetailsStepProps) {
   const hasVideo = isVideoServiceSelected(state.selectedServices);
+  const isVideoBasic = isVideoBasicSelected(state.selectedServices);
+  const isAgentIntro = isAgentIntroVideoSelected(state.selectedServices);
   const hasVirtualStaging = isVirtualStagingSelected(state.selectedServices);
   const hasNonVSPhoto = isNonVirtualStagingPhotoSelected(state.selectedServices);
   const hasAddons = isPhotoAddonEligible(state.selectedServices);
@@ -415,7 +420,7 @@ export function ServiceDetailsStep({
               <RadioGroupField
                 name="videoDuration"
                 legend="Video Duration"
-                options={VIDEO_DURATION_OPTIONS}
+                options={isAgentIntro ? AGENT_INTRO_VIDEO_DURATION_OPTIONS : VIDEO_DURATION_OPTIONS}
                 value={state.videoDuration}
                 onChange={(v) => onChange("videoDuration", v)}
               />
@@ -435,7 +440,19 @@ export function ServiceDetailsStep({
                   {(() => {
                     const secs = parseInt(state.customVideoDuration, 10);
                     if (!Number.isFinite(secs) || secs < 1) return null;
-                    if (secs < 60) {
+                    if (isAgentIntro) {
+                      if (secs <= 30) {
+                        return <p className="text-xs text-muted-foreground">Included in base price (under 30s)</p>;
+                      }
+                      const extra = Math.floor((secs - 30) / 10);
+                      const cost = extra * 10;
+                      return (
+                        <p className="text-xs text-muted-foreground">
+                          {secs}s &middot; First 30s included ($55) &middot; {extra} × 10s = +${cost}
+                        </p>
+                      );
+                    }
+                    if (secs <= 60) {
                       return <p className="text-xs text-muted-foreground">Free (under 60s)</p>;
                     }
                     const extra = Math.floor((secs - 60) / 15);
@@ -449,10 +466,104 @@ export function ServiceDetailsStep({
                 </div>
               )}
 
-              {state.videoDuration === "60s" && (
+              {isAgentIntro && state.videoDuration === "30s" && (
+                <div className="rounded-lg bg-muted/30 p-3 space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground">Extended Duration (+10s per +1 step)</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Requires 10s added for every +1 (+ $10.00 / step). Total duration: {30 + (state.videoDurationExtended || 0) * 10}s
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={() =>
+                        onChange(
+                          "videoDurationExtended",
+                          Math.max(0, (state.videoDurationExtended || 0) - 1),
+                        )
+                      }
+                      disabled={!state.videoDurationExtended}
+                    >
+                      -
+                    </Button>
+                    <span className="w-8 text-center font-medium text-sm tabular-nums">
+                      {state.videoDurationExtended || 0}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={() =>
+                        onChange(
+                          "videoDurationExtended",
+                          (state.videoDurationExtended || 0) + 1,
+                        )
+                      }
+                    >
+                      +
+                    </Button>
+                    <span className="text-xs text-muted-foreground">
+                      +{(state.videoDurationExtended || 0) * 10}s = ${(state.videoDurationExtended || 0) * 10}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {isAgentIntro && state.videoDuration === "60s" && (
+                <div className="rounded-lg bg-muted/30 p-3 space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground">Extended Duration (+10s per +1 step)</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    60s is +$30.00 over 30s base. Total duration: {60 + (state.videoDurationExtended || 0) * 10}s
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={() =>
+                        onChange(
+                          "videoDurationExtended",
+                          Math.max(0, (state.videoDurationExtended || 0) - 1),
+                        )
+                      }
+                      disabled={!state.videoDurationExtended}
+                    >
+                      -
+                    </Button>
+                    <span className="w-8 text-center font-medium text-sm tabular-nums">
+                      {state.videoDurationExtended || 0}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={() =>
+                        onChange(
+                          "videoDurationExtended",
+                          (state.videoDurationExtended || 0) + 1,
+                        )
+                      }
+                    >
+                      +
+                    </Button>
+                    <span className="text-xs text-muted-foreground">
+                      +{(state.videoDurationExtended || 0) * 10}s = ${(state.videoDurationExtended || 0) * 10}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {!isAgentIntro && state.videoDuration === "60s" && (
                 <div className="rounded-lg bg-muted/30 p-3 space-y-2">
                   <p className="text-xs font-medium text-muted-foreground">Extended Duration (+15s per +1 step)</p>
-                  <p className="text-[11px] text-muted-foreground">Requires 15s added for every +1 (+ $10.00 / step). Total duration: {60 + (state.videoDurationExtended || 0) * 15}s</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Requires 15s added for every +1 (+ $10.00 / step). Total duration: {60 + (state.videoDurationExtended || 0) * 15}s
+                  </p>
                   <div className="flex items-center gap-3">
                     <Button
                       type="button"
@@ -494,16 +605,18 @@ export function ServiceDetailsStep({
               )}
             </div>
 
-            {/* Video Style */}
-            <div className="rounded-lg border p-4 space-y-3">
-              <RadioGroupField
-                name="videoStyle"
-                legend="Video Editing Style"
-                options={VIDEO_STYLE_OPTIONS}
-                value={state.videoStyle}
-                onChange={(v) => onChange("videoStyle", v)}
-              />
-            </div>
+            {/* Video Style (hidden for video-basic) */}
+            {!isVideoBasic && (
+              <div className="rounded-lg border p-4 space-y-3">
+                <RadioGroupField
+                  name="videoStyle"
+                  legend="Video Editing Style"
+                  options={VIDEO_STYLE_OPTIONS}
+                  value={state.videoStyle}
+                  onChange={(v) => onChange("videoStyle", v)}
+                />
+              </div>
+            )}
 
             {/* Aspect Ratio */}
             <div className="rounded-lg border p-4 space-y-3">
@@ -563,156 +676,172 @@ export function ServiceDetailsStep({
               )}
             </div>
 
-            {/* Text & Captions — hidden from customers, visible to managers in order preview */}
+            {/* Video Note for video-basic */}
+            {isVideoBasic && (
+              <div className="rounded-lg border p-4 space-y-3 md:col-span-2">
+                <TextareaField
+                  id="videoServiceNote"
+                  label="Video Note"
+                  placeholder="Describe any specific requests or notes for basic video editing..."
+                  value={state.videoServiceNote}
+                  onChange={(v) => onChange("videoServiceNote", v)}
+                  rows={3}
+                />
+              </div>
+            )}
 
-            {/* Transitions — full width when text & captions are hidden */}
-            <div className="rounded-lg border p-4 space-y-3 md:col-span-2">
-              <fieldset className="space-y-3">
-                <legend className="text-sm font-medium">Transitions</legend>
-                <div className="grid grid-cols-2 gap-2">
-                  {TRANSITIONS_OPTIONS.map((option) => (
-                    <label
-                      key={option.value}
-                      htmlFor={`transition-${option.value}`}
-                      className={cn(
-                        "flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-all duration-200",
-                        state.transitions === option.value
-                          ? "border-primary bg-primary/5"
-                          : "border-border hover:border-muted-foreground/30",
-                      )}
-                    >
-                      <div
+            {/* Transitions — hidden for video-basic */}
+            {!isVideoBasic && (
+              <div className="rounded-lg border p-4 space-y-3 md:col-span-2">
+                <fieldset className="space-y-3">
+                  <legend className="text-sm font-medium">Transitions</legend>
+                  <div className="grid grid-cols-2 gap-2">
+                    {TRANSITIONS_OPTIONS.map((option) => (
+                      <label
+                        key={option.value}
+                        htmlFor={`transition-${option.value}`}
                         className={cn(
-                          "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-all duration-200",
+                          "flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-all duration-200",
                           state.transitions === option.value
-                            ? "border-primary"
-                            : "border-input",
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-muted-foreground/30",
                         )}
                       >
-                        {state.transitions === option.value && (
-                          <div className="h-2.5 w-2.5 rounded-full bg-primary" />
-                        )}
-                      </div>
-                      <input
-                        type="radio"
-                        id={`transition-${option.value}`}
-                        name="transitions"
-                        value={option.value}
-                        checked={state.transitions === option.value}
-                        onChange={() => onChange("transitions", option.value)}
-                        className="sr-only"
+                        <div
+                          className={cn(
+                            "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-all duration-200",
+                            state.transitions === option.value
+                              ? "border-primary"
+                              : "border-input",
+                          )}
+                        >
+                          {state.transitions === option.value && (
+                            <div className="h-2.5 w-2.5 rounded-full bg-primary" />
+                          )}
+                        </div>
+                        <input
+                          type="radio"
+                          id={`transition-${option.value}`}
+                          name="transitions"
+                          value={option.value}
+                          checked={state.transitions === option.value}
+                          onChange={() => onChange("transitions", option.value)}
+                          className="sr-only"
+                        />
+                        <span className="text-sm leading-tight">{option.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+
+                {state.transitions && (
+                  <TextareaField
+                    id="transitionsNote"
+                    label="Transitions Note"
+                    placeholder="Describe transition style or specific effects..."
+                    value={state.transitionsNote}
+                    onChange={(v) => onChange("transitionsNote", v)}
+                    rows={2}
+                  />
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* AI & Boundary Draw Options (hidden for video-basic) */}
+          {!isVideoBasic && (
+            <div className="rounded-lg border p-4 space-y-3">
+              <fieldset className="space-y-4">
+                <legend className="text-sm font-medium">Additional Options</legend>
+
+                <div className="space-y-2">
+                  {renderCheckboxOption(
+                    { value: "aiOption", label: `AI Option (+$20)` },
+                    state.aiOption,
+                    (checked) => onChange("aiOption", checked),
+                  )}
+                  {state.aiOption && (
+                    <TextareaField
+                      id="aiNote"
+                      label="AI Note"
+                      placeholder="Enter requirements for AI option..."
+                      value={state.aiNote}
+                      onChange={(v) => onChange("aiNote", v)}
+                      rows={2}
+                    />
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <QuantityStepper
+                    id="aiSceneCount"
+                    label={`AI Scenes (${formatCurrency(AI_SCENE_PRICE)}/scene)`}
+                    gloss="Number of AI-generated scenes to process"
+                    value={state.aiSceneCount}
+                    onValueChange={(n) => onChange("aiSceneCount", n)}
+                  />
+                  {state.aiSceneCount > 0 && (
+                    <div className="space-y-2 pt-1">
+                      <p className="text-xs text-muted-foreground pl-1">
+                        {state.aiSceneCount} × {formatCurrency(AI_SCENE_PRICE)} = {formatCurrency(state.aiSceneCount * AI_SCENE_PRICE)}
+                      </p>
+                      <TextareaField
+                        id="aiSceneNote"
+                        label="AI Scene Annotation & Note"
+                        placeholder="Describe specific scenes, locations, or requirements for AI scenes..."
+                        value={state.aiSceneNote ?? ""}
+                        onChange={(v) => onChange("aiSceneNote", v)}
+                        rows={2}
                       />
-                      <span className="text-sm leading-tight">{option.label}</span>
-                    </label>
-                  ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <QuantityStepper
+                    id="text2d3dCount"
+                    label={`2D/3D Text (${formatCurrency(TEXT_2D_3D_PRICE)}/text)`}
+                    gloss="Convert spoken words into animated 2D/3D text elements"
+                    value={state.text2d3dCount}
+                    onValueChange={(n) => onChange("text2d3dCount", n)}
+                  />
+                  {state.text2d3dCount > 0 && (
+                    <div className="space-y-2 pt-1">
+                      <p className="text-xs text-muted-foreground pl-1">
+                        {state.text2d3dCount} × {formatCurrency(TEXT_2D_3D_PRICE)} = {formatCurrency(state.text2d3dCount * TEXT_2D_3D_PRICE)}
+                      </p>
+                      <TextareaField
+                        id="text2d3dNote"
+                        label="2D/3D Text Annotation & Note"
+                        placeholder="Enter text strings, positioning, or style notes for 2D/3D text..."
+                        value={state.text2d3dNote ?? ""}
+                        onChange={(v) => onChange("text2d3dNote", v)}
+                        rows={2}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  {renderCheckboxOption(
+                    { value: "boundaryDrawOption", label: `Boundary Draw Option (+$10)` },
+                    state.boundaryDrawOption,
+                    (checked) => onChange("boundaryDrawOption", checked),
+                  )}
+                  {state.boundaryDrawOption && (
+                    <TextareaField
+                      id="boundaryDrawNote"
+                      label="Boundary Draw Note"
+                      placeholder="Enter requirements for Boundary Draw option..."
+                      value={state.boundaryDrawNote}
+                      onChange={(v) => onChange("boundaryDrawNote", v)}
+                      rows={2}
+                    />
+                  )}
                 </div>
               </fieldset>
-
-              {state.transitions && (
-                <TextareaField
-                  id="transitionsNote"
-                  label="Transitions Note"
-                  placeholder="Describe transition style or specific effects..."
-                  value={state.transitionsNote}
-                  onChange={(v) => onChange("transitionsNote", v)}
-                  rows={2}
-                />
-              )}
             </div>
-          </div>
-
-          {/* AI & Boundary Draw Options */}
-          <div className="rounded-lg border p-4 space-y-3">
-            <fieldset className="space-y-4">
-              <legend className="text-sm font-medium">Additional Options</legend>
-
-              <div className="space-y-2">
-                {renderCheckboxOption(
-                  { value: "aiOption", label: `AI Option (+$20)` },
-                  state.aiOption,
-                  (checked) => onChange("aiOption", checked),
-                )}
-                {state.aiOption && (
-                  <TextareaField
-                    id="aiNote"
-                    label="AI Note"
-                    placeholder="Enter requirements for AI option..."
-                    value={state.aiNote}
-                    onChange={(v) => onChange("aiNote", v)}
-                    rows={2}
-                  />
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <QuantityStepper
-                  id="aiSceneCount"
-                  label={`AI Scenes (${formatCurrency(AI_SCENE_PRICE)}/scene)`}
-                  gloss="Number of AI-generated scenes to process"
-                  value={state.aiSceneCount}
-                  onValueChange={(n) => onChange("aiSceneCount", n)}
-                />
-                {state.aiSceneCount > 0 && (
-                  <div className="space-y-2 pt-1">
-                    <p className="text-xs text-muted-foreground pl-1">
-                      {state.aiSceneCount} × {formatCurrency(AI_SCENE_PRICE)} = {formatCurrency(state.aiSceneCount * AI_SCENE_PRICE)}
-                    </p>
-                    <TextareaField
-                      id="aiSceneNote"
-                      label="AI Scene Annotation & Note"
-                      placeholder="Describe specific scenes, locations, or requirements for AI scenes..."
-                      value={state.aiSceneNote ?? ""}
-                      onChange={(v) => onChange("aiSceneNote", v)}
-                      rows={2}
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <QuantityStepper
-                  id="text2d3dCount"
-                  label={`2D/3D Text (${formatCurrency(TEXT_2D_3D_PRICE)}/text)`}
-                  gloss="Convert spoken words into animated 2D/3D text elements"
-                  value={state.text2d3dCount}
-                  onValueChange={(n) => onChange("text2d3dCount", n)}
-                />
-                {state.text2d3dCount > 0 && (
-                  <div className="space-y-2 pt-1">
-                    <p className="text-xs text-muted-foreground pl-1">
-                      {state.text2d3dCount} × {formatCurrency(TEXT_2D_3D_PRICE)} = {formatCurrency(state.text2d3dCount * TEXT_2D_3D_PRICE)}
-                    </p>
-                    <TextareaField
-                      id="text2d3dNote"
-                      label="2D/3D Text Annotation & Note"
-                      placeholder="Enter text strings, positioning, or style notes for 2D/3D text..."
-                      value={state.text2d3dNote ?? ""}
-                      onChange={(v) => onChange("text2d3dNote", v)}
-                      rows={2}
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                {renderCheckboxOption(
-                  { value: "boundaryDrawOption", label: `Boundary Draw Option (+$10)` },
-                  state.boundaryDrawOption,
-                  (checked) => onChange("boundaryDrawOption", checked),
-                )}
-                {state.boundaryDrawOption && (
-                  <TextareaField
-                    id="boundaryDrawNote"
-                    label="Boundary Draw Note"
-                    placeholder="Enter requirements for Boundary Draw option..."
-                    value={state.boundaryDrawNote}
-                    onChange={(v) => onChange("boundaryDrawNote", v)}
-                    rows={2}
-                  />
-                )}
-              </div>
-            </fieldset>
-          </div>
+          )}
         </section>
 
         <Separator />

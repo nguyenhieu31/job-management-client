@@ -47,12 +47,15 @@ import {
   TRANSITIONS_OPTIONS,
   UPLOAD_METHOD_OPTIONS,
   VIDEO_DURATION_OPTIONS,
+  AGENT_INTRO_VIDEO_DURATION_OPTIONS,
   VIDEO_SERVICES,
   VIDEO_STYLE_OPTIONS,
   VIRTUAL_STAGING_ROOMS,
   VIRTUAL_STAGING_STYLES,
   VIRTUAL_STAGING_LEGACY_ROOM_LABELS,
   isVideoServiceSelected,
+  isVideoBasicSelected,
+  isAgentIntroVideoSelected,
   isNonVirtualStagingPhotoSelected,
   isVirtualStagingSelected,
 } from "@/types/services";
@@ -339,9 +342,13 @@ function ConfigurationDetails({ config }: { config: unknown }) {
   const instagramHandle = obj.instagramHandle as string | undefined;
   const websiteUrl = obj.websiteUrl as string | undefined;
 
+  const isVideoBasic = isVideoBasicSelected(selectedServices);
+  const isAgentIntro = isAgentIntroVideoSelected(selectedServices);
+  const durationOptions = isAgentIntro ? AGENT_INTRO_VIDEO_DURATION_OPTIONS : VIDEO_DURATION_OPTIONS;
   const videoDuration = isFilledString(obj.videoDuration)
-    ? (lookupLabel(VIDEO_DURATION_OPTIONS, obj.videoDuration) ?? obj.videoDuration)
+    ? (lookupLabel(durationOptions, obj.videoDuration) ?? obj.videoDuration)
     : null;
+  const videoServiceNote = isFilledString(obj.videoServiceNote) ? (obj.videoServiceNote as string) : undefined;
   const customVideoDuration = obj.customVideoDuration as string | undefined;
   const videoDurationExtended = obj.videoDurationExtended != null ? Number(obj.videoDurationExtended) : undefined;
   const videoStyle = isFilledString(obj.videoStyle)
@@ -507,13 +514,17 @@ function ConfigurationDetails({ config }: { config: unknown }) {
     if (videoDuration !== "Custom" && videoDuration !== "custom") return null;
     const secs = parseInt(customVideoDuration ?? "", 10);
     if (!Number.isFinite(secs) || secs < 1) return null;
-    if (secs < 60) return { secs, extra: 0, cost: 0, free: true };
-    const extra = Math.floor((secs - 60) / 15);
-    return { secs, extra, cost: extra * DURATION_EXTEND_PRICE, free: false };
+    const baseSecs = isAgentIntro ? 30 : 60;
+    const unitSecs = isAgentIntro ? 10 : 15;
+    if (secs <= baseSecs) return { secs, extra: 0, cost: 0, free: true, baseSecs, unitSecs };
+    const extra = Math.floor((secs - baseSecs) / unitSecs);
+    return { secs, extra, cost: extra * DURATION_EXTEND_PRICE, free: false, baseSecs, unitSecs };
   })();
 
+  const baseSecs = isAgentIntro ? 30 : 60;
+  const unitSecs = isAgentIntro ? 10 : 15;
   const durationPriceLine = (videoDurationExtended ?? 0) > 0
-    ? `60s + ${(videoDurationExtended ?? 0) * 15}s = ${60 + (videoDurationExtended ?? 0) * 15}s (+ $${(videoDurationExtended ?? 0) * DURATION_EXTEND_PRICE})`
+    ? `${baseSecs}s + ${(videoDurationExtended ?? 0) * unitSecs}s = ${baseSecs + (videoDurationExtended ?? 0) * unitSecs}s (+ $${(videoDurationExtended ?? 0) * DURATION_EXTEND_PRICE})`
     : null;
 
   const aiScenePriceLine = aiSceneCount > 0
@@ -608,22 +619,24 @@ function ConfigurationDetails({ config }: { config: unknown }) {
                 <p className="text-xs text-muted-foreground">
                   {customDurationPrice.secs}s
                   {customDurationPrice.free
-                    ? " · Free (under 60s)"
-                    : ` · First 60s free · ${customDurationPrice.extra} × 15s = +$${customDurationPrice.cost}`}
+                    ? ` · Included in base (under ${customDurationPrice.baseSecs}s)`
+                    : ` · First ${customDurationPrice.baseSecs}s included · ${customDurationPrice.extra} × ${customDurationPrice.unitSecs}s = +$${customDurationPrice.cost}`}
                 </p>
               )}
               {(videoDurationExtended ?? 0) > 0 && (
                 <p className="text-xs text-muted-foreground">
-                  Extended Duration: {durationPriceLine ?? `${videoDurationExtended} × 15s`}
+                  Extended Duration: {durationPriceLine ?? `${videoDurationExtended} × ${unitSecs}s`}
                 </p>
               )}
             </div>
 
-            {/* Video Style */}
-            <div className="rounded-lg border p-4 space-y-2">
-              <span className="text-xs font-medium text-muted-foreground">Video Editing Style</span>
-              <p className="text-sm">{videoStyle ?? ""}</p>
-            </div>
+            {/* Video Style (hidden for video-basic) */}
+            {!isVideoBasic && (
+              <div className="rounded-lg border p-4 space-y-2">
+                <span className="text-xs font-medium text-muted-foreground">Video Editing Style</span>
+                <p className="text-sm">{videoStyle ?? ""}</p>
+              </div>
+            )}
 
             {/* Aspect Ratio */}
             <div className="rounded-lg border p-4 space-y-2">
@@ -641,53 +654,67 @@ function ConfigurationDetails({ config }: { config: unknown }) {
               )}
             </div>
 
-            {/* Text & Captions */}
-            <div className="rounded-lg border p-4 space-y-2">
-              <span className="text-xs font-medium text-muted-foreground">Text & Captions</span>
-              {textCaptionLabels.length > 0 && (
-                <div className="space-y-0.5">
-                  {textCaptionLabels.map((label, i) => (
-                    <p key={i} className="text-sm">&bull; {label}</p>
-                  ))}
-                </div>
-              )}
-              {textCaptionsNote && <p className="text-sm text-muted-foreground"><span className="text-red-500 font-semibold">Note: </span>{linkifyText(textCaptionsNote)}</p>}
-            </div>
+            {/* Video Note (for video-basic) */}
+            {videoServiceNote && (
+              <div className="rounded-lg border p-4 space-y-2">
+                <span className="text-xs font-medium text-muted-foreground">Video Note</span>
+                <p className="text-sm">{videoServiceNote}</p>
+              </div>
+            )}
 
-            {/* Transitions */}
-            <div className="rounded-lg border p-4 space-y-2">
-              <span className="text-xs font-medium text-muted-foreground">Transitions</span>
-              <p className="text-sm">{transitions ?? ""}</p>
-              {transitionsNote && <p className="text-sm text-muted-foreground"><span className="text-red-500 font-semibold">Note: </span>{linkifyText(transitionsNote)}</p>}
-            </div>
+            {/* Text & Captions (hidden for video-basic) */}
+            {!isVideoBasic && (
+              <div className="rounded-lg border p-4 space-y-2">
+                <span className="text-xs font-medium text-muted-foreground">Text & Captions</span>
+                {textCaptionLabels.length > 0 && (
+                  <div className="space-y-0.5">
+                    {textCaptionLabels.map((label, i) => (
+                      <p key={i} className="text-sm">&bull; {label}</p>
+                    ))}
+                  </div>
+                )}
+                {textCaptionsNote && <p className="text-sm text-muted-foreground"><span className="text-red-500 font-semibold">Note: </span>{linkifyText(textCaptionsNote)}</p>}
+              </div>
+            )}
+
+            {/* Transitions (hidden for video-basic) */}
+            {!isVideoBasic && (
+              <div className="rounded-lg border p-4 space-y-2">
+                <span className="text-xs font-medium text-muted-foreground">Transitions</span>
+                <p className="text-sm">{transitions ?? ""}</p>
+                {transitionsNote && <p className="text-sm text-muted-foreground"><span className="text-red-500 font-semibold">Note: </span>{linkifyText(transitionsNote)}</p>}
+              </div>
+            )}
           </div>
 
-          {/* Additional Options */}
-          <div className="rounded-lg border p-4 space-y-3">
-            <span className="text-xs font-medium text-muted-foreground">Additional Options</span>
-            <div className="space-y-2">
-              <p className="text-sm">
-                AI Voiceover: {aiOption ? "Yes (+$20)" : ""}
-              </p>
-              {aiNote && <p className="text-sm text-muted-foreground pl-3"><span className="text-red-500 font-semibold">Note: </span>{linkifyText(aiNote)}</p>}
-              {aiSceneCount > 0 && (
-                <div>
-                  <p className="text-sm">AI Scenes: {aiScenePriceLine}</p>
-                  {aiSceneNote && <p className="text-sm text-muted-foreground pl-3"><span className="text-red-500 font-semibold">Note: </span>{linkifyText(aiSceneNote)}</p>}
-                </div>
-              )}
-              {text2d3dCount > 0 && (
-                <div>
-                  <p className="text-sm">Add 2D/3D animated text: {text2d3dPriceLine}</p>
-                  {text2d3dNote && <p className="text-sm text-muted-foreground pl-3"><span className="text-red-500 font-semibold">Note: </span>{linkifyText(text2d3dNote)}</p>}
-                </div>
-              )}
-              <p className="text-sm">
-                Boundary Draw: {boundaryDrawOption ? "Yes (+$10)" : ""}
-              </p>
-              {boundaryDrawNote && <p className="text-sm text-muted-foreground pl-3"><span className="text-red-500 font-semibold">Note: </span>{linkifyText(boundaryDrawNote)}</p>}
+          {/* Additional Options (hidden for video-basic) */}
+          {!isVideoBasic && (
+            <div className="rounded-lg border p-4 space-y-3">
+              <span className="text-xs font-medium text-muted-foreground">Additional Options</span>
+              <div className="space-y-2">
+                <p className="text-sm">
+                  AI Voiceover: {aiOption ? "Yes (+$20)" : ""}
+                </p>
+                {aiNote && <p className="text-sm text-muted-foreground pl-3"><span className="text-red-500 font-semibold">Note: </span>{linkifyText(aiNote)}</p>}
+                {aiSceneCount > 0 && (
+                  <div>
+                    <p className="text-sm">AI Scenes: {aiScenePriceLine}</p>
+                    {aiSceneNote && <p className="text-sm text-muted-foreground pl-3"><span className="text-red-500 font-semibold">Note: </span>{linkifyText(aiSceneNote)}</p>}
+                  </div>
+                )}
+                {text2d3dCount > 0 && (
+                  <div>
+                    <p className="text-sm">Add 2D/3D animated text: {text2d3dPriceLine}</p>
+                    {text2d3dNote && <p className="text-sm text-muted-foreground pl-3"><span className="text-red-500 font-semibold">Note: </span>{linkifyText(text2d3dNote)}</p>}
+                  </div>
+                )}
+                <p className="text-sm">
+                  Boundary Draw: {boundaryDrawOption ? "Yes (+$10)" : ""}
+                </p>
+                {boundaryDrawNote && <p className="text-sm text-muted-foreground pl-3"><span className="text-red-500 font-semibold">Note: </span>{linkifyText(boundaryDrawNote)}</p>}
+              </div>
             </div>
-          </div>
+          )}
         </section>
       )}
 

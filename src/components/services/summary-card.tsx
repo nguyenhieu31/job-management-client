@@ -7,6 +7,7 @@ import {
   PHOTO_SERVICES,
   VIDEO_SERVICES,
   VIDEO_DURATION_OPTIONS,
+  AGENT_INTRO_VIDEO_DURATION_OPTIONS,
   VIDEO_STYLE_OPTIONS,
   ASPECT_RATIO_OPTIONS,
   MUSIC_OPTIONS,
@@ -18,6 +19,8 @@ import {
   AI_SCENE_PRICE,
   TEXT_2D_3D_PRICE,
   isVideoServiceSelected,
+  isVideoBasicSelected,
+  isAgentIntroVideoSelected,
   isNonVirtualStagingPhotoSelected,
   isVirtualStagingSelected,
   isPhotoAddonEligible,
@@ -58,6 +61,8 @@ function getOptionLabel(
 export function SummaryCard({ state, mobile = false }: SummaryCardProps) {
   const [isOpen, setIsOpen] = useState(false);
   const hasVideo = isVideoServiceSelected(state.selectedServices);
+  const isVideoBasic = isVideoBasicSelected(state.selectedServices);
+  const isAgentIntro = isAgentIntroVideoSelected(state.selectedServices);
   const hasNonVSPhoto = isNonVirtualStagingPhotoSelected(state.selectedServices);
   const hasVS = isVirtualStagingSelected(state.selectedServices);
   const hasAddons = isPhotoAddonEligible(state.selectedServices);
@@ -212,15 +217,33 @@ export function SummaryCard({ state, mobile = false }: SummaryCardProps) {
             {state.videoDuration && (
               <li>
                 Duration:{" "}
-                {getOptionLabel(state.videoDuration, VIDEO_DURATION_OPTIONS)}
-                {state.videoDuration === "60s" && (state.videoDurationExtended || 0) > 0 && (
+                {getOptionLabel(
+                  state.videoDuration,
+                  isAgentIntro ? AGENT_INTRO_VIDEO_DURATION_OPTIONS : VIDEO_DURATION_OPTIONS,
+                )}
+                {isAgentIntro && state.videoDuration === "30s" && (state.videoDurationExtended || 0) > 0 && (
+                  <span className="text-xs text-muted-foreground ml-1">
+                    (+{state.videoDurationExtended * 10}s = {30 + state.videoDurationExtended * 10}s total, +${state.videoDurationExtended * 10})
+                  </span>
+                )}
+                {isAgentIntro && state.videoDuration === "60s" && (
+                  <span className="text-xs text-muted-foreground ml-1">
+                    (+30s over 30s base = +$30{(state.videoDurationExtended || 0) > 0 ? `, +${state.videoDurationExtended * 10}s = +$${state.videoDurationExtended * 10}` : ""})
+                  </span>
+                )}
+                {!isAgentIntro && state.videoDuration === "60s" && (state.videoDurationExtended || 0) > 0 && (
                   <span className="text-xs text-muted-foreground ml-1">
                     (+{state.videoDurationExtended * 15}s = {60 + state.videoDurationExtended * 15}s total, +${state.videoDurationExtended * 10})
                   </span>
                 )}
+                {state.videoDuration === "custom" && state.customVideoDuration && (
+                  <span className="text-xs text-muted-foreground ml-1">
+                    ({state.customVideoDuration}s)
+                  </span>
+                )}
               </li>
             )}
-            {state.videoStyle && (
+            {!isVideoBasic && state.videoStyle && (
               <li>
                 Style: {getOptionLabel(state.videoStyle, VIDEO_STYLE_OPTIONS)}
               </li>
@@ -229,13 +252,16 @@ export function SummaryCard({ state, mobile = false }: SummaryCardProps) {
             {state.music && (
               <li>Music: {getOptionLabel(state.music, MUSIC_OPTIONS)}</li>
             )}
-            {state.aiOption && (
+            {state.videoServiceNote && (
+              <li>Note: {state.videoServiceNote}</li>
+            )}
+            {!isVideoBasic && state.aiOption && (
               <li>
                 AI Voiceover (+$20)
                 {state.aiNote ? `: ${state.aiNote}` : ""}
               </li>
             )}
-            {state.aiSceneCount > 0 && (
+            {!isVideoBasic && state.aiSceneCount > 0 && (
               <li className="flex flex-col gap-0.5">
                 <div className="flex justify-between gap-2">
                   <span>AI Scenes</span>
@@ -248,7 +274,7 @@ export function SummaryCard({ state, mobile = false }: SummaryCardProps) {
                 )}
               </li>
             )}
-            {state.text2d3dCount > 0 && (
+            {!isVideoBasic && state.text2d3dCount > 0 && (
               <li className="flex flex-col gap-0.5">
                 <div className="flex justify-between gap-2">
                   <span>Add 2D/3D animated text</span>
@@ -261,16 +287,16 @@ export function SummaryCard({ state, mobile = false }: SummaryCardProps) {
                 )}
               </li>
             )}
-            {state.boundaryDrawOption && (
+            {!isVideoBasic && state.boundaryDrawOption && (
               <li>
                 Boundary Draw (+$10)
                 {state.boundaryDrawNote ? `: ${state.boundaryDrawNote}` : ""}
               </li>
             )}
-            {state.textCaptions.length > 0 && (
+            {!isVideoBasic && state.textCaptions.length > 0 && (
               <li>Text: {state.textCaptions.join(", ")}</li>
             )}
-            {state.transitions && (
+            {!isVideoBasic && state.transitions && (
               <li>
                 Transitions:{" "}
                 {getOptionLabel(state.transitions, TRANSITIONS_OPTIONS)}
