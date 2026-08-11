@@ -416,35 +416,35 @@ export function PayrollDayTable({
         );
 
       case "qa":
-        if (canEditField() && qaList && qaList.length > 0) {
-          const currentQA = getCurrentValue(job, "qualifiedAssignee") as any;
+        // if (canEditField() && qaList && qaList.length > 0) {
+        //   const currentQA = getCurrentValue(job, "qualifiedAssignee") as any;
 
-          return (
-            <SearchableDropdown
-              options={qaList.map((q) => ({
-                id: q.id,
-                name: q.fullName,
-              }))}
-              placeholder="Tìm kiếm QA..."
-              onChange={createQaChangeHandler(job.id)}
-              defaultValue={
-                currentQA
-                  ? {
-                      id: currentQA.id,
-                      name: currentQA.fullName,
-                    }
-                  : job.qualifiedAssignee
-                  ? {
-                      id: job.qualifiedAssignee.id,
-                      name: job.qualifiedAssignee.fullName,
-                    }
-                  : null
-              }
-              className="w-[150px]"
-              type="text"
-            />
-          );
-        }
+        //   return (
+        //     <SearchableDropdown
+        //       options={qaList.map((q) => ({
+        //         id: q.id,
+        //         name: q.fullName,
+        //       }))}
+        //       placeholder="Tìm kiếm QA..."
+        //       onChange={createQaChangeHandler(job.id)}
+        //       defaultValue={
+        //         currentQA
+        //           ? {
+        //               id: currentQA.id,
+        //               name: currentQA.fullName,
+        //             }
+        //           : job.qualifiedAssignee
+        //           ? {
+        //               id: job.qualifiedAssignee.id,
+        //               name: job.qualifiedAssignee.fullName,
+        //             }
+        //           : null
+        //       }
+        //       className="w-[150px]"
+        //       type="text"
+        //     />
+        //   );
+        // }
         return (
           <span>
             {qaList?.find((q) => q.id === job.qualifiedAssignee?.id)
