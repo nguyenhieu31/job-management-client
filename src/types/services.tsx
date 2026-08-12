@@ -437,7 +437,7 @@ export const SERVICE_SAMPLE_IMAGES: Record<string, SampleImagePair[]> = {
       video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1786197243/tham_quan_3_zmpqhu.mp4",
     },
     {
-      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1786197506/socal_1_u1a02e.mp4",
+      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1786197194/%C4%91%C3%A3_xu%E1%BA%A5t_tham_quan_2_lg68ll.mp4",
     },
     {
       video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1786197163/%C4%91%C3%A3_xu%E1%BA%A5t_tham_quan_ymy5zj.mp4",
