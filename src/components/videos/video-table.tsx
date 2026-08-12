@@ -155,6 +155,7 @@ const columnLabels: Record<string, string> = {
   paymentEmployee: "Thanh Toán NV",
   note: "Ghi Chú",
   qaNote: "Ghi Chú QA",
+  rejectReason: "Lý Do Từ Chối",
   employeeNote: "Thuê ngoài",
   assignedEmployee: "Người Được Giao",
   assignedSale: "Saler",
@@ -1267,6 +1268,16 @@ console.log("editValue: ", editValue)
             className="max-w-[250px] overflow-hidden break-words line-clamp-3 prose prose-sm h-[40px]"
             onClick={() => handlePreviewClick(video)}
             dangerouslySetInnerHTML={{ __html: currentNote || "" }}
+          />
+        );
+
+      case "rejectReason":
+        const currentRejectReason = getCurrentValue(video, "rejectReason") as string;
+        return (
+          <div
+            className="max-w-[250px] overflow-hidden break-words line-clamp-3 prose prose-sm h-[40px]"
+            onClick={() => handlePreviewClick(video)}
+            dangerouslySetInnerHTML={{ __html: currentRejectReason || "" }}
           />
         );
 

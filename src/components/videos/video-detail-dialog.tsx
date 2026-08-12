@@ -418,6 +418,21 @@ export function VideoDetailDialog({
                     </div>
                   )}
 
+                  {video.rejectReason && (
+                    <div className="space-y-2 min-w-0">
+                      <h3 className="font-semibold text-lg">Lý do từ chối</h3>
+                      {/* <div className="text-sm whitespace-pre-wrap bg-muted/50 p-4 rounded-lg break-words overflow-wrap-break-word max-w-full">
+                        {renderTextWithLinks(video.rejectReason)}
+                      </div> */}
+
+                      <div
+                        className="rich-note-content text-sm bg-muted/50 p-4 rounded-lg break-words overflow-wrap-break-word max-w-full cursor-pointer"
+                        onClick={handleRichContentClick}
+                        dangerouslySetInnerHTML={{ __html: renderHtmlWithLinks(video.rejectReason) }}
+                      />
+                    </div>
+                  )}
+
                   {/* Media Gallery - Images & Videos from fileStorages */}
                   {video.fileStorages && video.fileStorages.length > 0 && (
                     <div className="space-y-4">
