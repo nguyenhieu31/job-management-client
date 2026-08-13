@@ -258,7 +258,10 @@ export function isVideoServiceSelected(selectedServices: string[]): boolean {
 }
 
 export function isVideoBasicSelected(selectedServices: string[]): boolean {
-  return selectedServices.includes("video-basic");
+  return (
+    selectedServices.includes("video-basic") ||
+    selectedServices.includes("property-tour-video")
+  );
 }
 
 export function isAgentIntroVideoSelected(selectedServices: string[]): boolean {

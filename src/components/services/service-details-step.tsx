@@ -676,13 +676,13 @@ export function ServiceDetailsStep({
               )}
             </div>
 
-            {/* Video Note for video-basic */}
+            {/* Video Note for video-basic / property-tour-video */}
             {isVideoBasic && (
               <div className="rounded-lg border p-4 space-y-3 md:col-span-2">
                 <TextareaField
                   id="videoServiceNote"
                   label="Video Note"
-                  placeholder="Describe any specific requests or notes for basic video editing..."
+                  placeholder="Describe any specific requests or notes for video editing..."
                   value={state.videoServiceNote}
                   onChange={(v) => onChange("videoServiceNote", v)}
                   rows={3}
