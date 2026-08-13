@@ -88,7 +88,7 @@ export const VIDEO_SERVICES: ServiceOption[] = [
   { id: "video-basic", label: "Video Basic", subtitle: "Video cơ bản", price: 40, samplesAvailable: true },
   { id: "social-media-reel", label: "Social Media Reel", subtitle: "Video ngắn cho mạng xã hội", price: 50, samplesAvailable: true },
   { id: "luxury-cinematic-video", label: "Luxury Cinematic Video", subtitle: "Video điện ảnh cao cấp", price: 55, samplesAvailable: true },
-  { id: "agent-introduction-video", label: "Agent Introduction Video", subtitle: "Video giới thiệu môi giới", price: 55, samplesAvailable: true },
+  { id: "agent-introduction-video", label: "Agent Introduction Video", subtitle: "Video giới thiệu môi giới", price: 60, samplesAvailable: true },
   { id: "property-tour-video", label: "Property Tour Video", subtitle: "Video tham quan bất động sản", price: 40, samplesAvailable: true },
 ];
 
