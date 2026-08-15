@@ -16,6 +16,7 @@ import type { UserRole } from "@/types/videos";
 import type { FileStorage } from "@/types/jobs";
 import { formatCurrency, formatCurrencyVND, formatDate } from "@/lib/utils";
 import { useAppSelector } from "@/store/store";
+import { RelatedWorkSection } from "@/components/shared/related-work-section";
 import {
   ExternalLink,
   User,
@@ -24,7 +25,6 @@ import {
   DollarSign,
   FileText,
   Link as LinkIcon,
-  CheckCircle,
   Eye,
   X,
   XCircle,
@@ -329,199 +329,152 @@ export function VideoDetailDialog({
 
           <Separator />
 
-          {/* Work Request Information */}
-          {video.workRequest && (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Left Column - Work Request Details */}
+          {/* 2-Column Grid: Left = Video Mẫu, Right = Notes & Media */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Left Column - Video Mẫu / Video Tương Tự */}
+            <div className="space-y-4">
+              {video.customer?.customerCode ? (
+                <RelatedWorkSection
+                  customerCode={video.customer.customerCode}
+                  currentItemId={video.id}
+                  currentItemType="video"
+                  onViewItem={() => {}}
+                  customerNote={video.customer?.customerNote}
+                  hideSeparator
+                  title="Video mẫu"
+                />
+              ) : (
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-lg flex items-center gap-2">
+                    <Film className="h-5 w-5" />
+                    Video mẫu
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Không có mã khách hàng để tìm video mẫu
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Right Column - Notes & Media */}
+            <div className="space-y-4 min-w-0">
+              {video.note && (
+                <div className="space-y-2 min-w-0">
+                  <h3 className="font-semibold text-lg">Ghi Chú</h3>
+                  <div
+                    className="rich-note-content text-sm bg-muted/50 p-4 rounded-lg break-words overflow-wrap-break-word max-w-full cursor-pointer"
+                    onClick={handleRichContentClick}
+                    dangerouslySetInnerHTML={{ __html: renderHtmlWithLinks(video.note) }}
+                  />
+                </div>
+              )}
+
+              {video.rejectReason && (
+                <div className="space-y-2 min-w-0">
+                  <h3 className="font-semibold text-lg">Lý do từ chối</h3>
+                  <div
+                    className="rich-note-content text-sm bg-muted/50 p-4 rounded-lg break-words overflow-wrap-break-word max-w-full cursor-pointer"
+                    onClick={handleRichContentClick}
+                    dangerouslySetInnerHTML={{ __html: renderHtmlWithLinks(video.rejectReason) }}
+                  />
+                </div>
+              )}
+
+              {/* Media Gallery - Images & Videos from fileStorages */}
+              {video.fileStorages && video.fileStorages.length > 0 && (
                 <div className="space-y-4">
                   <h3 className="font-semibold text-lg flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5" />
-                    Style hàng
+                    <ImageIcon className="h-5 w-5" />
+                    Ảnh & Video đính kèm
                   </h3>
 
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-sm text-muted-foreground">
-                        Danh Mục
-                      </label>
-                      <p className="font-medium">
-                        {video.workRequest.categoryName}
-                      </p>
-                    </div>
-
-                    <div>
-                      <label className="text-sm text-muted-foreground">
-                        Loại File
-                      </label>
-                      <Badge variant="outline">{video.workRequest.fileType}</Badge>
-                    </div>
-
-                    <div>
-                      <label className="text-sm text-muted-foreground">
-                        Tóm Tắt
-                      </label>
-                      <p className="text-sm">{video.workRequest.summaryNote}</p>
-                    </div>
-
-                    <div>
-                      <label className="text-sm text-muted-foreground">
-                        Hướng Dẫn Chi Tiết
-                      </label>
-                      <p className="text-sm whitespace-pre-wrap">
-                        {renderTextWithLinks(video.workRequest.detailedNotes)}
-                      </p>
-                    </div>
-
-                    {video.workRequest.colorNote && (
-                      <div>
-                        <label className="text-sm text-muted-foreground">
-                          Ghi Chú Màu Sắc
-                        </label>
-                        <p className="text-sm">{video.workRequest.colorNote}</p>
-                      </div>
+                  {/* Summary */}
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    {video.fileStorages.filter((f) => f.isImage).length > 0 && (
+                      <span className="flex items-center gap-1">
+                        <ImageIcon className="h-4 w-4" />
+                        {video.fileStorages.filter((f) => f.isImage).length} ảnh
+                      </span>
                     )}
-
-                    {video.workRequest.linkSample && (
-                      <div>
-                        <label className="text-sm text-muted-foreground">
-                          Link Mẫu
-                        </label>
-                        <a
-                          href={video.workRequest.linkSample}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1 text-blue-600 hover:underline"
-                        >
-                          <ExternalLink className="h-3 w-3" />
-                          Xem mẫu
-                        </a>
-                      </div>
+                    {video.fileStorages.filter((f) => !f.isImage).length > 0 && (
+                      <span className="flex items-center gap-1">
+                        <Film className="h-4 w-4" />
+                        {video.fileStorages.filter((f) => !f.isImage).length} video
+                      </span>
                     )}
                   </div>
-                </div>
 
-                {/* Right Column - Notes & Media */}
-                <div className="space-y-4 min-w-0">
-                  {video.note && (
-                    <div className="space-y-2 min-w-0">
-                      <h3 className="font-semibold text-lg">Ghi Chú</h3>
-                      {/* <div className="text-sm whitespace-pre-wrap bg-muted/50 p-4 rounded-lg break-words overflow-wrap-break-word max-w-full">
-                        {renderTextWithLinks(video.note)}
-                      </div> */}
-
-                      <div
-                        className="rich-note-content text-sm bg-muted/50 p-4 rounded-lg break-words overflow-wrap-break-word max-w-full cursor-pointer"
-                        onClick={handleRichContentClick}
-                        dangerouslySetInnerHTML={{ __html: renderHtmlWithLinks(video.note) }}
-                      />
-                    </div>
-                  )}
-
-                  {video.rejectReason && (
-                    <div className="space-y-2 min-w-0">
-                      <h3 className="font-semibold text-lg">Lý do từ chối</h3>
-                      {/* <div className="text-sm whitespace-pre-wrap bg-muted/50 p-4 rounded-lg break-words overflow-wrap-break-word max-w-full">
-                        {renderTextWithLinks(video.rejectReason)}
-                      </div> */}
-
-                      <div
-                        className="rich-note-content text-sm bg-muted/50 p-4 rounded-lg break-words overflow-wrap-break-word max-w-full cursor-pointer"
-                        onClick={handleRichContentClick}
-                        dangerouslySetInnerHTML={{ __html: renderHtmlWithLinks(video.rejectReason) }}
-                      />
-                    </div>
-                  )}
-
-                  {/* Media Gallery - Images & Videos from fileStorages */}
-                  {video.fileStorages && video.fileStorages.length > 0 && (
-                    <div className="space-y-4">
-                      <h3 className="font-semibold text-lg flex items-center gap-2">
-                        <ImageIcon className="h-5 w-5" />
-                        Ảnh & Video đính kèm
-                      </h3>
-
-                      {/* Summary */}
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        {video.fileStorages.filter(f => f.isImage).length > 0 && (
-                          <span className="flex items-center gap-1">
-                            <ImageIcon className="h-4 w-4" />
-                            {video.fileStorages.filter(f => f.isImage).length} ảnh
-                          </span>
-                        )}
-                        {video.fileStorages.filter(f => !f.isImage).length > 0 && (
-                          <span className="flex items-center gap-1">
-                            <Film className="h-4 w-4" />
-                            {video.fileStorages.filter(f => !f.isImage).length} video
-                          </span>
-                        )}
+                  {/* Images Grid */}
+                  {video.fileStorages.filter((f) => f.isImage).length > 0 && (
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-muted-foreground">
+                        Ảnh
+                      </label>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                        {video.fileStorages
+                          .filter((f) => f.isImage)
+                          .map((file) => (
+                            <div
+                              key={file.id}
+                              className="relative group rounded-lg overflow-hidden border bg-muted aspect-square cursor-pointer"
+                              onClick={() => setPreviewMedia(file)}
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={file.dropboxLink}
+                                alt={file.folderPath}
+                                className="w-full h-full object-cover"
+                                loading="lazy"
+                              />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <Eye className="h-6 w-6 text-white" />
+                              </div>
+                            </div>
+                          ))}
                       </div>
+                    </div>
+                  )}
 
-                      {/* Images Grid */}
-                      {video.fileStorages.filter(f => f.isImage).length > 0 && (
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium text-muted-foreground">Ảnh</label>
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                            {video.fileStorages.filter(f => f.isImage).map((file) => (
-                              <div
-                                key={file.id}
-                                className="relative group rounded-lg overflow-hidden border bg-muted aspect-square cursor-pointer"
-                                onClick={() => setPreviewMedia(file)}
-                              >
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
-                                  src={file.dropboxLink}
-                                  alt={file.folderPath}
-                                  className="w-full h-full object-cover"
-                                  loading="lazy"
-                                />
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                  <Eye className="h-6 w-6 text-white" />
-                                </div>
+                  {/* Videos Grid */}
+                  {video.fileStorages.filter((f) => !f.isImage).length > 0 && (
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-muted-foreground">
+                        Video
+                      </label>
+                      <div className="grid grid-cols-2 gap-3">
+                        {video.fileStorages
+                          .filter((f) => !f.isImage)
+                          .map((file) => (
+                            <div
+                              key={file.id}
+                              className="relative group rounded-lg overflow-hidden border bg-black aspect-video cursor-pointer"
+                              onClick={() => setPreviewMedia(file)}
+                            >
+                              <video
+                                src={file.dropboxLink}
+                                className="w-full h-full object-cover"
+                                muted
+                                preload="metadata"
+                              />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <Eye className="h-6 w-6 text-white" />
                               </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Videos Grid */}
-                      {video.fileStorages.filter(f => !f.isImage).length > 0 && (
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium text-muted-foreground">Video</label>
-                          <div className="grid grid-cols-2 gap-3">
-                            {video.fileStorages.filter(f => !f.isImage).map((file) => (
-                              <div
-                                key={file.id}
-                                className="relative group rounded-lg overflow-hidden border bg-black aspect-video cursor-pointer"
-                                onClick={() => setPreviewMedia(file)}
-                              >
-                                <video
-                                  src={file.dropboxLink}
-                                  className="w-full h-full object-cover"
-                                  muted
-                                  preload="metadata"
-                                />
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                  <Eye className="h-6 w-6 text-white" />
-                                </div>
-                                <div className="absolute top-1 left-1">
-                                  <span className="bg-blue-500/80 text-white text-[10px] px-1.5 py-0.5 rounded">
-                                    VIDEO
-                                  </span>
-                                </div>
+                              <div className="absolute top-1 left-1">
+                                <span className="bg-blue-500/80 text-white text-[10px] px-1.5 py-0.5 rounded">
+                                  VIDEO
+                                </span>
                               </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
+                            </div>
+                          ))}
+                      </div>
                     </div>
                   )}
                 </div>
-              </div>
+              )}
+            </div>
+          </div>
 
-              <Separator />
-            </>
-          )}
+          <Separator />
 
           {/* Preview Modal - rendered via portal to escape dialog constraints */}
           {previewMedia && mounted && createPortal(

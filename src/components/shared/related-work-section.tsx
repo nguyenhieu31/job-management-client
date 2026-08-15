@@ -34,6 +34,8 @@ interface RelatedWorkSectionProps {
   currentItemType: "job" | "video";
   onViewItem: (id: number, type: "job" | "video") => void;
   customerNote?: string;
+  hideSeparator?: boolean;
+  title?: string;
 }
 
 const jobStatusColors: Record<string, string> = {
@@ -88,6 +90,8 @@ export function RelatedWorkSection({
   currentItemType,
   onViewItem,
   customerNote,
+  hideSeparator = false,
+  title,
 }: RelatedWorkSectionProps) {
   const [items, setItems] = useState<RelatedItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -164,11 +168,11 @@ export function RelatedWorkSection({
 
   return (
     <div className="space-y-3">
-      <Separator />
+      {!hideSeparator && <Separator />}
       <div className="space-y-3">
         <h3 className="font-semibold text-lg flex items-center gap-2">
           {currentItemType === "video" ? <Film className="h-5 w-5" /> : <Briefcase className="h-5 w-5" />}
-          {currentItemType === "video" ? "Video" : "Photo"} cùng khách hàng
+          {title || `${currentItemType === "video" ? "Video" : "Photo"} cùng khách hàng`}
           <span className="text-xs text-muted-foreground font-normal">
             (mã KH: {customerCode})
           </span>
