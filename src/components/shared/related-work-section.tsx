@@ -179,7 +179,7 @@ export function RelatedWorkSection({
         </h3>
 
         {customerNote && (
-          <div className="rounded border border-blue-200/50 bg-blue-50/60 p-3 text-sm text-blue-800 dark:border-blue-800/30 dark:bg-blue-950/20 dark:text-blue-200">
+          <div className="rounded border border-blue-200/50 bg-blue-50/60 p-3 text-sm text-blue-800 dark:border-blue-800/30 dark:bg-blue-950/20 dark:text-blue-200 whitespace-pre-wrap break-words">
             <span className="font-medium">Ghi chú khách hàng:</span> {customerNote}
           </div>
         )}
