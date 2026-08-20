@@ -31,6 +31,7 @@ export interface InvoiceRequest {
   jobs: JobResponse[];
   customerInfo: CustomerInfo;
   notes?: string;
+  currency?: string;
 }
 
 export interface InvoicePageRequest {
@@ -55,6 +56,7 @@ export interface InvoiceResponseDetail {
   createdAt: Date;
   updatedAt: Date;
   notes?: string;
+  currency?: string;
 }
 
 export interface InvoiceResponse {
@@ -72,6 +74,7 @@ export interface InvoiceResponse {
   createdAt: string;
   createdBy: string;
   company: string;
+  currency?: string;
 }
 
 

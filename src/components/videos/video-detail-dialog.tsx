@@ -211,11 +211,11 @@ export function VideoDetailDialog({
                 {paymentStatusLabels[video.paymentStatus]}
               </Badge>
             )}
-            {video.deliveryStatus && video.deliveryStatus !== "NONE" && (
+            {/* {video.deliveryStatus && video.deliveryStatus !== "NONE" && (
               <Badge variant="secondary" className="text-xs">
                 {video.deliveryStatus === "NOT_DELIVERED" ? "Chưa giao hàng" : "Đã giao hàng"}
               </Badge>
-            )}
+            )} */}
             {video.revisionStatus && video.revisionStatus !== "NONE" && (
               <Badge variant="outline" className="text-xs border-orange-400 text-orange-600">
                 {video.revisionStatus === "REVISION_REQUESTED"

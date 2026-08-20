@@ -21,10 +21,18 @@ import { Label } from "@/components/ui/label";
 import MultiSelectDropdown from "@/components/ui/multi-select-dropdown";
 import { generateExcelInvoice } from "@/lib/excel/generate-invoice-excel";
 import { toast } from "react-toastify";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { PAYPAL_CURRENCIES } from "@/constants/currencies";
 
 interface InvoiceListProps {
   jobsByCustomer: CustomerJobSummary[];
-  onCreateInvoice: (customer: CustomerInfo, selectedJob: JobResponse[]) => void;
+  onCreateInvoice: (customer: CustomerInfo, selectedJob: JobResponse[], currency: string) => void;
   loading?: boolean;
 }
 
@@ -40,6 +48,9 @@ export function InvoiceList({
   const [selectedCustomers, setSelectedCustomers] = useState<
     { id: number; name: string }[]
   >([]);
+  const [selectedCurrencies, setSelectedCurrencies] = useState<
+    Record<number, string>
+  >({});
 
   // Filter customers based on selection
   const filteredCustomers = useMemo(() => {
@@ -293,14 +304,44 @@ export function InvoiceList({
                   ))}
                 </TableBody>
               </Table>
-              <div className="border-t p-4 flex justify-end">
+              <div className="border-t p-4 flex items-center justify-end gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground font-medium whitespace-nowrap">
+                    Đơn vị tiền tệ:
+                  </span>
+                  <Select
+                    value={selectedCurrencies[customer.customer.id] || "USD"}
+                    onValueChange={(value) =>
+                      setSelectedCurrencies((prev) => ({
+                        ...prev,
+                        [customer.customer.id]: value,
+                      }))
+                    }
+                  >
+                    <SelectTrigger className="w-[140px] h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[260px]">
+                      {PAYPAL_CURRENCIES.map((c) => (
+                        <SelectItem key={c.code} value={c.code}>
+                          {c.code} ({c.symbol})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <Button
                   onClick={() => {
                     const selectedJobIds = getSelectedJobsByCustomer(
                       customer.customer.id
                     );
+                    const chosenCurrency = selectedCurrencies[customer.customer.id] || "USD";
                     if (selectedJobIds.length > 0) {
-                      onCreateInvoice(customer.customer, customer.jobs.filter(job => selectedJobIds.includes(job.id)));
+                      onCreateInvoice(
+                        customer.customer,
+                        customer.jobs.filter((job) => selectedJobIds.includes(job.id)),
+                        chosenCurrency
+                      );
                     }
                   }}
                   disabled={

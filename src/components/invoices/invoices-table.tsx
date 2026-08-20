@@ -285,7 +285,10 @@ export function InvoicesTable({
                       {invoice.numberJob || 0}
                     </TableCell>
                     <TableCell className="text-right border-r font-bold text-lg">
-                      {formatCurrency(invoice.dueAmount?.value || 0)}
+                      {formatCurrency(
+                        invoice.dueAmount?.value || 0,
+                        invoice.currency || invoice.dueAmount?.currency_code || invoice.amount?.currency_code || "USD"
+                      )}
                     </TableCell>
                     <TableCell className="text-center border-r">
                       <Badge

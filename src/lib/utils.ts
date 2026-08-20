@@ -17,11 +17,16 @@ export function formatDate(dateString: string | Date | undefined): string {
   });
 }
 
-export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(amount);
+export function formatCurrency(amount: number, currency: string = "USD"): string {
+  const validCurrency = currency && currency.trim() ? currency.trim().toUpperCase() : "USD";
+  try {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: validCurrency,
+    }).format(amount);
+  } catch {
+    return `${amount} ${validCurrency}`;
+  }
 }
 
 export const formatCurrencyVND = (amount: any) => {
