@@ -1275,7 +1275,7 @@ console.log("editValue: ", editValue)
         const currentRejectReason = getCurrentValue(video, "rejectReason") as string;
         return (
           <div
-            className="max-w-[250px] overflow-hidden break-words line-clamp-3 prose prose-sm h-[40px]"
+            className="max-w-[250px] overflow-hidden break-words line-clamp-3 prose prose-sm h-[40px] text-red-600 cursor-pointer"
             onClick={() => handlePreviewClick(video)}
             dangerouslySetInnerHTML={{ __html: currentRejectReason || "" }}
           />

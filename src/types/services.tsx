@@ -350,7 +350,7 @@ export interface SampleImagePair {
 export const SERVICE_SAMPLE_IMAGES: Record<string, SampleImagePair[]> = {
   "hdr-editing": [
     {
-      before: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783934253/2025.12.06_ViaDeiMarchetti_00024_exuvpw.jpg",
+      before: "https://www.dropbox.com/scl/fo/xmtyc8pj5x1110qafct4b/ANBRh8zac4UHDkYy9uZev-k/Photo%20Editing/Blended%20Brackets%20(HDR)/trc/GQ2A5499.jpg?rlkey=4v83aenzwe0tgkcqmomn8fpe8&st=nhx9lpnr&dl=0",
       after: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783934269/2025.12.06_VIDSOL-ViaDeiMarchetti_00025_tqppg5.jpg",
     },
   ],

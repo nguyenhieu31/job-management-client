@@ -316,7 +316,7 @@ export function VideoFilterBar({
             </div>
 
             {/* Sale Multi-Select - Manager Only */}
-            {roleName === "MANAGER" && (
+            {(roleName === "MANAGER" || roleName === "SALER") && (
               <div className="space-y-2">
                 <Label htmlFor="saleFilter" className="text-sm font-medium">
                   Sale phụ trách

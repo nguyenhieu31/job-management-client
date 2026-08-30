@@ -17,7 +17,7 @@ import { TimePeriod, JobStatus } from "@/types/overview";
 import PeriodYearFilter from "./period-year-filter";
 import { Briefcase } from "lucide-react";
 
-const STATUS_COLORS: Record<JobStatus, string> = {
+const STATUS_COLORS: Record<string, string> = {
   PENDING: "#f59e0b",
   IN_PROGRESS: "#3b82f6",
   DONE: "#10b981",
@@ -25,9 +25,10 @@ const STATUS_COLORS: Record<JobStatus, string> = {
   IN_REVIEW: "#8b5cf6",
   REVIEWED: "#06b6d4",
   COMPLETED: "#22c55e",
+  TOTAL: "#6366f1",
 };
 
-const STATUS_LABELS: Record<JobStatus, string> = {
+const STATUS_LABELS: Record<string, string> = {
   PENDING: "Chờ xử lý",
   IN_PROGRESS: "Đang làm",
   DONE: "Hoàn thành",
@@ -35,6 +36,7 @@ const STATUS_LABELS: Record<JobStatus, string> = {
   IN_REVIEW: "Đang duyệt",
   REVIEWED: "Đã duyệt",
   COMPLETED: "Nghiệm thu",
+  TOTAL: "Tổng",
 };
 
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -62,13 +64,26 @@ export default function JobStatusChart() {
     dispatch(fetchJobStatusStats({ period, year }));
   }, [dispatch, period, year]);
 
-  const chartData = Object.entries(jobStatusData?.countsByStatus ?? {}).map(
-    ([status, count]) => ({
-      status: STATUS_LABELS[status as JobStatus] ?? status,
-      count: count as number,
-      color: STATUS_COLORS[status as JobStatus] ?? "#6b7280",
-    })
+  const counts = jobStatusData?.countsByStatus ?? {};
+  const statusEntries = Object.entries(counts).map(([status, count]) => ({
+    status: STATUS_LABELS[status] ?? status,
+    count: count as number,
+    color: STATUS_COLORS[status] ?? "#6b7280",
+  }));
+
+  const totalCount = Object.values(counts).reduce(
+    (acc: number, count) => acc + (Number(count) || 0),
+    0
   );
+
+  const chartData = [
+    ...statusEntries,
+    {
+      status: STATUS_LABELS.TOTAL,
+      count: totalCount,
+      color: STATUS_COLORS.TOTAL,
+    },
+  ];
 
   const isEmpty = chartData.every((d) => d.count === 0);
 
