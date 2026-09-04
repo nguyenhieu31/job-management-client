@@ -31,7 +31,6 @@ export interface InvoiceRequest {
   jobs: JobResponse[];
   customerInfo: CustomerInfo;
   notes?: string;
-  currency?: string;
 }
 
 export interface InvoicePageRequest {

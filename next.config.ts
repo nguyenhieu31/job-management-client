@@ -8,6 +8,14 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "res.cloudinary.com",
       },
+      {
+        protocol: "https",
+        hostname: "dl.dropboxusercontent.com",
+      },
+      {
+        protocol: "https",
+        hostname: "www.dropbox.com",
+      },
     ],
   },
   async rewrites() {

@@ -350,133 +350,193 @@ export interface SampleImagePair {
 export const SERVICE_SAMPLE_IMAGES: Record<string, SampleImagePair[]> = {
   "hdr-editing": [
     {
-      before: "https://www.dropbox.com/scl/fo/xmtyc8pj5x1110qafct4b/ANBRh8zac4UHDkYy9uZev-k/Photo%20Editing/Blended%20Brackets%20(HDR)/trc/GQ2A5499.jpg?rlkey=4v83aenzwe0tgkcqmomn8fpe8&st=nhx9lpnr&dl=0",
-      after: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783934269/2025.12.06_VIDSOL-ViaDeiMarchetti_00025_tqppg5.jpg",
+      before: "https://dl.dropboxusercontent.com/scl/fi/wuqteva5x8xq4adctnecn/GQ2A5499.jpg?rlkey=aigo22r2ywf1egdsozfkod9bc&st=a3ct9lzv&dl=0",
+      after: "https://dl.dropboxusercontent.com/scl/fi/6vsmpc1jb1yoil25n5m1d/GQ2A5499_1.jpg?rlkey=4k50cappg8tzs1l6wcpvv9j4o&st=lrcv8rc3&dl=0",
+    },
+    {
+      before: "https://dl.dropboxusercontent.com/scl/fi/ka3qyyfekkl7acbuh7706/GQ2A5595.jpg?rlkey=szox0lpu6806tjhmi2xipkcst&st=0zrji6ig&dl=0",
+      after: "https://dl.dropboxusercontent.com/scl/fi/p8p6sx60ahh8qs33ncktj/GQ2A5595_1.jpg?rlkey=833grof15yr6b51xyt0tv7enj&st=60yf7fmi&dl=0",
+    },
+    {
+      before: "https://dl.dropboxusercontent.com/scl/fi/m1b6poao8kwei68eq6zks/GQ2A5679.jpg?rlkey=x357imkep0hpd02yityh1armd&st=1sq7zvzg&dl=0",
+      after: "https://dl.dropboxusercontent.com/scl/fi/p6hc9plguw3swe9c1boyt/GQ2A5679_1.jpg?rlkey=ta5kak7nnmvrt78ufqd805j9q&st=dmy6tafa&dl=0",
     },
   ],
   "single-photo": [
     {
-      before: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783935136/IMG_5726_gczv9n.jpg",
-      after: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783935146/IMG_5725_nadupl.jpg",
+      before: "https://dl.dropboxusercontent.com/scl/fi/c5i5v7aqdgtdbkyvlv22f/_MKY9486_1.jpg?rlkey=5d6jgd9z4iocrg4i4qxtk6uup&st=jun9yq7i&dl=0",
+      after: "https://dl.dropboxusercontent.com/scl/fi/p6ny8x3ipzy6j40ndyg3o/_MKY9486.jpg?rlkey=g4i5p1vmbtxeoy2hc32dhndbk&st=0juuh5zg&dl=0",
+    },
+    {
+      before: "https://dl.dropboxusercontent.com/scl/fi/vdzclrnbn4do2dptes29m/IMG_2240.jpg?rlkey=2trwxl4eup4ctae2ebw444dhk&st=pcn2indm&dl=0",
+      after: "https://dl.dropboxusercontent.com/scl/fi/44awskdtfjgupa0uf5lwc/IMG_2241.jpg?rlkey=jd8lr3jix8sj7rxkvol9h9i1x&st=9vhv3y5s&dl=0",
+    },
+    {
+      before: "https://dl.dropboxusercontent.com/scl/fi/b9mn54jgwq8q2njmf1tbd/IMG_2267.jpg?rlkey=0pwgrsn66gv9jfvm10qsq0o2s&st=kb2kafik&dl=0",
+      after: "https://dl.dropboxusercontent.com/scl/fi/w8qmxmmpej269tqtrdhdb/IMG_2268.jpg?rlkey=hb57pzz046r2hse5qh14im74u&st=qcio3zaj&dl=0",
     },
   ],
   "flash": [
     {
-      before: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783934178/IMG_6824_tafdld.jpg",
-      after: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783936273/IMG_6824_1_uipb2c.jpg",
+      before: "https://dl.dropboxusercontent.com/scl/fi/kx9cymdjm4wjas60lzw4b/C51A0710.jpg?rlkey=qbg0ln9hb4083sg1wmfpo8xrq&st=rwec1mzp&dl=0",
+      after: "https://dl.dropboxusercontent.com/scl/fi/2h1po89u2x3ppdvln9ogz/C51A0709.jpg?rlkey=h9nzsta0m0may08mdqdpnoa9i&st=1xett3wn&dl=0",
+    },
+    {
+      before: "https://dl.dropboxusercontent.com/scl/fi/4vvb1dlgj96e9mu9qjcp4/C51A0722.jpg?rlkey=9i7qkx6z1iwl45ihom2eadl7r&st=3tbeyyrm&dl=0",
+      after: "https://dl.dropboxusercontent.com/scl/fi/z3h32b10ex4uld82z7nim/C51A0721.jpg?rlkey=rh3erjp1tqiqihqz1e10nytwa&st=fosc0mek&dl=0",
+    },
+    {
+      before: "https://dl.dropboxusercontent.com/scl/fi/934f66agsz06jbxcdtyl7/C51A0726.jpg?rlkey=909n3ub9fp890ks4p6vswkvx8&st=avmzo0ac&dl=0",
+      after: "https://dl.dropboxusercontent.com/scl/fi/fwx153jnju3n3u5b6oqu9/C51A0725.jpg?rlkey=tw678yls8rpno2fwcogxsqtls&st=m9kb38vz&dl=0",
     },
   ],
   "flambient-editing": [
     {
-      before: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783933541/1775_NW_93rd_Pl_019_qbj7rv.jpg",
-      after: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783931754/1775_NW_93rd_Pl_023_umeozb.jpg",
+      before: "https://dl.dropboxusercontent.com/scl/fi/lwqwb14r46clrfmi3ek1q/DSC08537.jpg?rlkey=wywd6js5dchznlw1qd8i8qc4c&st=isbezddc&dl=0",
+      after: "https://dl.dropboxusercontent.com/scl/fi/5p0ptotbc509ozgq9k1zk/DSC08538.jpg?rlkey=ueozsr9y4vhr0b2lcbe0690fg&st=j44aggfr&dl=0",
+    },
+    {
+      before: "https://dl.dropboxusercontent.com/scl/fi/m84slz56ihlqs8h52fgd0/DSC08564.jpg?rlkey=xwf0kzrmibro4ul4mb09igg0w&st=y5hxx91g&dl=0",
+      after: "https://dl.dropboxusercontent.com/scl/fi/16t1otu9tnjf83q995557/DSC08562.jpg?rlkey=byxfg2n8ga8cev9ln8p30jyte&st=7a3zi1cj&dl=0",
+    },
+    {
+      before: "https://dl.dropboxusercontent.com/scl/fi/xoubyrnalv52ogatgsohy/DSC08576.jpg?rlkey=7nqckupjrpkhwxo1pe2xf8xp1&st=bmryx5vm&dl=0",
+      after: "https://dl.dropboxusercontent.com/scl/fi/wvscev7uz6byi1q3f8ufy/DSC08571.jpg?rlkey=x8wm9kii3u0qyu6eoc4yy0mco&st=ae9p2fok&dl=0",
     },
   ],
   "day-to-dusk": [
     {
-      before: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783934727/IMG_8096_s6dpky.jpg",
-      after: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783934735/IMG_8095_rjffif.jpg",
+      before: "https://dl.dropboxusercontent.com/scl/fi/0id4pzv3b24mw1m66w62m/DJI_20260721193421_0120_D.jpg?rlkey=velud3m8nht6ommuvuhd595o8&st=di5z6bpb&dl=0",
+      after: "https://dl.dropboxusercontent.com/scl/fi/ip5e0odqkagzz5hs6usrq/DJI_20260721193421_0120_D_1.jpg?rlkey=j0qmddftftjbp4fg7x0oikovj&st=y73imi7v&dl=0",
     },
   ],
   "virtual-twilight": [
     {
-      before: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783935248/DSC00869_bbgfgv.jpg",
-      after: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783935261/DSC00870_1_grtwll.jpg",
+      before: "https://dl.dropboxusercontent.com/scl/fi/ucfcmzp84da06kx9hfadu/721-Kephard-Cir-2.jpg?rlkey=o4waze6jg7xf8d0t52ql501mm&st=stdno3dd&dl=0",
+      after: "https://dl.dropboxusercontent.com/scl/fi/hj9gqzqyxxynkljeiwjw7/721-Kephard-Cir-2.jpg?rlkey=3y6pi36hcbcjovyy0ldinq6ip&st=vlgt2xav&dl=0",
+    },
+    {
+      before: "https://dl.dropboxusercontent.com/scl/fi/dlez6ier2jzswyzd1bghg/721-Kephard-Cir-4.jpg?rlkey=hdchd9hz5srdc533n8a8so66m&st=oxgrbs3c&dl=0",
+      after: "https://dl.dropboxusercontent.com/scl/fi/o8chqu56gnqywgljb2do5/721-Kephard-Cir-4.jpg?rlkey=oh212eyzayf0glp1cyu1scvjp&st=jw4j7575&dl=0",
+    },
+    {
+      before: "https://dl.dropboxusercontent.com/scl/fi/pxwwqlbhc6gjo09m060fe/1910-E-Broadway-1.jpg?rlkey=8lmub9ljz0w4q6cil31mpqrmn&st=3hsuki6p&dl=0",
+      after: "https://dl.dropboxusercontent.com/scl/fi/bgyuiatico4ibc1gi748x/1910-E-Broadway-1.jpg?rlkey=jh3zmr7eg6tsfyq11orpselgd&st=if8emzdz&dl=0",
+    },
+    {
+      before: "https://dl.dropboxusercontent.com/scl/fi/yr6c66ijwl76i8hkp0c73/1910-E-Broadway-2.jpg?rlkey=2fakp38dhu4owiwbk0coym2mo&st=ek693j09&dl=0",
+      after: "https://dl.dropboxusercontent.com/scl/fi/xab0jltqo1fwj3hv7mmur/1910-E-Broadway-2.jpg?rlkey=53afb66qgpxckrqham3ctpnis&st=zfkizh59&dl=0",
     },
   ],
   "virtual-staging": [
     {
-      before: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783935585/BB6A2956_1_nqqtbu.jpg",
-      after: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783935230/BB6A2956_final_rbcjbc.jpg",
+      before: "https://dl.dropboxusercontent.com/scl/fi/jt30jmu6njj9to8cl9klk/9-Sao-ch-p.jpg?rlkey=acdcq7gc0nd0pah82dsh870sa&st=1dy40oqm&dl=0",
+      after: "https://dl.dropboxusercontent.com/scl/fi/bzm38e3hj2emvogjtcaxn/9.jpg?rlkey=awzp44blhhitu08tym4ut2pfw&st=bj1m647l&dl=0",
+    },
+    {
+      before: "https://dl.dropboxusercontent.com/scl/fi/nzu1l6p4u53x27axbvxt3/26-Sao-ch-p.jpg?rlkey=lingvj3y2spp566t5zkoat4ie&st=5xmynwiu&dl=0",
+      after: "https://dl.dropboxusercontent.com/scl/fi/dx2oppm7spoxgdc9043ol/26.jpg?rlkey=uv9ia8paqtwymhhbpjpie2dhw&st=5znbt7oj&dl=0",
+    },
+    {
+      before: "https://dl.dropboxusercontent.com/scl/fi/ke166bsci92y1ip5tfrfr/27-Sao-ch-p.jpg?rlkey=2l3g6sminzqsl9hbfrjslksuj&st=xy0q32u2&dl=0",
+      after: "https://dl.dropboxusercontent.com/scl/fi/a5o4qvqd2ud07q3dzgouh/27.jpg?rlkey=samakbcpzlzo48at5z4z7x639&st=5i0kid7s&dl=0",
     },
   ],
   "object-removal-1-4": [
     {
-      before: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783934772/DSC05073_ygajnm.jpg",
-      after: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783934791/DSC05073_final_tbwvya.jpg",
+      before: "https://dl.dropboxusercontent.com/scl/fi/xy93kxta95sn5qgaamjsi/IMG_4702.jpg?rlkey=beo6g53gq7lbqr1l4p9udfs74&st=mdoku82e&dl=0",
+      after: "https://dl.dropboxusercontent.com/scl/fi/s95tjq089ckfip7tjkak5/IMG_4702_1.jpg?rlkey=43sh0ezbmv4yb3uutyp2rdhai&st=gxptowpn&dl=0",
     },
     {
-      before: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783934769/DSC01515_s9qpnm.jpg",
-      after: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783934786/DSC01515_fo4prq.jpg",
+      before: "https://dl.dropboxusercontent.com/scl/fi/dkqhdc25k38rmtcgioe8x/IMG_4814.jpg?rlkey=gb3ef4m86r72kbbgbh0hq8h9q&st=f6rm6h78&dl=0",
+      after: "https://dl.dropboxusercontent.com/scl/fi/5un9pjh16jm6wy5dvk9om/IMG_4814_1.jpg?rlkey=9w8c9zqv9o6oci35q3cibp8yz&st=z9ybfjan&dl=0",
+    },
+    {
+      before: "https://dl.dropboxusercontent.com/scl/fi/wlwisb26edo8obioe6dmg/IMG_4820.jpg?rlkey=k5hgklemoh80fl0t4k3w5sbda&st=400zl0qz&dl=0",
+      after: "https://dl.dropboxusercontent.com/scl/fi/ye0ykndi1legacuwjl4cu/IMG_4820_1.jpg?rlkey=89n0pdqyyl6rlhvugvsr1y9d3&st=aawp34yo&dl=0",
     },
   ],
   "object-removal-clear-room": [
     {
-      before: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783934851/OESR8114_nxofy0.jpg",
-      after: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783934861/OESR8114_nermlb.jpg",
+      before: "https://dl.dropboxusercontent.com/scl/fi/efu31x0new957c5p2o3b9/GQ2A9366.jpg?rlkey=4z891uaawjnfk8zr06q037cfs&st=dh6magxx&dl=0",
+      after: "https://dl.dropboxusercontent.com/scl/fi/0ea8nayb2g40dx3u1mu2i/GQ2A9366_rt.jpg?rlkey=8ftd0tjrv7zkj6ri26dve51mh&st=s6w7dk1n&dl=0",
+    },
+    {
+      before: "https://dl.dropboxusercontent.com/scl/fi/fgrmamixj5sp8lu90c6sn/GQ2A9652.jpg?rlkey=2votqhn4fmvem4h78sazhm36q&st=k1l4nzxp&dl=0",
+      after: "https://dl.dropboxusercontent.com/scl/fi/i4zlvq8ff02iktyv6gpge/GQ2A9652_rt.jpg?rlkey=7jal3my1rduwu3qgm11k0h89t&st=umqs28y2&dl=0",
     },
   ],
   "lawn-replacement": [
     {
-      before: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783934580/P1114971_gjis2n.jpg",
-      after: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783934593/P1114971_v2_fpo8zi.jpg",
+      before: "https://dl.dropboxusercontent.com/scl/fi/2bw6ab0wukt4l4j76lv8i/P1114971.jpg?rlkey=bm0y82glkaqv5q7hzm1saa2ti&st=t6hziq84&dl=0",
+      after: "https://dl.dropboxusercontent.com/scl/fi/c28q7jnn3t87kn44wbd30/P1114971_v2.jpg?rlkey=ah5bif44ee2muk9urkddlurr0&st=ihz7wlij&dl=0",
     },
   ],
   "water-in-pool": [
     {
-      before: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783935366/72ba6ebe-8dda-4639-b8fc-94da4b631782_qgtdw8.jpg",
-      after: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783935346/2bf59ea4-2854-4d2c-9447-0b6e9f8d3285_jwa2ca.jpg",
+      before: "https://dl.dropboxusercontent.com/scl/fi/ondcnyybu8v5x97i880cu/3.jpg?rlkey=e14y384idqobrgfuh704dtcgr&st=dlem0ew0&dl=0",
+      after: "https://dl.dropboxusercontent.com/scl/fi/9in0jdjgjokqml3akvqhq/3_final.jpg?rlkey=0ok5u06ozde9d3fkjvlx8nqyx&st=7givjdrm&dl=0",
     },
   ],
   "virtual-renovation": [
     {
-      before: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783934895/DJI_0278_ugmj7z.jpg",
-      after: "https://res.cloudinary.com/dri9qx6pb/image/upload/v1783935060/DJI_0278_1_loqqyg.jpg",
+      before: "https://dl.dropboxusercontent.com/scl/fi/nfb4bpvli2bz9s4x2fd2l/Arbeitszimmer-Sao-ch-p.jpg?rlkey=ltebuwwt37u3x75c4975nps5s&st=797fgu7z&dl=0",
+      after: "https://dl.dropboxusercontent.com/scl/fi/p5ao5dj4br21vpvzzjn5w/Arbeitszimmer.jpg?rlkey=x6d11vdljdycko9xxfe3vefbx&st=ngtroktg&dl=0",
     },
   ],
   "video-basic": [
     {
-      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1786199460/co_ban_3_ce3xkg.mp4",
+      video: "https://dl.dropboxusercontent.com/scl/fi/xe2agkz8xmgjeh78fecoq/1920-canadiana-ct-video-v12313422.mp4?rlkey=adaeyby5d0f964239kbv6cyti&st=8425gnqe&dl=0",
     },
     {
-      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1786199348/c%C6%A1_ban_2_wzqtsz.mp4",
+      video: "https://dl.dropboxusercontent.com/scl/fi/nrbk5ca1fbmyejcq5yh2v/2607-Ken-Smith-1660-Mont-Rue-Dr-SE-Grand-Rapids-MI-49546.mp4?rlkey=ocerf1d1idtkjtsfctbrw7bcr&st=adbbh81w&dl=0",
     },
     {
-      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1786198783/coban1_jxbjpc.mp4",
+      video: "https://dl.dropboxusercontent.com/scl/fi/7dyuylw6ttnqh2a8fsg72/2594-Laurie-Zwiers-3016-Fransworth-Dr-Holland-MI-49424.mp4?rlkey=ulax6o73y3gv5wyk5w5z1w9ie&st=im5u4ajj&dl=0",
     },
   ],
   "property-tour-video": [
     {
-      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1786197243/tham_quan_3_zmpqhu.mp4",
+      video: "https://dl.dropboxusercontent.com/scl/fi/boy6rcmi6yhk8twiihwou/Speed-Ramp-6048-Bella-Terra-Ln.mp4?rlkey=07q5fp4v0mxzjilamu5d0ur1d&st=y6ral34n&dl=0",
     },
     {
-      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1786197194/%C4%91%C3%A3_xu%E1%BA%A5t_tham_quan_2_lg68ll.mp4",
+      video: "https://dl.dropboxusercontent.com/scl/fi/6si7wd9f0aizf02way0hr/8304-Silver-Fox-Ct-Williamsville-NY.mp4?rlkey=wzdbv24bjk7iv3oyxbt5y971a&st=mshjdjx1&dl=0",
     },
     {
-      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1786197163/%C4%91%C3%A3_xu%E1%BA%A5t_tham_quan_ymy5zj.mp4",
+      video: "https://dl.dropboxusercontent.com/scl/fi/zf1oe23mbfo910s3wrl9x/3222-Greathouse-Rd.mp4?rlkey=qtq0nc2ridsms9a483rxw6n06&st=zcxryjf7&dl=0",
     },
   ],
   "social-media-reel": [
     {
-      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1786199529/mang_xa_hoi_3_qljfsd.mp4",
+      video: "https://dl.dropboxusercontent.com/scl/fi/7spcnmjwhxbaj6xb4m3d4/Sean-Bayway-Reel-fix-v1.mp4?rlkey=83b9xa8va7fuv0ant3q7tdneh&st=1k5v4bwq&dl=0",
     },
     {
-      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1786197506/socal_1_u1a02e.mp4",
+      video: "https://dl.dropboxusercontent.com/scl/fi/aimix182i22dz9csamyu8/Footage-premium.mp4?rlkey=34ww8mm7f137i3a5rukcve7s3&st=98459oko&dl=0",
     },
     {
-      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1784388671/VIDEO_Social_Media_Reel_ygwyqk.mp4",
+      video: "https://dl.dropboxusercontent.com/scl/fi/sycp07t2ax80i28demh0s/2633-Travis-DeHaan-6700-N-Woodland-Rd-Woodland-MI-48897-1.mp4?rlkey=12g5qwjhlpj81onuaaps7bk0z&st=2d35moa1&dl=0",
     },
   ],
   "luxury-cinematic-video": [
     {
-      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1784387976/reelsvideo.io_1784387876267_qpieh6.mp4",
+      video: "https://dl.dropboxusercontent.com/scl/fi/ptxsm9y960urtplyh1h6n/3.mp4?rlkey=a89nziiauq96ybogc40sixz4q&st=bi4nq8vr&dl=0",
     },
     {
-      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1784389024/reelsvideo.io_1784388910644_jxuos7.mp4",
+      video: "https://dl.dropboxusercontent.com/scl/fi/lstdd2mpjse1b5r2qn9p1/2.mp4?rlkey=bwy7wwtmnt12wwktjrp7ff4xj&st=l0u1r4nm&dl=0",
     },
     {
-      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1784388033/reelsvideo.io_1784388008169_kawu0l.mp4",
+      video: "https://dl.dropboxusercontent.com/scl/fi/tbk51vp3q7oigu0f43mgh/1.mp4?rlkey=2at6tyacfxun32prarpl2gnny&st=pk98rxmx&dl=0",
     },
   ],
   "agent-introduction-video": [
     {
-      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1786198452/nii_2_k6g6sw.mp4",
+      video: "https://dl.dropboxusercontent.com/scl/fi/m28ust06rn1rrr9cmdxtr/Roman-Reel-3-Editor.mp4?rlkey=yvl6mhlbkhbg9t05mtrra5ao8&st=ewnqat8f&dl=0",
     },
     {
-      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1786198442/noi30725_bkpfff.mp4",
+      video: "https://dl.dropboxusercontent.com/scl/fi/j6e29023creosu6jkmtg8/Roman-Reel-1-Editor.mp4?rlkey=xyfgrnwkvq153mhgj8qswp7og&st=y42sf8m7&dl=0",
     },
     {
-      video: "https://res.cloudinary.com/dri9qx6pb/video/upload/v1786198406/n%C3%B3i_1_pzd9cc.mp4",
+      video: "https://dl.dropboxusercontent.com/scl/fi/p1i75s12rf1od9oetnbbb/Afil-Reel-1-Editor.mp4?rlkey=z2xpmlfyqvw81rtvhnrksfuvv&st=6mz2zl16&dl=0",
     },
   ],
 };

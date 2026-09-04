@@ -97,12 +97,11 @@ export default function InvoicesPage() {
 
   const handleCreateInvoice = async (
     customer: CustomerInfo,
-    selectedJobs: JobResponse[],
-    currency: string = "USD"
+    selectedJobs: JobResponse[]
   ) => {
     try {
       // log the customer and selected jobs for debugging
-      console.log("Creating invoice for customer:", customer, "with currency:", currency);
+      console.log("Creating invoice for customer:", customer);
       console.log("Selected jobs:", selectedJobs);
       const existJobsNotHasTotalAmount = selectedJobs.find(job => job.filePrice === null || job.outputNumber === null || job.outputNumber === 0 || job.filePrice === 0);
       if (existJobsNotHasTotalAmount) {
@@ -112,7 +111,6 @@ export default function InvoicesPage() {
       const payload = {
         customerInfo: customer,
         jobs: selectedJobs,
-        currency,
       };
       console.log("Create invoice payload:", payload);
       const res = await dispatch(CreateInvoiceAction(payload));
