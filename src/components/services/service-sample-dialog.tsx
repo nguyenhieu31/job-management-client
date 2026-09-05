@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useState } from "react";
-import { ChevronLeft, ChevronRight, Monitor } from "lucide-react";
+import { useCallback, useState, useEffect } from "react";
+import { ChevronLeft, ChevronRight, Monitor, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -38,10 +38,16 @@ export function ServiceSampleDialog({
 }: ServiceSampleDialogProps) {
   const samples = serviceId ? getServiceSampleImages(serviceId) : [];
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [videoLoading, setVideoLoading] = useState(false);
   const currentPair = samples[currentIndex] ?? null;
   const isVideo = !!currentPair?.video;
   const label = serviceId ? getServiceLabel(serviceId) : "";
   const hasMultiple = samples.length > 1;
+
+  useEffect(() => {
+    setCurrentIndex(0);
+    setVideoLoading(false);
+  }, [serviceId]);
 
   const handleClose = useCallback(() => {
     setCurrentIndex(0);
@@ -76,14 +82,25 @@ export function ServiceSampleDialog({
           ) : (
             <>
               {isVideo ? (
-                <div className="w-full overflow-hidden rounded-lg border bg-black">
+                <div className="relative w-full overflow-hidden rounded-lg border bg-black">
+                  {videoLoading && (
+                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-black/60 backdrop-blur-sm">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                      <span className="text-xs text-white/80">Loading video...</span>
+                    </div>
+                  )}
                   <video
-                    key={currentIndex}
+                    key={`${serviceId}-${currentIndex}`}
                     src={currentPair.video}
                     controls
                     className="w-full aspect-video"
                     poster={currentPair.before}
                     autoPlay
+                    onLoadStart={() => setVideoLoading(true)}
+                    onLoadedData={() => setVideoLoading(false)}
+                    onCanPlay={() => setVideoLoading(false)}
+                    onWaiting={() => setVideoLoading(true)}
+                    onPlaying={() => setVideoLoading(false)}
                   >
                     Your browser does not support the video tag.
                   </video>
@@ -91,6 +108,7 @@ export function ServiceSampleDialog({
               ) : (
                 <div className="w-full overflow-hidden rounded-lg border">
                   <BeforeAfterSlider
+                    key={`${serviceId}-${currentIndex}`}
                     beforeSrc={currentPair.before ?? ""}
                     afterSrc={currentPair.after ?? ""}
                     alt={label}

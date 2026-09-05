@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import Image from "next/image";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -21,8 +21,17 @@ export function BeforeAfterSlider({
   const containerRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState(50);
   const [loaded, setLoaded] = useState({ before: false, after: false });
+  const [hasError, setHasError] = useState({ before: false, after: false });
   const draggingRef = useRef(false);
-  const loading = !loaded.before || !loaded.after;
+
+  // Reset loaded state whenever images change
+  useEffect(() => {
+    setLoaded({ before: false, after: false });
+    setHasError({ before: false, after: false });
+    setPosition(50);
+  }, [beforeSrc, afterSrc]);
+
+  const loading = (!loaded.before || !loaded.after) && (!hasError.before && !hasError.after);
 
   const updatePosition = useCallback((clientX: number) => {
     const rect = containerRef.current?.getBoundingClientRect();
@@ -49,7 +58,7 @@ export function BeforeAfterSlider({
   return (
     <div
       ref={containerRef}
-      className={cn("relative w-full overflow-hidden select-none", className)}
+      className={cn("relative w-full overflow-hidden select-none bg-muted", className)}
       style={{ aspectRatio: "16 / 9" }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
@@ -65,19 +74,33 @@ export function BeforeAfterSlider({
       }}
     >
       {loading && (
-        <div className="absolute inset-0 z-40 flex items-center justify-center bg-background/60">
+        <div className="absolute inset-0 z-40 flex flex-col items-center justify-center gap-2 bg-background/80 backdrop-blur-sm">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="text-xs text-muted-foreground">Loading sample image...</span>
         </div>
       )}
 
+      {/* Before / After labels */}
+      <span className="absolute top-2.5 left-2.5 z-20 rounded bg-black/60 px-2 py-0.5 text-[11px] font-medium text-white backdrop-blur-sm pointer-events-none">
+        Before
+      </span>
+      <span className="absolute top-2.5 right-2.5 z-20 rounded bg-black/60 px-2 py-0.5 text-[11px] font-medium text-white backdrop-blur-sm pointer-events-none">
+        After
+      </span>
+
       {/* After image (bottom layer) */}
       <Image
+        key={`after-${afterSrc}`}
         src={afterSrc}
         alt={alt ? `After - ${alt}` : "After"}
         fill
-        className={cn("pointer-events-none object-cover", !loaded.after && "invisible")}
+        className={cn("pointer-events-none object-cover transition-opacity duration-200", !loaded.after ? "opacity-0" : "opacity-100")}
         draggable={false}
         onLoad={() => setLoaded((p) => ({ ...p, after: true }))}
+        onError={() => {
+          setLoaded((p) => ({ ...p, after: true }));
+          setHasError((p) => ({ ...p, after: true }));
+        }}
       />
 
       {/* Before image (top layer, clipped) */}
@@ -86,12 +109,17 @@ export function BeforeAfterSlider({
         style={{ clipPath: `inset(0 ${100 - position}% 0 0)` }}
       >
         <Image
+          key={`before-${beforeSrc}`}
           src={beforeSrc}
           alt={alt ? `Before - ${alt}` : "Before"}
           fill
-          className={cn("pointer-events-none object-cover", !loaded.before && "invisible")}
+          className={cn("pointer-events-none object-cover transition-opacity duration-200", !loaded.before ? "opacity-0" : "opacity-100")}
           draggable={false}
           onLoad={() => setLoaded((p) => ({ ...p, before: true }))}
+          onError={() => {
+            setLoaded((p) => ({ ...p, before: true }));
+            setHasError((p) => ({ ...p, before: true }));
+          }}
         />
       </div>
 
