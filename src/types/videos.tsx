@@ -231,6 +231,6 @@ export const ROLE_COLUMNS = {
     "note",
     // "relatedWork",
     "paymentStatus",
-    // "actions",
+    "actions",
   ],
 } as const;

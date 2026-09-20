@@ -222,7 +222,7 @@ export function JobDetailDialog({
             <Badge variant="outline" className={jobStatusColors[job.jobStatus]}>
               {jobStatusLabels[job.jobStatus]}
             </Badge>
-            {userRole === "manager" && (
+            {(userRole === "manager" || userRole === "saler") && (
               <Badge
                 variant="outline"
                 className={paymentStatusColors[job.paymentStatus]}
@@ -542,7 +542,7 @@ export function JobDetailDialog({
           )}
 
           {/* File & Price Information - Hidden for Employee & QA */}
-          {userRole === "manager" && (
+          {(userRole === "manager" || userRole === "saler") && (
             <div className="space-y-4">
               <h3 className="font-semibold text-lg flex items-center gap-2">
                 <DollarSign className="h-5 w-5" />

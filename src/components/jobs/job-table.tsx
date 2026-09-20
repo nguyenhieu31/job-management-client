@@ -298,16 +298,20 @@ export function JobTable({
             : null,
           customerId: changes.customer?.id || null,
           filePrice: changes.filePrice || null,
-          inputNumber: changes.inputNumber || null,
-          outputNumber: changes.outputNumber || null,
-          qaOutputNumber: changes.qaOutputNumber || null,
+          inputNumber:
+            changes.inputNumber !== undefined ? changes.inputNumber : null,
+          outputNumber:
+            changes.outputNumber !== undefined ? changes.outputNumber : null,
+          qaOutputNumber:
+            changes.qaOutputNumber !== undefined ? changes.qaOutputNumber : null,
           qualifiedAssigneeId: qualifiedAssigneeId
             ? Number.parseInt(qualifiedAssigneeId.toString())
             : null,
           paymentStatus: changes.paymentStatus || null,
           paymentEmployee: changes.paymentEmployee || "",
           doneLink: changes.doneLink || "",
-          employeeNote: changes.employeeNote || null,
+          employeeNote:
+            changes.employeeNote !== undefined ? changes.employeeNote : null,
           isDeleteAssignee: isDeleteAssignee || undefined,
           isDeleteQualifiedAssignee: isDeleteQualifiedAssignee || undefined,
         };
@@ -749,18 +753,13 @@ export function JobTable({
         );
 
       case "inputCount":
-        // Manager can edit Input Count, Employee cannot
-        if (userRole === "manager") {
-          return (
-            <EditableInput
-              value={getCurrentValue(job, "inputNumber") as number}
-              onChange={createInputNumberHandler(job.id)}
-              className="border-blue-200 focus:border-blue-400"
-            />
-          );
-        }
-        // Employee and QA: read-only
-        return <span>{job.inputNumber}</span>;
+        return (
+          <EditableInput
+            value={getCurrentValue(job, "inputNumber") as number}
+            onChange={createInputNumberHandler(job.id)}
+            className="border-blue-200 focus:border-blue-400"
+          />
+        );
 
       case "outputCount":
         // Employee can edit Output Count, Manager and QA cannot

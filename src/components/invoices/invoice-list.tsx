@@ -15,11 +15,18 @@ import { Card, CardContent } from "@/components/ui/card";
 import { CustomerJobSummary } from "@/types/invoices";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ChevronDown, ChevronRight, Filter, FileSpreadsheet } from "lucide-react";
+import { ChevronDown, ChevronRight, Filter, FileSpreadsheet, FileText, Download } from "lucide-react";
 import { CustomerInfo, JobResponse } from "@/types/jobs";
 import { Label } from "@/components/ui/label";
 import MultiSelectDropdown from "@/components/ui/multi-select-dropdown";
 import { generateExcelInvoice } from "@/lib/excel/generate-invoice-excel";
+import { generatePdfInvoice } from "@/lib/pdf/generate-invoice-pdf";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "react-toastify";
 
 interface InvoiceListProps {
@@ -113,6 +120,31 @@ export function InvoiceList({
     } catch (err: any) {
       console.error("Excel export error:", err);
       toast.error("Xuất hóa đơn Excel thất bại!");
+    }
+  };
+
+  const handleExportPdf = (customerInfo: CustomerInfo, allJobs: JobResponse[]) => {
+    const selectedJobIds = getSelectedJobsByCustomer(customerInfo.id);
+    const selectedJobsToExport = allJobs.filter((j) => selectedJobIds.includes(j.id));
+    if (selectedJobsToExport.length === 0) {
+      toast.warn("Vui lòng chọn ít nhất một công việc để xuất hóa đơn PDF!");
+      return;
+    }
+
+    const invalidJob = selectedJobsToExport.find(
+      (job) => job.filePrice === null || job.outputNumber === null || job.outputNumber === 0 || job.filePrice === 0
+    );
+    if (invalidJob) {
+      toast.error(`Công việc "${invalidJob.caseName}" chưa có tổng tiền. Vui lòng cập nhật trước khi xuất PDF.`);
+      return;
+    }
+
+    try {
+      generatePdfInvoice(customerInfo, selectedJobsToExport);
+      toast.success(`Đã tải xuống hóa đơn PDF cho ${customerInfo.name}!`);
+    } catch (err: any) {
+      console.error("PDF export error:", err);
+      toast.error("Xuất hóa đơn PDF thất bại!");
     }
   };
 
@@ -212,18 +244,38 @@ export function InvoiceList({
                     {customer.jobs.length} công việc
                   </p>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-1.5 border-emerald-600 text-emerald-600 hover:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500 font-medium transition-colors"
-                  onClick={() => handleExportExcel(customer.customer, customer.jobs)}
-                  disabled={
-                    getSelectedJobsByCustomer(customer.customer.id).length === 0 || loading
-                  }
-                >
-                  <FileSpreadsheet className="h-4 w-4" />
-                  Xuất Excel ({getSelectedJobsByCustomer(customer.customer.id).length})
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-1.5 border-primary/40 text-primary hover:bg-primary/10 font-medium transition-colors"
+                      disabled={
+                        getSelectedJobsByCustomer(customer.customer.id).length === 0 || loading
+                      }
+                    >
+                      <Download className="h-4 w-4" />
+                      Xuất hóa đơn ({getSelectedJobsByCustomer(customer.customer.id).length})
+                      <ChevronDown className="h-3.5 w-3.5 opacity-70" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem
+                      className="flex items-center gap-2 cursor-pointer font-medium text-emerald-600 dark:text-emerald-400 focus:text-emerald-600 focus:bg-emerald-50 dark:focus:bg-emerald-950/40"
+                      onClick={() => handleExportExcel(customer.customer, customer.jobs)}
+                    >
+                      <FileSpreadsheet className="h-4 w-4" />
+                      <span>Xuất Excel (.xlsx)</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="flex items-center gap-2 cursor-pointer font-medium text-rose-600 dark:text-rose-400 focus:text-rose-600 focus:bg-rose-50 dark:focus:bg-rose-950/40"
+                      onClick={() => handleExportPdf(customer.customer, customer.jobs)}
+                    >
+                      <FileText className="h-4 w-4" />
+                      <span>Xuất PDF (.pdf)</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
           </div>

@@ -393,9 +393,11 @@ console.log("editValue: ", editValue)
             assigneeId: assigneeId
               ? Number.parseInt(assigneeId.toString())
               : null,
-            caseName: changes?.caseName || null,
-            note: changes?.note || null,
-            employeeNote: changes?.employeeNote || null,
+            caseName:
+              changes?.caseName !== undefined ? changes.caseName : null,
+            note: changes?.note !== undefined ? changes.note : null,
+            employeeNote:
+              changes?.employeeNote !== undefined ? changes.employeeNote : null,
             customerId: changes?.customer?.id || null,
             filePrice: changes?.filePrice || null,
             inputNumber:
@@ -1006,18 +1008,13 @@ console.log("editValue: ", editValue)
         );
 
       case "inputCount":
-        // Manager can edit Input Count, Employee cannot
-        if (userRole === "manager") {
-          return (
-            <EditableInput
-              value={getCurrentValue(video, "inputNumber") as number}
-              onChange={createInputNumberHandler(video.id)}
-              className="border-blue-200 focus:border-blue-400"
-            />
-          );
-        }
-        // Employee: read-only
-        return <span>{video.inputNumber || 0}</span>;
+        return (
+          <EditableInput
+            value={getCurrentValue(video, "inputNumber") as number}
+            onChange={createInputNumberHandler(video.id)}
+            className="border-blue-200 focus:border-blue-400"
+          />
+        );
 
       case "outputCount":
         // Manager can always edit, Employee can edit when IN_PROGRESS
@@ -1458,15 +1455,12 @@ console.log("editValue: ", editValue)
               </Button>
             )}
 
-            {/* Save button - show for manager OR special saler OR employee/special with pending changes */}
-            {((userRole === "manager" && (pendingChangesRef.current[video.id] || uploadedFilesRef.current[video.id] || removedFileStoragesRef.current[video.id])) ||
-              (canEditTotalPayPerFile && userRole === "saler" && pendingChangesRef.current[video.id]) ||
-              ((userRole === "employee" || userRole === "special") &&
-                video.jobStatus === "IN_PROGRESS" &&
-                pendingChangesRef.current[video.id]) ||
-              (userRole === "special" &&
-                canEditSpecialFields(video) &&
-                pendingChangesRef.current[video.id])) && (
+            {/* Save button - show whenever there are pending changes */}
+            {Boolean(
+              pendingChangesRef.current[video.id] ||
+              uploadedFilesRef.current[video.id] ||
+              removedFileStoragesRef.current[video.id]
+            ) && (
               <>
                 <Button
                   variant="default"
