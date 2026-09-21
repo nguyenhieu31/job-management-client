@@ -291,6 +291,8 @@ export const ROLE_COLUMNS = {
     "outputCount",
     "jobStatus",
     "linkDone",
+    "filePrice",
+    "totalPrice",
     "paymentStatus",
     // "assignedSale",
     "assignedEmployee",
