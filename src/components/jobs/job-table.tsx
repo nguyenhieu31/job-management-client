@@ -698,7 +698,7 @@ export function JobTable({
 
       case "totalPrice":
         return (
-          <span className="font-medium">{formatCurrency(job.totalPrice)}</span>
+          <span className="font-medium">{formatCurrency((job.filePrice || 0) * (job.outputNumber || 0))}</span>
         );
 
       case "linkInput":
