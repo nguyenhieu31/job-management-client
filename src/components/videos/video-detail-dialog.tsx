@@ -339,7 +339,6 @@ export function VideoDetailDialog({
                   currentItemId={video.id}
                   currentItemType="video"
                   onViewItem={() => {}}
-                  customerNote={video.customer?.customerNote}
                   hideSeparator
                   title="Video mẫu"
                 />
@@ -358,6 +357,15 @@ export function VideoDetailDialog({
 
             {/* Right Column - Notes & Media */}
             <div className="space-y-4 min-w-0">
+              {video.customer?.customerNote && (
+                <div className="space-y-2 min-w-0">
+                  <h3 className="font-semibold text-lg">Ghi Chú Khách Hàng</h3>
+                  <div className="rounded border border-blue-200/50 bg-blue-50/60 p-3 text-sm text-blue-800 dark:border-blue-800/30 dark:bg-blue-950/20 dark:text-blue-200 whitespace-pre-wrap break-words">
+                    {video.customer?.customerNote}
+                  </div>
+                </div>
+              )}
+      
               {video.note && (
                 <div className="space-y-2 min-w-0">
                   <h3 className="font-semibold text-lg">Ghi Chú</h3>

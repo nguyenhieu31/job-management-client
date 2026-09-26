@@ -91,7 +91,7 @@ export function CustomerForm({
       phone: formData.phone,
       company: formData.company,
       customerCode: formData.customerCode || undefined,
-      customerNote: formData.customerNote || undefined,
+      customerNote: formData.customerNote,
       // Send as saleIds for backend Create/UpdateCustomerRequest
       ...(formData.saleIds.length > 0 && { saleIds: formData.saleIds }),
       isJobAccount: formData.isJobAccount,
