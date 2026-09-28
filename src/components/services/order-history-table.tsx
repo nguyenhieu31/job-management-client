@@ -498,7 +498,8 @@ function ConfigurationDetails({ config }: { config: unknown }) {
 
   const hasUpload =
     uploadMethodLabels.length > 0 || dropboxLink || googleDriveLink || wetransferLink;
-  const hasAnyCustomer = customerName || customerEmail || realEstateAddress || instagramHandle || websiteUrl;
+  const hasCustomerInfo = customerName || customerEmail || instagramHandle || websiteUrl;
+  const hasAddress = !!realEstateAddress;
 
   const vsPrice = PHOTO_SERVICES.find((s) => s.id === "virtual-staging")?.price ?? 0;
   const vsTotal = roomCountLines.length > 0
@@ -521,7 +522,9 @@ function ConfigurationDetails({ config }: { config: unknown }) {
     return { secs, extra, cost: extra * DURATION_EXTEND_PRICE, free: false, baseSecs, unitSecs };
   })();
 
-  const baseSecs = isAgentIntro ? 30 : 60;
+  const baseSecs = isAgentIntro
+      ? (videoDuration === "60s" || videoDuration === "60 seconds" ? 60 : 30)
+      : 60;
   const unitSecs = isAgentIntro ? 10 : 15;
   const durationPriceLine = (videoDurationExtended ?? 0) > 0
     ? `${baseSecs}s + ${(videoDurationExtended ?? 0) * unitSecs}s = ${baseSecs + (videoDurationExtended ?? 0) * unitSecs}s (+ $${(videoDurationExtended ?? 0) * DURATION_EXTEND_PRICE})`
@@ -540,17 +543,24 @@ function ConfigurationDetails({ config }: { config: unknown }) {
 
   return (
     <div className="space-y-5">
-      {/* ====== 1. Customer & Property ====== */}
-      {hasAnyCustomer && (
+      {/* ====== 1. Customer Information ====== */}
+      {hasCustomerInfo && (
         <section className="space-y-4 rounded-lg border bg-card p-4 sm:p-6">
-          <SectionHeading title="Customer & Property" />
+          <SectionHeading title="Customer Information" />
           <div className="grid gap-3 sm:grid-cols-2">
             <DetailRow label="Full Name" value={customerName} />
             <DetailRow label="Paypal Email" value={customerEmail} />
-            <DetailRow label="Real Estate Address" value={realEstateAddress} />
             <DetailRow label="Instagram" value={instagramHandle} />
             <DetailRow label="Website" value={websiteUrl} />
           </div>
+        </section>
+      )}
+
+      {/* ====== 2. Real Estate Address ====== */}
+      {hasAddress && (
+        <section className="space-y-4 rounded-lg border bg-card p-4 sm:p-6">
+          <SectionHeading title="Real Estate Address" />
+          <DetailRow label="Real Estate Address" value={realEstateAddress} />
         </section>
       )}
 
@@ -614,7 +624,13 @@ function ConfigurationDetails({ config }: { config: unknown }) {
             {/* Video Duration */}
             <div className="rounded-lg border p-4 space-y-2">
               <span className="text-xs font-medium text-muted-foreground">Video Duration</span>
-              <p className="text-sm">{videoDuration ?? ""}</p>
+              <p className="text-sm">
+                {(videoDurationExtended ?? 0) > 0 ? (
+                  baseSecs + (videoDurationExtended ?? 0) * unitSecs + "s"
+                ) : (
+                  videoDuration ?? ""
+                )}
+              </p>
               {videoDuration === "Custom" && customDurationPrice && (
                 <p className="text-xs text-muted-foreground">
                   {customDurationPrice.secs}s

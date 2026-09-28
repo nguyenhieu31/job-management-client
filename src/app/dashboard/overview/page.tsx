@@ -6,7 +6,9 @@ import { fetchOverviewDashboard } from "@/store/slice/overview/Overview";
 import useRouter from "@/hooks/use-router";
 import OverviewMetricCards from "@/components/overview/overview-metric-cards";
 import JobStatusChart from "@/components/overview/job-status-chart";
+import JobByEmployeeChart from "@/components/overview/job-by-employee-chart";
 import VideoStatusChart from "@/components/overview/video-status-chart";
+import VideoByEmployeeChart from "@/components/overview/video-by-employee-chart";
 import RevenueBarChart from "@/components/overview/revenue-bar-chart";
 import { ShieldOff, BarChart3 } from "lucide-react";
 
@@ -75,17 +77,27 @@ export default function OverviewPage() {
         <OverviewMetricCards data={dashboardData} loading={loading} />
       </section>
 
-      {/* R2 — Job Status Bar Chart */}
+      {/* R2 — Job By Employee Bar Chart */}
+      <section id="overview-job-by-employee-chart">
+        <JobByEmployeeChart />
+      </section>
+
+      {/* R3 — Video By Employee Bar Chart */}
+      <section id="overview-video-by-employee-chart">
+        <VideoByEmployeeChart />
+      </section>
+
+      {/* R4 — Job Status Bar Chart */}
       <section id="overview-job-status-chart">
         <JobStatusChart />
       </section>
 
-      {/* R3 — Video Status Bar Chart */}
+      {/* R5 — Video Status Bar Chart */}
       <section id="overview-video-status-chart">
         <VideoStatusChart />
       </section>
 
-      {/* R4 — Revenue Bar Chart */}
+      {/* R6 — Revenue Bar Chart */}
       <section id="overview-revenue-chart">
         <RevenueBarChart />
       </section>

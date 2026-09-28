@@ -261,16 +261,6 @@ export function ServiceDetailsStep({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="realEstateAddress">Real Estate Address <span className="text-destructive">*</span></Label>
-            <Input
-              id="realEstateAddress"
-              placeholder="e.g. 123 Main St, City"
-              value={state.realEstateAddress}
-              onChange={(e) => onChange("realEstateAddress", e.target.value)}
-            />
-          </div>
-
-          <div className="space-y-2">
             <Label htmlFor="instagramHandle">
               Instagram <span className="text-destructive">*</span>
             </Label>
@@ -286,7 +276,7 @@ export function ServiceDetailsStep({
             )}
           </div>
 
-          <div className="space-y-2 sm:col-span-2">
+          <div className="space-y-2">
             <Label htmlFor="websiteUrl">
               Website <span className="text-destructive">*</span>
             </Label>
@@ -301,6 +291,32 @@ export function ServiceDetailsStep({
               <p className="text-xs text-destructive">{errors.websiteUrl}</p>
             )}
           </div>
+        </div>
+      </section>
+
+      {/* 2. Real Estate Address */}
+      <section className="space-y-6 rounded-lg border bg-card p-4 sm:p-6">
+        <div className="flex items-center gap-2">
+          <div className="h-2 w-2 rounded-full bg-primary" />
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Real Estate Address
+          </h3>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="realEstateAddress">
+            Real Estate Address <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            id="realEstateAddress"
+            placeholder="e.g. 123 Main St, City"
+            value={state.realEstateAddress}
+            onChange={(e) => onChange("realEstateAddress", e.target.value)}
+            className={errors.realEstateAddress ? "border-destructive" : ""}
+          />
+          {errors.realEstateAddress && (
+            <p className="text-xs text-destructive">{errors.realEstateAddress}</p>
+          )}
         </div>
       </section>
 

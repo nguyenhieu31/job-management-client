@@ -48,3 +48,35 @@ export interface OverviewFilterParams {
   period: TimePeriod;
   year?: number;
 }
+
+export interface EmployeeOption {
+  id: number;
+  fullName: string;
+  code: string;
+}
+
+export interface EmployeeStatItem {
+  employeeId: number;
+  employeeName: string;
+  employeeCode: string;
+  total: number;
+  countsByStatus: Record<JobStatus, number>;
+}
+
+export interface EmployeeStatsResponse {
+  period: TimePeriod;
+  selectedYear: number;
+  selectedEmployeeId?: number | null;
+  selectedEmployeeIds?: number[];
+  employees: EmployeeStatItem[];
+  allEmployees: EmployeeOption[];
+  countsByStatus: Record<JobStatus, number>;
+  total: number;
+}
+
+export interface EmployeeStatsFilterParams {
+  period: TimePeriod;
+  year?: number;
+  employeeId?: number | null;
+  employeeIds?: number[];
+}

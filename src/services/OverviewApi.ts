@@ -4,6 +4,7 @@ import {
   OverviewDashboardResponse,
   StatusCountStatsResponse,
   RevenueStatsResponse,
+  EmployeeStatsResponse,
   TimePeriod,
 } from "@/types/overview";
 
@@ -63,3 +64,44 @@ export const getRevenue = async (
     throw new Error(err.message);
   }
 };
+
+export const getJobsByEmployee = async (
+  period: TimePeriod,
+  year?: number,
+  employeeIds?: number[]
+): Promise<ApiResponse<EmployeeStatsResponse>> => {
+  try {
+    const params: Record<string, any> = { period };
+    if (year) params.year = year;
+    if (employeeIds && employeeIds.length > 0) {
+      params.employeeIds = employeeIds.join(",");
+    }
+    const res = await axiosInstance.get(`/admin/overview/jobs-by-employee`, {
+      params,
+    });
+    return res as unknown as ApiResponse<EmployeeStatsResponse>;
+  } catch (err: any) {
+    throw new Error(err.message);
+  }
+};
+
+export const getVideosByEmployee = async (
+  period: TimePeriod,
+  year?: number,
+  employeeIds?: number[]
+): Promise<ApiResponse<EmployeeStatsResponse>> => {
+  try {
+    const params: Record<string, any> = { period };
+    if (year) params.year = year;
+    if (employeeIds && employeeIds.length > 0) {
+      params.employeeIds = employeeIds.join(",");
+    }
+    const res = await axiosInstance.get(`/admin/overview/videos-by-employee`, {
+      params,
+    });
+    return res as unknown as ApiResponse<EmployeeStatsResponse>;
+  } catch (err: any) {
+    throw new Error(err.message);
+  }
+};
+

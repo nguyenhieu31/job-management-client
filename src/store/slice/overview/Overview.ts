@@ -8,11 +8,14 @@ import {
   getJobsByStatus,
   getVideosByStatus,
   getRevenue,
+  getJobsByEmployee,
+  getVideosByEmployee,
 } from "@/services/OverviewApi";
 import {
   OverviewDashboardResponse,
   StatusCountStatsResponse,
   RevenueStatsResponse,
+  EmployeeStatsResponse,
   TimePeriod,
 } from "@/types/overview";
 
@@ -22,6 +25,8 @@ interface OverviewState {
   dashboardData: OverviewDashboardResponse | null;
   jobStatusData: StatusCountStatsResponse | null;
   videoStatusData: StatusCountStatsResponse | null;
+  jobEmployeeData: EmployeeStatsResponse | null;
+  videoEmployeeData: EmployeeStatsResponse | null;
   revenueData: RevenueStatsResponse | null;
   error: string | null;
 }
@@ -31,6 +36,8 @@ const initialState: OverviewState = {
   dashboardData: null,
   jobStatusData: null,
   videoStatusData: null,
+  jobEmployeeData: null,
+  videoEmployeeData: null,
   revenueData: null,
   error: null,
 };
@@ -67,6 +74,22 @@ export const fetchRevenueStats = createAsyncThunk<
 >("overview/fetchRevenueStats", async ({ period, year }) => {
   const res = await getRevenue(period, year);
   return res.data as RevenueStatsResponse;
+});
+
+export const fetchJobEmployeeStats = createAsyncThunk<
+  EmployeeStatsResponse,
+  { period: TimePeriod; year?: number; employeeIds?: number[] }
+>("overview/fetchJobEmployeeStats", async ({ period, year, employeeIds }) => {
+  const res = await getJobsByEmployee(period, year, employeeIds);
+  return res.data as EmployeeStatsResponse;
+});
+
+export const fetchVideoEmployeeStats = createAsyncThunk<
+  EmployeeStatsResponse,
+  { period: TimePeriod; year?: number; employeeIds?: number[] }
+>("overview/fetchVideoEmployeeStats", async ({ period, year, employeeIds }) => {
+  const res = await getVideosByEmployee(period, year, employeeIds);
+  return res.data as EmployeeStatsResponse;
 });
 
 // ────────────────────────────────  Slice  ─────────────────────────────────
@@ -169,6 +192,44 @@ const overviewSlice = createSlice({
       .addCase(fetchRevenueStats.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message ?? "Failed to load revenue stats";
+      });
+
+    // fetchJobEmployeeStats
+    builder
+      .addCase(fetchJobEmployeeStats.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(
+        fetchJobEmployeeStats.fulfilled,
+        (state, action: PayloadAction<EmployeeStatsResponse>) => {
+          state.loading = false;
+          state.jobEmployeeData = action.payload;
+        }
+      )
+      .addCase(fetchJobEmployeeStats.rejected, (state, action) => {
+        state.loading = false;
+        state.error =
+          action.error.message ?? "Failed to load job employee stats";
+      });
+
+    // fetchVideoEmployeeStats
+    builder
+      .addCase(fetchVideoEmployeeStats.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(
+        fetchVideoEmployeeStats.fulfilled,
+        (state, action: PayloadAction<EmployeeStatsResponse>) => {
+          state.loading = false;
+          state.videoEmployeeData = action.payload;
+        }
+      )
+      .addCase(fetchVideoEmployeeStats.rejected, (state, action) => {
+        state.loading = false;
+        state.error =
+          action.error.message ?? "Failed to load video employee stats";
       });
   },
 });

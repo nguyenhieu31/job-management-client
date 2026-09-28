@@ -72,20 +72,15 @@ export function SummaryCard({ state, mobile = false }: SummaryCardProps) {
 
   const content = (
     <div className="space-y-4">
-      {state.customerName && (
+      {(state.customerName || state.customerEmail || state.instagramHandle || state.websiteUrl) && (
         <div>
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
             Customer
           </p>
-          <p className="text-sm mt-0.5">{state.customerName}</p>
+          {state.customerName && <p className="text-sm mt-0.5">{state.customerName}</p>}
           {state.customerEmail && (
             <p className="text-xs text-muted-foreground">
               {state.customerEmail}
-            </p>
-          )}
-          {state.realEstateAddress && (
-            <p className="text-xs text-muted-foreground">
-              Address: {state.realEstateAddress}
             </p>
           )}
           {state.instagramHandle && (
@@ -98,6 +93,17 @@ export function SummaryCard({ state, mobile = false }: SummaryCardProps) {
               Website: {state.websiteUrl}
             </p>
           )}
+        </div>
+      )}
+
+      {state.realEstateAddress && (
+        <div>
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            Real Estate Address
+          </p>
+          <p className="text-sm mt-0.5 text-muted-foreground">
+            {state.realEstateAddress}
+          </p>
         </div>
       )}
 
