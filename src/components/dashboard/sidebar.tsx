@@ -37,6 +37,10 @@ export function Sidebar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const {email, fullName, roleName} = useAppSelector((state) => state.authenticate);
 
+  const isManagerUser = Boolean(
+    email && MANAGER_USERS.some(u => u.toLowerCase() === email.toLowerCase())
+  );
+
   let filteredNavigation;
   if(roleName === 'CUSTOMER'){
     filteredNavigation = navigation.filter(item =>
@@ -53,7 +57,7 @@ export function Sidebar() {
           item.href === '/dashboard/my-payroll' ||
           item.href === '/dashboard/change-password'
         )
-      : roleName === 'MANAGER' && MANAGER_USERS.includes(email)
+      : roleName === 'MANAGER' && isManagerUser
       ? navigation.filter(item =>
           item.href !== '/dashboard/my-payroll' &&
           item.href !== '/dashboard/order-service'
@@ -65,12 +69,11 @@ export function Sidebar() {
           item.href === '/dashboard/customers' ||
           item.href === '/dashboard/change-password'
         )
-      : roleName === 'MANAGER' && !MANAGER_USERS.includes(email)
+      : roleName === 'MANAGER' && !isManagerUser
       ? navigation.filter(item =>
           item.href !== '/dashboard/my-payroll' &&
           item.href !== '/dashboard/order-service' &&
-          item.href !== '/dashboard/payroll' &&
-          item.href !== '/dashboard/overview'
+          item.href !== '/dashboard/payroll'
         )
       : navigation.filter(item => item.href !== '/dashboard/orders');
   }

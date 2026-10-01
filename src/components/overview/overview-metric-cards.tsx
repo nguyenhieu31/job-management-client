@@ -2,10 +2,13 @@
 
 import { OverviewDashboardResponse } from "@/types/overview";
 import { TrendingUp, Users, UserCheck } from "lucide-react";
+import { useAppSelector } from "@/store/store";
+import { MANAGER_USERS } from "@/types/authentication";
 
 interface OverviewMetricCardsProps {
   data: OverviewDashboardResponse | null;
   loading: boolean;
+  canViewDebt?: boolean;
 }
 
 const formatCurrency = (value: number): string => {
@@ -66,11 +69,25 @@ function SkeletonCard() {
 export default function OverviewMetricCards({
   data,
   loading,
+  canViewDebt,
 }: OverviewMetricCardsProps) {
+  const { email } = useAppSelector((state) => state.authenticate);
+  const isManagerUser = Boolean(
+    email && MANAGER_USERS.some((u) => u.toLowerCase() === email.toLowerCase())
+  );
+  const showDebt = canViewDebt !== undefined ? canViewDebt : isManagerUser;
+
+  const visibleCards = showDebt
+    ? cards
+    : cards.filter((c) => c.key !== "accountsReceivable");
+
+  const gridColsClass =
+    visibleCards.length === 2 ? "sm:grid-cols-2" : "sm:grid-cols-3";
+
   if (loading || !data) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-        {cards.map((c) => (
+      <div className={`grid grid-cols-1 ${gridColsClass} gap-5`}>
+        {visibleCards.map((c) => (
           <SkeletonCard key={c.id} />
         ))}
       </div>
@@ -78,10 +95,10 @@ export default function OverviewMetricCards({
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-      {cards.map((card) => {
+    <div className={`grid grid-cols-1 ${gridColsClass} gap-5`}>
+      {visibleCards.map((card) => {
         const Icon = card.icon;
-        const rawValue = data[card.key] as number;
+        const rawValue = (data[card.key] as number) ?? 0;
         return (
           <div
             key={card.id}

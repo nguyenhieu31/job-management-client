@@ -11,12 +11,17 @@ import VideoStatusChart from "@/components/overview/video-status-chart";
 import VideoByEmployeeChart from "@/components/overview/video-by-employee-chart";
 import RevenueBarChart from "@/components/overview/revenue-bar-chart";
 import { ShieldOff, BarChart3 } from "lucide-react";
+import { MANAGER_USERS } from "@/types/authentication";
 
 export default function OverviewPage() {
   const dispatch = useAppDispatch();
   const router = useRouter();
-  const { roleName } = useAppSelector((state) => state.authenticate);
+  const { roleName, email } = useAppSelector((state) => state.authenticate);
   const { dashboardData, loading, error } = useAppSelector((s) => s.overview);
+
+  const canViewDebt = Boolean(
+    email && MANAGER_USERS.some((u) => u.toLowerCase() === email.toLowerCase())
+  );
 
   // Role guard: only MANAGER can access this page
   useEffect(() => {
@@ -74,7 +79,11 @@ export default function OverviewPage() {
 
       {/* R1 — Metric Cards */}
       <section id="overview-metric-cards">
-        <OverviewMetricCards data={dashboardData} loading={loading} />
+        <OverviewMetricCards
+          data={dashboardData}
+          loading={loading}
+          canViewDebt={canViewDebt}
+        />
       </section>
 
       {/* R2 — Job By Employee Bar Chart */}
