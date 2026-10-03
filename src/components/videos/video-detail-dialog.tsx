@@ -634,7 +634,7 @@ export function VideoDetailDialog({
                     Trả/File
                   </label>
                   <p className="text-2xl font-bold text-blue-600">
-                    {formatCurrencyVND(video.payPerFile)}
+                    {formatCurrencyVND(video.totalPayPerFile)}
                   </p>
                 </div>
 
@@ -643,7 +643,7 @@ export function VideoDetailDialog({
                     Tổng Tiền Trả
                   </label>
                   <p className="text-2xl font-bold text-green-600">
-                    {formatCurrencyVND(video.payPerFile * video.outputNumber)}
+                    {formatCurrencyVND(video.totalPayPerFile)}
                   </p>
                 </div>
               </div>
