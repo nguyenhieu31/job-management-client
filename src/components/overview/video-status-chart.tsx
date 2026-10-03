@@ -13,8 +13,7 @@ import {
 } from "recharts";
 import { useAppDispatch, useAppSelector } from "@/store/store";
 import { fetchVideoStatusStats } from "@/store/slice/overview/Overview";
-import { TimePeriod, JobStatus } from "@/types/overview";
-import PeriodYearFilter from "./period-year-filter";
+import DateRangeFilter, { getTodayDateInput } from "./date-range-filter";
 import { Film } from "lucide-react";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -57,12 +56,12 @@ export default function VideoStatusChart() {
   const dispatch = useAppDispatch();
   const { videoStatusData, loading } = useAppSelector((s) => s.overview);
 
-  const [period, setPeriod] = useState<TimePeriod>("CURRENT_MONTH");
-  const [year, setYear] = useState(new Date().getFullYear());
+  const [fromDate, setFromDate] = useState(getTodayDateInput);
+  const [toDate, setToDate] = useState(getTodayDateInput);
 
   useEffect(() => {
-    dispatch(fetchVideoStatusStats({ period, year }));
-  }, [dispatch, period, year]);
+    dispatch(fetchVideoStatusStats({ fromDate, toDate }));
+  }, [dispatch, fromDate, toDate]);
 
   const counts = videoStatusData?.countsByStatus ?? {};
   const statusEntries = Object.entries(counts).map(([status, count]) => ({
@@ -104,11 +103,11 @@ export default function VideoStatusChart() {
             </p>
           </div>
         </div>
-        <PeriodYearFilter
-          period={period}
-          year={year}
-          onPeriodChange={setPeriod}
-          onYearChange={setYear}
+        <DateRangeFilter
+          fromDate={fromDate}
+          toDate={toDate}
+          onFromDateChange={setFromDate}
+          onToDateChange={setToDate}
         />
       </div>
 

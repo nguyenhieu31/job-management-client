@@ -107,9 +107,11 @@ export default function OverviewPage() {
       </section>
 
       {/* R6 — Revenue Bar Chart */}
-      <section id="overview-revenue-chart">
-        <RevenueBarChart />
-      </section>
+      {canViewDebt && (
+        <section id="overview-revenue-chart">
+          <RevenueBarChart />
+        </section>
+      )}
     </div>
   );
 }

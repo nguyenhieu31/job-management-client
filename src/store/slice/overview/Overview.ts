@@ -54,17 +54,17 @@ export const fetchOverviewDashboard = createAsyncThunk<
 
 export const fetchJobStatusStats = createAsyncThunk<
   StatusCountStatsResponse,
-  { period: TimePeriod; year?: number }
->("overview/fetchJobStatusStats", async ({ period, year }) => {
-  const res = await getJobsByStatus(period, year);
+  { fromDate: string; toDate?: string }
+>("overview/fetchJobStatusStats", async ({ fromDate, toDate }) => {
+  const res = await getJobsByStatus(fromDate, toDate);
   return res.data as StatusCountStatsResponse;
 });
 
 export const fetchVideoStatusStats = createAsyncThunk<
   StatusCountStatsResponse,
-  { period: TimePeriod; year?: number }
->("overview/fetchVideoStatusStats", async ({ period, year }) => {
-  const res = await getVideosByStatus(period, year);
+  { fromDate: string; toDate?: string }
+>("overview/fetchVideoStatusStats", async ({ fromDate, toDate }) => {
+  const res = await getVideosByStatus(fromDate, toDate);
   return res.data as StatusCountStatsResponse;
 });
 
@@ -78,17 +78,17 @@ export const fetchRevenueStats = createAsyncThunk<
 
 export const fetchJobEmployeeStats = createAsyncThunk<
   EmployeeStatsResponse,
-  { period: TimePeriod; year?: number; employeeIds?: number[] }
->("overview/fetchJobEmployeeStats", async ({ period, year, employeeIds }) => {
-  const res = await getJobsByEmployee(period, year, employeeIds);
+  { fromDate: string; toDate?: string; employeeIds?: number[] }
+>("overview/fetchJobEmployeeStats", async ({ fromDate, toDate, employeeIds }) => {
+  const res = await getJobsByEmployee(fromDate, toDate, employeeIds);
   return res.data as EmployeeStatsResponse;
 });
 
 export const fetchVideoEmployeeStats = createAsyncThunk<
   EmployeeStatsResponse,
-  { period: TimePeriod; year?: number; employeeIds?: number[] }
->("overview/fetchVideoEmployeeStats", async ({ period, year, employeeIds }) => {
-  const res = await getVideosByEmployee(period, year, employeeIds);
+  { fromDate: string; toDate?: string; employeeIds?: number[] }
+>("overview/fetchVideoEmployeeStats", async ({ fromDate, toDate, employeeIds }) => {
+  const res = await getVideosByEmployee(fromDate, toDate, employeeIds);
   return res.data as EmployeeStatsResponse;
 });
 

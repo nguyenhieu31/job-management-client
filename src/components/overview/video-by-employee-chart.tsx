@@ -15,12 +15,11 @@ import {
 import { useAppDispatch, useAppSelector } from "@/store/store";
 import { fetchVideoEmployeeStats } from "@/store/slice/overview/Overview";
 import {
-  TimePeriod,
   JobStatus,
   EmployeeOption,
   EmployeeStatItem,
 } from "@/types/overview";
-import PeriodYearFilter from "./period-year-filter";
+import DateRangeFilter, { getTodayDateInput } from "./date-range-filter";
 import MultiSelectDropdown from "@/components/ui/multi-select-dropdown";
 import { Film, ArrowLeft } from "lucide-react";
 
@@ -110,8 +109,8 @@ export default function VideoByEmployeeChart() {
   const dispatch = useAppDispatch();
   const { videoEmployeeData, loading } = useAppSelector((s) => s.overview);
 
-  const [period, setPeriod] = useState<TimePeriod>("DAY");
-  const [year, setYear] = useState(new Date().getFullYear());
+  const [fromDate, setFromDate] = useState(getTodayDateInput);
+  const [toDate, setToDate] = useState(getTodayDateInput);
   const [selectedEmployees, setSelectedEmployees] = useState<
     { id: number; name: string }[]
   >([]);
@@ -120,12 +119,12 @@ export default function VideoByEmployeeChart() {
     const employeeIds = selectedEmployees.map((e) => e.id);
     dispatch(
       fetchVideoEmployeeStats({
-        period,
-        year,
+        fromDate,
+        toDate,
         employeeIds: employeeIds.length > 0 ? employeeIds : undefined,
       })
     );
-  }, [dispatch, period, year, selectedEmployees]);
+  }, [dispatch, fromDate, toDate, selectedEmployees]);
 
   const allEmployees: EmployeeOption[] = videoEmployeeData?.allEmployees ?? [];
   const employees: EmployeeStatItem[] = videoEmployeeData?.employees ?? [];
@@ -246,7 +245,7 @@ export default function VideoByEmployeeChart() {
           </div>
         </div>
 
-        {/* Filter Controls: MultiSelectDropdown + PeriodYearFilter */}
+        {/* Filter Controls: MultiSelectDropdown + DateRangeFilter */}
         <div className="flex flex-wrap items-center gap-3">
           {/* Employee MultiSelect Dropdown */}
           <div className="w-56 sm:w-64">
@@ -260,12 +259,12 @@ export default function VideoByEmployeeChart() {
             />
           </div>
 
-          {/* Period + Year Filter */}
-          <PeriodYearFilter
-            period={period}
-            year={year}
-            onPeriodChange={setPeriod}
-            onYearChange={setYear}
+          {/* Date Range Filter */}
+          <DateRangeFilter
+            fromDate={fromDate}
+            toDate={toDate}
+            onFromDateChange={setFromDate}
+            onToDateChange={setToDate}
           />
         </div>
       </div>

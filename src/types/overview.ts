@@ -32,6 +32,8 @@ export interface RevenueStatsResponse {
 export interface StatusCountStatsResponse {
   period: TimePeriod;
   selectedYear: number;
+  fromDate?: string;
+  toDate?: string;
   countsByStatus: Record<JobStatus, number>;
 }
 
@@ -47,6 +49,11 @@ export interface OverviewDashboardResponse {
 export interface OverviewFilterParams {
   period: TimePeriod;
   year?: number;
+}
+
+export interface OverviewDateRangeParams {
+  fromDate: string;
+  toDate?: string;
 }
 
 export interface EmployeeOption {
@@ -66,6 +73,8 @@ export interface EmployeeStatItem {
 export interface EmployeeStatsResponse {
   period: TimePeriod;
   selectedYear: number;
+  fromDate?: string;
+  toDate?: string;
   selectedEmployeeId?: number | null;
   selectedEmployeeIds?: number[];
   employees: EmployeeStatItem[];
@@ -77,6 +86,11 @@ export interface EmployeeStatsResponse {
 export interface EmployeeStatsFilterParams {
   period: TimePeriod;
   year?: number;
+  employeeId?: number | null;
+  employeeIds?: number[];
+}
+
+export interface EmployeeStatsDateRangeParams extends OverviewDateRangeParams {
   employeeId?: number | null;
   employeeIds?: number[];
 }

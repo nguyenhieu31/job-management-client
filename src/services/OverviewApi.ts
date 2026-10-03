@@ -6,6 +6,7 @@ import {
   RevenueStatsResponse,
   EmployeeStatsResponse,
   TimePeriod,
+  OverviewDateRangeParams,
 } from "@/types/overview";
 
 export const getDashboardSummary = async (): Promise<
@@ -20,12 +21,12 @@ export const getDashboardSummary = async (): Promise<
 };
 
 export const getJobsByStatus = async (
-  period: TimePeriod,
-  year?: number
+  fromDate: string,
+  toDate?: string
 ): Promise<ApiResponse<StatusCountStatsResponse>> => {
   try {
-    const params: Record<string, any> = { period };
-    if (year) params.year = year;
+    const params: OverviewDateRangeParams = { fromDate };
+    if (toDate) params.toDate = toDate;
     const res = await axiosInstance.get(`/admin/overview/jobs-by-status`, {
       params,
     });
@@ -36,12 +37,12 @@ export const getJobsByStatus = async (
 };
 
 export const getVideosByStatus = async (
-  period: TimePeriod,
-  year?: number
+  fromDate: string,
+  toDate?: string
 ): Promise<ApiResponse<StatusCountStatsResponse>> => {
   try {
-    const params: Record<string, any> = { period };
-    if (year) params.year = year;
+    const params: OverviewDateRangeParams = { fromDate };
+    if (toDate) params.toDate = toDate;
     const res = await axiosInstance.get(`/admin/overview/videos-by-status`, {
       params,
     });
@@ -66,13 +67,13 @@ export const getRevenue = async (
 };
 
 export const getJobsByEmployee = async (
-  period: TimePeriod,
-  year?: number,
+  fromDate: string,
+  toDate?: string,
   employeeIds?: number[]
 ): Promise<ApiResponse<EmployeeStatsResponse>> => {
   try {
-    const params: Record<string, any> = { period };
-    if (year) params.year = year;
+    const params: Record<string, any> = { fromDate };
+    if (toDate) params.toDate = toDate;
     if (employeeIds && employeeIds.length > 0) {
       params.employeeIds = employeeIds.join(",");
     }
@@ -86,13 +87,13 @@ export const getJobsByEmployee = async (
 };
 
 export const getVideosByEmployee = async (
-  period: TimePeriod,
-  year?: number,
+  fromDate: string,
+  toDate?: string,
   employeeIds?: number[]
 ): Promise<ApiResponse<EmployeeStatsResponse>> => {
   try {
-    const params: Record<string, any> = { period };
-    if (year) params.year = year;
+    const params: Record<string, any> = { fromDate };
+    if (toDate) params.toDate = toDate;
     if (employeeIds && employeeIds.length > 0) {
       params.employeeIds = employeeIds.join(",");
     }
@@ -104,4 +105,3 @@ export const getVideosByEmployee = async (
     throw new Error(err.message);
   }
 };
-
