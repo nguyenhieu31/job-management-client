@@ -53,12 +53,12 @@ export const getVideosByStatus = async (
 };
 
 export const getRevenue = async (
-  period: TimePeriod,
-  year?: number
+  fromDate: string,
+  toDate?: string
 ): Promise<ApiResponse<RevenueStatsResponse>> => {
   try {
-    const params: Record<string, any> = { period };
-    if (year) params.year = year;
+    const params: OverviewDateRangeParams = { fromDate };
+    if (toDate) params.toDate = toDate;
     const res = await axiosInstance.get(`/admin/overview/revenue`, { params });
     return res as unknown as ApiResponse<RevenueStatsResponse>;
   } catch (err: any) {

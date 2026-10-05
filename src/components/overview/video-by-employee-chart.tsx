@@ -47,11 +47,11 @@ const STATUS_COLORS: Record<string, string> = {
 const STATUS_LABELS: Record<string, string> = {
   PENDING: "Chờ xử lý",
   IN_PROGRESS: "Đang làm",
-  DONE: "Hoàn thành",
+  DONE: "Đang đợi xét duyệt",
   REJECTED: "Từ chối",
   IN_REVIEW: "Đang duyệt",
   REVIEWED: "Đã duyệt",
-  COMPLETED: "Nghiệm thu",
+  COMPLETED: "Hoàn thành",
   TOTAL: "Tổng",
 };
 

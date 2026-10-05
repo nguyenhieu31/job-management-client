@@ -70,9 +70,9 @@ export const fetchVideoStatusStats = createAsyncThunk<
 
 export const fetchRevenueStats = createAsyncThunk<
   RevenueStatsResponse,
-  { period: TimePeriod; year?: number }
->("overview/fetchRevenueStats", async ({ period, year }) => {
-  const res = await getRevenue(period, year);
+  { fromDate: string; toDate?: string }
+>("overview/fetchRevenueStats", async ({ fromDate, toDate }) => {
+  const res = await getRevenue(fromDate, toDate);
   return res.data as RevenueStatsResponse;
 });
 
@@ -114,24 +114,9 @@ const overviewSlice = createSlice({
         (state, action: PayloadAction<OverviewDashboardResponse>) => {
           state.loading = false;
           state.dashboardData = action.payload;
-          // Pre-seed chart data from dashboard summary defaults
-          if (action.payload.jobsByStatus) {
-            state.jobStatusData = {
-              period: "CURRENT_MONTH",
-              selectedYear: new Date().getFullYear(),
-              countsByStatus: action.payload.jobsByStatus,
-            };
-          }
-          if (action.payload.videosByStatus) {
-            state.videoStatusData = {
-              period: "CURRENT_MONTH",
-              selectedYear: new Date().getFullYear(),
-              countsByStatus: action.payload.videosByStatus,
-            };
-          }
-          if (action.payload.revenueStats) {
-            state.revenueData = action.payload.revenueStats;
-          }
+          // Do NOT overwrite jobStatusData, videoStatusData, or revenueData here
+          // because each chart component manages its own fromDate -> toDate filter
+          // and fetches independently. Overwriting here caused race condition showing monthly data on initial load.
         }
       )
       .addCase(fetchOverviewDashboard.rejected, (state, action) => {

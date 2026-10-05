@@ -13,7 +13,7 @@ import {
 import { useAppDispatch, useAppSelector } from "@/store/store";
 import { fetchRevenueStats } from "@/store/slice/overview/Overview";
 import { TimePeriod, RevenueDataPoint } from "@/types/overview";
-import PeriodYearFilter from "./period-year-filter";
+import DateRangeFilter, { getTodayDateInput } from "./date-range-filter";
 import { DollarSign } from "lucide-react";
 
 const formatCurrency = (v: number): string => {
@@ -43,12 +43,12 @@ export default function RevenueBarChart() {
   const dispatch = useAppDispatch();
   const { revenueData, loading } = useAppSelector((s) => s.overview);
 
-  const [period, setPeriod] = useState<TimePeriod>("CURRENT_MONTH");
-  const [year, setYear] = useState(new Date().getFullYear());
+  const [fromDate, setFromDate] = useState(getTodayDateInput);
+  const [toDate, setToDate] = useState(getTodayDateInput);
 
   useEffect(() => {
-    dispatch(fetchRevenueStats({ period, year }));
-  }, [dispatch, period, year]);
+    dispatch(fetchRevenueStats({ fromDate, toDate }));
+  }, [dispatch, fromDate, toDate]);
 
   const chartData = (revenueData?.dataPoints ?? []).map((dp: RevenueDataPoint) => ({
     label: dp.label,
@@ -73,11 +73,11 @@ export default function RevenueBarChart() {
             </p>
           </div>
         </div>
-        <PeriodYearFilter
-          period={period}
-          year={year}
-          onPeriodChange={setPeriod}
-          onYearChange={setYear}
+        <DateRangeFilter
+          fromDate={fromDate}
+          toDate={toDate}
+          onFromDateChange={setFromDate}
+          onToDateChange={setToDate}
         />
       </div>
 

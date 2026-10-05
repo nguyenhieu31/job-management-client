@@ -23,8 +23,8 @@ export interface RevenueDataPoint {
 }
 
 export interface RevenueStatsResponse {
-  period: TimePeriod;
-  selectedYear: number;
+  fromDate?: string;
+  toDate?: string;
   totalRevenue: number;
   dataPoints: RevenueDataPoint[];
 }
