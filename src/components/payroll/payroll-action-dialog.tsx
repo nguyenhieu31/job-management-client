@@ -135,9 +135,6 @@ export default function PayrollActionDialog({
   };
 
   const sanitizedEmployeeCode = (payroll.employee.code || "").replace(/[^A-Za-z0-9]/g, "");
-  const compactFullName = (payroll.employee.fullName || "")
-    .toUpperCase()
-    .replace(/\s/g, "");
   return (
     <Dialog open={open} onOpenChange={(newOpen) => !newOpen && handleCancel()}>
       <DialogContent className="max-w-md">
@@ -168,7 +165,7 @@ export default function PayrollActionDialog({
                   <div className="flex flex-col items-center gap-3 p-4 border rounded-xl bg-slate-50 shadow-sm w-full">
                     <div className="bg-white p-2 rounded-lg shadow-sm">
                       <img
-                        src={`https://img.vietqr.io/image/${bankInfo.bin}-${payroll.employee.bankAccountNumber}-compact2.png?amount=${payroll.totalAmount}&addInfo=${'SEVQR ' + encodeURIComponent(compactFullName + ' ' + payroll.payrollPeriod + ' ' + `MSNV${sanitizedEmployeeCode}`)}&accountName=${encodeURIComponent(payroll.employee.bankAccountName || '')}&v=${qrVersion}`}
+                        src={`https://img.vietqr.io/image/${bankInfo.bin}-${payroll.employee.bankAccountNumber}-compact2.png?amount=${payroll.totalAmount}&addInfo=${encodeURIComponent(`SEVQR MSNV${sanitizedEmployeeCode} ${payroll.payrollPeriod}`)}&accountName=${encodeURIComponent(payroll.employee.bankAccountName || '')}&v=${qrVersion}`}
                         alt="VietQR"
                         className="w-64 h-64 object-contain"
                       />
