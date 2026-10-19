@@ -10,7 +10,7 @@ import { Pagination } from "@/components/videos/pagination";
 import type {
   UserRole,
   VideoAction,
-  VideoStatus,
+  VideoTransitionEvent,
   Pagination as PaginationType,
   VideoResponse,
 } from "@/types/videos";
@@ -21,12 +21,11 @@ import {
   CreateVideoAction,
   GetAllVideosAction,
   GetAllVideosByAssigneeAction,
-  GetAllVideosBySalerAssigneeAction,
+  GetAllVideosByQualifiedAssigneeAction,
   SearchVideoByConditionsAction,
-  updateVideo,
   UpdateVideoFullAction,
-  UpdateVideoStatusAction,
   GetVideoFromDropboxAction,
+  GetRandomVideoAction,
   TransitionVideoAction,
 } from "@/store/slice/videos/Videos";
 import { PageResponse } from "@/components/types/Page";
@@ -56,11 +55,12 @@ export default function VideosPage() {
 
   // Get user role from Redux store
   const { roleName, email, id } = useAppSelector((state) => state.authenticate);
-  const {
-    videos,
-    loading,
-  }: { videos: PageResponse<VideoResponse[]> | undefined; loading: boolean } =
-    useAppSelector((state) => state.video);
+  const { videos, loading, transitioning, error }: {
+    videos: PageResponse<VideoResponse[]> | undefined;
+    loading: boolean;
+    transitioning: boolean;
+    error: string | null;
+  } = useAppSelector((state) => state.video);
   const {
     employees,
   }: { employees: PageResponse<EmployeeResponse[]> | undefined } =
@@ -113,11 +113,12 @@ export default function VideosPage() {
             imageTempUrls,
             videoTempUrls,
           }),
-        );
+        ).unwrap();
         setFormOpen(false);
       } catch (error: any) {
         toast.error(error.message || "Lỗi khi tạo video");
         setFormOpen(true);
+        throw error;
       }
     },
     [dispatch],
@@ -140,12 +141,13 @@ export default function VideosPage() {
             imageTempUrls,
             videoTempUrls,
           }),
-        );
+        ).unwrap();
         setFormOpen(false);
         setEditingJob(null);
       } catch (error: any) {
         toast.error(error.message || "Lỗi khi cập nhật video");
         setFormOpen(true);
+        throw error;
       }
     },
     [dispatch],
@@ -159,11 +161,14 @@ export default function VideosPage() {
     const video = videos
       ? videos.data.find((v) => v.id === videoId)
       : undefined;
-    if (!video) return;
+    if (!video || transitioning) return false;
 
-    const eventMap: Partial<Record<VideoAction, string>> = {
+    const eventMap: Partial<Record<VideoAction, VideoTransitionEvent>> = {
       "take-video": "TAKE",
       "done-video": "DONE",
+      "start-review": "START_REVIEW",
+      "approve-review": "APPROVE_REVIEW",
+      "reject-review": "REJECT_REVIEW",
       "complete-video": "APPROVE",
       "reject-video": "REJECT",
       "mark-delivered": "MARK_DELIVERED",
@@ -175,13 +180,13 @@ export default function VideosPage() {
     };
 
     const event = eventMap[action];
-    if (!event) return;
+    if (!event) return false;
 
-    if (action === "reject-video") {
-      const reason = payload?.reason?.trim() || "";
+    if (action === "reject-video" || action === "reject-review") {
+      const reason = payload?.reason?.replace(/<[^>]*>/g, "").trim() || "";
       if (reason.length < 5) {
         toast.error("Lý do từ chối tối thiểu 5 ký tự");
-        return;
+        return false;
       }
     }
 
@@ -195,54 +200,14 @@ export default function VideosPage() {
         }),
       ).unwrap();
 
-      // Optimistic local patch for common fields
-      let patch: Partial<typeof video> = {};
-      switch (action) {
-        case "take-video":
-          patch = { jobStatus: "IN_PROGRESS" };
-          break;
-        case "done-video":
-          patch = { jobStatus: "DONE" };
-          break;
-        case "complete-video":
-          patch = {
-            jobStatus: "COMPLETED",
-            deliveryStatus: "NOT_DELIVERED",
-            revisionStatus: "NONE",
-          };
-          break;
-        case "reject-video":
-          patch = {
-            jobStatus: "IN_PROGRESS",
-            rejectReason: payload?.reason,
-            deliveryStatus: "NONE",
-          };
-          break;
-        case "mark-delivered":
-          patch = { deliveryStatus: "DELIVERED" };
-          break;
-        case "request-revision":
-        case "re-request-revision":
-          patch = { revisionStatus: "REVISION_REQUESTED" };
-          break;
-        case "start-revision":
-          patch = { revisionStatus: "REVISION_IN_PROGRESS" };
-          break;
-        case "finish-revision":
-          patch = { revisionStatus: "REVISION_DONE" };
-          break;
-        case "accept-revision":
-          patch = {
-            revisionStatus: "NONE",
-            deliveryStatus: "DELIVERED",
-            rejectReason: null,
-          };
-          break;
-      }
-      dispatch(updateVideo({ ...video, ...patch }));
       toast.success("Cập nhật trạng thái thành công");
+      await fetchVideos().catch(() => {
+        toast.error("Trạng thái đã cập nhật nhưng chưa tải lại được danh sách. Vui lòng thử lại.");
+      });
+      return true;
     } catch (err: any) {
       toast.error(err?.message || "Không thể cập nhật trạng thái");
+      return false;
     }
   };
 
@@ -254,12 +219,15 @@ export default function VideosPage() {
   };
 
   const handleClickGetVideo = async () => {
-    console.log("Get Random Video clicked");
-    if (roleName === undefined) return;
-    if (roleName === "MANAGER") {
-      console.log("Manager role - refreshing video list");
+    if (loading || transitioning) return;
+    if (userRole === "qa") {
+      try {
+        await dispatch(GetRandomVideoAction()).unwrap();
+      } catch (err: any) {
+        toast.error(err?.message || "Không thể tìm việc kiểm duyệt");
+      }
+    } else if (userRole === "manager") {
       await dispatch(GetVideoFromDropboxAction());
-      return;
     }
   };
 
@@ -301,26 +269,26 @@ export default function VideosPage() {
   );
 
   // Fetch videos when pagination or filters change
-  useEffect(() => {
-    if (roleName === undefined) return;
+  const fetchVideos = useCallback(async () => {
+    if (!roleName) return;
 
     if (activeFilters) {
-      dispatch(SearchVideoByConditionsAction({
+      await dispatch(SearchVideoByConditionsAction({
         ...activeFilters,
         pageNumber: pagination.currentPage - 1,
         pageSize: pagination.pageSize,
-      }));
+      })).unwrap();
       return;
     }
 
-    if (roleName === "MANAGER" || roleName === "SALER") {
-      dispatch(
+    if (userRole === "manager" || userRole === "saler") {
+      await dispatch(
         GetAllVideosAction({
           pageNumber: pagination.currentPage - 1,
           pageSize: pagination.pageSize,
           fromDate: getFirstDayOfMonth(),
         }),
-      );
+      ).unwrap();
     } 
     // else if (roleName === "SALER") {
     //   dispatch(
@@ -331,38 +299,42 @@ export default function VideosPage() {
     //     }),
     //   );
     // } 
-    else if (roleName === "QA") {
-      dispatch(
+    else if (userRole === "qa") {
+      await dispatch(
+        GetAllVideosByQualifiedAssigneeAction({
+          pageNumber: pagination.currentPage - 1,
+          pageSize: pagination.pageSize,
+          email: email || "",
+          fromDate: getFirstDayOfMonth(),
+        }),
+      ).unwrap();
+    } else if (userRole === "employee" || userRole === "special") {
+      await dispatch(
         GetAllVideosByAssigneeAction({
           pageNumber: pagination.currentPage - 1,
           pageSize: pagination.pageSize,
           email: email || "",
           fromDate: getFirstDayOfMonth(),
         }),
-      );
-    } else if (roleName === "EMPLOYEE" || roleName === "SPECIAL") {
-      dispatch(
-        GetAllVideosByAssigneeAction({
-          pageNumber: pagination.currentPage - 1,
-          pageSize: pagination.pageSize,
-          email: email || "",
-          fromDate: getFirstDayOfMonth(),
-        }),
-      );
+      ).unwrap();
     }
-  }, [pagination.currentPage, pagination.pageSize, roleName, email, dispatch, activeFilters]);
+  }, [pagination.currentPage, pagination.pageSize, roleName, userRole, email, dispatch, activeFilters]);
+
+  useEffect(() => {
+    void fetchVideos().catch(() => {});
+  }, [fetchVideos]);
 
   // Load related data (employees, work requests, customers) only for Manager on mount
   useEffect(() => {
     if (roleName === undefined) return;
-    if (roleName === "MANAGER" || roleName === "SALER") {
+    if (userRole === "manager" || userRole === "saler") {
       Promise.all([
         dispatch(GetAllEmployeesAction({ pageNumber: 0, pageSize: 1000 })),
         dispatch(GetAllWorkRequestsAction({ pageNumber: 0, pageSize: 1000 })),
         dispatch(GetAllCustomersAction({ pageNumber: 0, pageSize: 1000 })),
       ]);
     }
-  }, [dispatch, roleName]);
+  }, [dispatch, roleName, userRole]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -387,13 +359,14 @@ export default function VideosPage() {
               Thêm Công Việc
             </Button>
           )}
-          {userRole === "manager" && (
+          {(userRole === "manager" || userRole === "qa") && (
             <Button
               onClick={handleClickGetVideo}
+              disabled={loading || transitioning}
               className="sm:w-auto bg-green-600 hover:bg-green-700 cursor-pointer"
             >
               <ArrowDown className="mr-2 h-4 w-4" />
-              Lấy Video Ngẫu Nhiên
+              {userRole === "qa" ? "Tìm việc kiểm duyệt" : "Lấy Video Ngẫu Nhiên"}
             </Button>
           )}
         </div>
@@ -410,6 +383,12 @@ export default function VideosPage() {
       />
 
       {/* Table */}
+      {error && (
+        <div role="alert" className="flex items-center justify-between gap-4 rounded-lg border border-destructive/30 p-4 text-destructive">
+          <span>{error}</span>
+          <Button variant="outline" onClick={() => void fetchVideos().catch(() => {})}>Thử lại</Button>
+        </div>
+      )}
       {loading ? (
         <div className="flex justify-center items-center h-40">
           <Loader width={50} height={50} />
@@ -419,6 +398,8 @@ export default function VideosPage() {
         <VideoTable
           videos={videos ? videos.data : []}
           userRole={userRole}
+          qaList={qaList}
+          actionPending={transitioning}
           employees={employeeList.filter((e) => e.isVideoAccount === true)}
           customers={customerList.filter((c) => c.isVideoAccount === true)}
           onVideoAction={handleVideoAction}
@@ -445,7 +426,7 @@ export default function VideosPage() {
         onOpenChange={handleFormClose}
         onSubmit={(jobData, images, videos, imageTempUrls, videoTempUrls) => {
           if (editingVideo) {
-            handleUpdateJob(
+            return handleUpdateJob(
               jobData,
               images,
               videos,
@@ -453,7 +434,7 @@ export default function VideosPage() {
               videoTempUrls,
             );
           } else {
-            handleAddVideo(
+            return handleAddVideo(
               jobData,
               images,
               videos,

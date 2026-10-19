@@ -1,7 +1,7 @@
 import { ApiResponse } from "@/components/types/ApiResponse";
 import { PageRequest, PageResponse } from "@/components/types/Page";
 import { axiosInstance } from "@/lib/utils/axios-instance";
-import { VideoRequest, VideoResponse, VideoViewResponse } from "@/types/videos";
+import { VideoRequest, VideoResponse, VideoViewResponse, VideoTransitionRequest } from "@/types/videos";
 import { FileStorage } from "@/types/jobs";
 
 export const getAllVideos = async (data: PageRequest & { fromDate?: string | null }) => {
@@ -34,6 +34,17 @@ export const getAllVideosByAssignee = async (
     return res as unknown as ApiResponse<PageResponse<VideoResponse[]>>;
   } catch (err: any) {
     throw new Error(err.message);
+  }
+};
+
+export const getAllVideosByQualifiedAssignee = async (
+  data: PageRequest & { email: string; fromDate?: string | null }
+) => {
+  try {
+    const res = await axiosInstance.get(`/admin/videos/qualified-assignee`, { params: data });
+    return res as unknown as ApiResponse<PageResponse<VideoResponse[]>>;
+  } catch (err: any) {
+    throw new Error(err?.data?.message || err?.message || "Không thể tải danh sách duyệt video");
   }
 };
 
@@ -70,12 +81,7 @@ export const updateVideoStatus = async (data: {
   }
 };
 
-export const transitionVideo = async (data: {
-  id: number;
-  event: string;
-  reason?: string;
-  linkDone?: string;
-}) => {
+export const transitionVideo = async (data: VideoTransitionRequest) => {
   try {
     const res = await axiosInstance.put(`/admin/videos/${data.id}/transition`, {
       event: data.event,
@@ -84,7 +90,7 @@ export const transitionVideo = async (data: {
     });
     return res as unknown as ApiResponse<string>;
   } catch (err: any) {
-    throw new Error(err.message);
+    throw new Error(err?.data?.message || err?.message || "Không thể cập nhật trạng thái video");
   }
 };
 
@@ -165,6 +171,7 @@ export const updateGridViewVideo = async (data: {
   editedNumber?: number | null;
   qaOutputNumber?: number | null;
   qualifiedAssigneeId?: number | null;
+  isDeleteQualifiedAssignee?: boolean;
   paymentStatus?: string | null;
   paymentEmployee?: string | null;
   doneLink?: string | null;
@@ -192,6 +199,7 @@ export const updateGridViewVideo = async (data: {
     if (data.editedNumber != null) formData.append("editedNumber", String(data.editedNumber));
     if (data.qaOutputNumber != null) formData.append("qaOutputNumber", String(data.qaOutputNumber));
     if (data.qualifiedAssigneeId != null) formData.append("qualifiedAssigneeId", String(data.qualifiedAssigneeId));
+    if (data.isDeleteQualifiedAssignee != null) formData.append("isDeleteQualifiedAssignee", String(data.isDeleteQualifiedAssignee));
     if (data.paymentStatus != null) formData.append("paymentStatus", data.paymentStatus);
     if (data.paymentEmployee != null) formData.append("paymentEmployee", data.paymentEmployee);
     if (data.doneLink != null) formData.append("doneLink", data.doneLink);
@@ -274,6 +282,8 @@ const buildVideoFormData = (
   if (data.note != null) formData.append("note", data.note);
   if (data.employeeNote != null) formData.append("employeeNote", data.employeeNote);
   if (data.assigneeId != null) formData.append("assigneeId", String(data.assigneeId));
+  if (data.qualifiedAssigneeId != null) formData.append("qualifiedAssigneeId", String(data.qualifiedAssigneeId));
+  if (data.isDeleteQualifiedAssignee != null) formData.append("isDeleteQualifiedAssignee", String(data.isDeleteQualifiedAssignee));
   if (data.customerId != null) formData.append("customerId", String(data.customerId));
   if (data.workRequestId != null) formData.append("workRequestId", String(data.workRequestId));
   if (data.isDeleteAssignee != null) formData.append("isDeleteAssignee", String(data.isDeleteAssignee));

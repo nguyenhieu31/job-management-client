@@ -49,7 +49,7 @@ interface VideoFormProps {
     videos?: File[],
     imageTempUrls?: string[],
     videoTempUrls?: string[],
-  ) => void;
+  ) => Promise<void>;
   editingVideo?: VideoResponse | null;
   customers?: CustomerResponse[];
   employees?: EmployeeResponse[];
@@ -64,10 +64,12 @@ export function VideoForm({
   editingVideo,
   customers = [],
   employees = [],
+  qaList = [],
   workRequests = [],
 }: VideoFormProps) {
   // Use useReducer for re-render trigger
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
+  const [submitting, setSubmitting] = useState(false);
 
   // State for existing fileStorages from server
   const [existingFiles, setExistingFiles] = useState<FileStorage[]>([]);
@@ -91,6 +93,7 @@ export function VideoForm({
     note: "",
     employeeNote: "",
     assignedEmployee: undefined as string | undefined,
+    qualifiedAssignee: undefined as string | undefined,
     assignedSale: undefined as string | undefined,
     customerId: undefined as string | undefined,
     workRequestId: undefined as string | undefined,
@@ -177,6 +180,7 @@ export function VideoForm({
         inputLink: editingVideo.inputLink,
         note: editingVideo.note || "",
         employeeNote: editingVideo.employeeNote || "",
+        qualifiedAssignee: editingVideo.qualifiedAssignee?.id.toString(),
         assignedEmployee: editingVideo.assignee?.id
           ? editingVideo.assignee.id.toString()
           : undefined,
@@ -226,6 +230,7 @@ export function VideoForm({
         note: "",
         employeeNote: "",
         assignedEmployee: undefined,
+        qualifiedAssignee: undefined,
         customerId: undefined,
         assignedSale: undefined,
         workRequestId: undefined,
@@ -242,13 +247,15 @@ export function VideoForm({
     forceUpdate();
   }, [editingVideo, open]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
 
     const {
       caseName,
       customerId,
       assignedEmployee,
+      qualifiedAssignee,
       assignedSale,
       inputNumber,
       filePrice,
@@ -306,66 +313,73 @@ export function VideoForm({
       filesToRemove = [...filesToRemove, ...removedFileStorages];
     }
 
-    if (isEditingRef.current && editingVideo) {
-      // Check if user cleared assignee or QA fields
-      const isDeleteAssignee = editingVideo.assignee?.id && !assignedEmployee;
-
-      // Update: send all fields including id and hidden fields
-      onSubmit({
-        id: editingVideo.id,
-        code: editingVideo.code,
-        caseName,
-        inputNumber: inputCount,
-        filePrice: price,
-        payPerFile: payPerFileNum,
-        totalPayPerFile: totalPayPerFileNum,
-        fileCount: fileCountNum,
-        paymentStatus,
-        paymentEmployee,
-        jobStatus,
-        inputLink: inputLink,
-        doneLink: doneLink,
-        note: note,
-        employeeNote: employeeNote,
-        assigneeId: assigneeId_,
-        customerId: customerId_,
-        workRequestId: workReqId_,
-        assignedSaleId: assignedSaleId_,
-        isDeleteAssignee: isDeleteAssignee,
-        fileStoragesNeedRemove:
-          filesToRemove.length > 0 ? filesToRemove : undefined,
-      } as VideoRequest,
-      imageFiles,
-      videoFiles,
-      imageTempUrls,
-      videoTempUrls,
-      );
-    } else {
-      // Create: send only required fields, skip id, code, doneLink
-      onSubmit(
-        {
-          caseName,
-          inputNumber: inputCount,
-          filePrice: price,
-          payPerFile: payPerFileNum,
-          totalPayPerFile: totalPayPerFileNum,
-          fileCount: fileCountNum,
-          paymentStatus,
-          paymentEmployee,
-          jobStatus,
-          inputLink: inputLink,
-          note: note || null,
-          employeeNote: employeeNote || null,
-          assigneeId: assigneeId_,
-          customerId: customerId_,
-          workRequestId: workReqId_,
-          assignedSaleId: assignedSaleId_,
-        } as Omit<VideoRequest, "id" | "code" | "doneLink">,
-        imageFiles,
-        videoFiles,
-        imageTempUrls,
-        videoTempUrls,
-      );
+    setSubmitting(true);
+    try {
+      if (isEditingRef.current && editingVideo) {
+        const isDeleteAssignee = Boolean(editingVideo.assignee?.id) && !assignedEmployee;
+        await onSubmit(
+          {
+            id: editingVideo.id,
+            code: editingVideo.code,
+            caseName,
+            inputNumber: inputCount,
+            filePrice: price,
+            payPerFile: payPerFileNum,
+            totalPayPerFile: totalPayPerFileNum,
+            fileCount: fileCountNum,
+            paymentStatus,
+            paymentEmployee,
+            jobStatus,
+            inputLink,
+            doneLink,
+            note,
+            employeeNote,
+            assigneeId: assigneeId_,
+            qualifiedAssigneeId: qualifiedAssignee ? Number(qualifiedAssignee) : null,
+            isDeleteQualifiedAssignee: Boolean(editingVideo.qualifiedAssignee?.id) && !qualifiedAssignee,
+            customerId: customerId_,
+            workRequestId: workReqId_,
+            assignedSaleId: assignedSaleId_,
+            isDeleteAssignee,
+            fileStoragesNeedRemove: filesToRemove.length > 0 ? filesToRemove : undefined,
+          },
+          imageFiles,
+          videoFiles,
+          imageTempUrls,
+          videoTempUrls,
+        );
+      } else {
+        await onSubmit(
+          {
+            caseName,
+            inputNumber: inputCount,
+            filePrice: price,
+            payPerFile: payPerFileNum,
+            totalPayPerFile: totalPayPerFileNum,
+            fileCount: fileCountNum,
+            paymentStatus,
+            paymentEmployee,
+            jobStatus,
+            inputLink,
+            note: note || null,
+            employeeNote: employeeNote || null,
+            assigneeId: assigneeId_,
+            qualifiedAssigneeId: qualifiedAssignee ? Number(qualifiedAssignee) : null,
+            customerId: customerId_,
+            workRequestId: workReqId_,
+            assignedSaleId: assignedSaleId_,
+          },
+          imageFiles,
+          videoFiles,
+          imageTempUrls,
+          videoTempUrls,
+        );
+      }
+    } catch {
+      // The page reports API errors; keep the entered values for retry.
+      return;
+    } finally {
+      setSubmitting(false);
     }
 
     // Reset form
@@ -383,6 +397,7 @@ export function VideoForm({
       note: "",
       employeeNote: "",
       assignedEmployee: undefined,
+      qualifiedAssignee: undefined,
       customerId: undefined,
       assignedSale: undefined,
       workRequestId: undefined,
@@ -397,7 +412,7 @@ export function VideoForm({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(value) => !submitting && onOpenChange(value)}>
       {open && (
         <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -411,7 +426,7 @@ export function VideoForm({
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit}>
-            <div className="grid gap-4 py-4">
+            <fieldset disabled={submitting} className="grid gap-4 py-4">
               {/* Case Name */}
               <div className="grid gap-2">
                 <Label htmlFor="caseName">Tên Job</Label>
@@ -489,6 +504,24 @@ export function VideoForm({
                     type="text"
                   />
                 </div>
+              </div>
+
+              <div className="grid gap-2">
+                <Label>QA được giao</Label>
+                <SearchableDropdown
+                  options={qaList.map((qa) => ({ id: qa.id, name: qa.fullName }))}
+                  placeholder="Chọn QA..."
+                  onChange={(option) => {
+                    formRef.current.qualifiedAssignee = option?.id.toString();
+                    forceUpdate();
+                  }}
+                  defaultValue={formRef.current.qualifiedAssignee ? {
+                    id: Number(formRef.current.qualifiedAssignee),
+                    name: qaList.find((qa) => qa.id === Number(formRef.current.qualifiedAssignee))?.fullName
+                      || editingVideo?.qualifiedAssignee?.fullName || "",
+                  } : null}
+                  type="text"
+                />
               </div>
 
               {/* Sale Dropdown - full width */}
@@ -781,16 +814,17 @@ export function VideoForm({
                   rows={3}
                 />
               </div> */}
-            </div>
+            </fieldset>
             <DialogFooter>
               <Button
                 type="button"
                 variant="outline"
+                disabled={submitting}
                 onClick={() => onOpenChange(false)}
               >
                 Hủy
               </Button>
-              <Button type="submit">
+              <Button type="submit" disabled={submitting}>
                 {editingVideo ? "Cập nhật công việc" : "Tạo công việc"}
               </Button>
             </DialogFooter>

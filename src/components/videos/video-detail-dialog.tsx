@@ -109,7 +109,7 @@ const videoStatusColors: Record<string, string> = {
 const videoStatusLabels: Record<string, string> = {
   PENDING: "Đang chờ",
   IN_PROGRESS: "Đang tiến hành",
-  DONE: "Đã hoàn thành",
+  DONE: "Đang đợi xét duyệt",
   IN_REVIEW: "Đang xem xét",
   REVIEWED: "Đã được xem xét",
   COMPLETED: "Đã hoàn tất",
@@ -185,8 +185,7 @@ export function VideoDetailDialog({
       onOpenChange(value);
     }}>
       <DialogContent
-        className="max-w-4xl max-h-[90vh] overflow-y-auto"
-        style={{ maxWidth: "60%" }}
+        className="w-[calc(100%-2rem)] sm:max-w-4xl max-h-[90vh] overflow-y-auto"
       >
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">
@@ -229,12 +228,23 @@ export function VideoDetailDialog({
             )}
           </div>
 
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground">QA được giao</p>
+            <p className="font-medium">{video.qualifiedAssignee?.fullName || "Chưa giao QA"}</p>
+          </div>
+          {video.qaNote && (
+            <div className="rounded-lg border p-4 space-y-2">
+              <h3 className="text-sm font-medium">Ghi Chú QA</h3>
+              <p className="whitespace-pre-wrap break-words text-sm">{video.qaNote}</p>
+            </div>
+          )}
+
           {/* Reject Reason */}
           {video.rejectReason && (
             <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg p-4">
               <label className="text-sm font-medium text-red-700 dark:text-red-400 flex items-center gap-1 mb-2">
                 <XCircle className="h-4 w-4" />
-                Lý Do Từ Chối (Ghi chú QA)
+                Lý Do Từ Chối
               </label>
               <div 
                 className="prose dark:prose-invert max-w-none text-sm text-red-700 dark:text-red-300 rich-editor-content overflow-x-auto cursor-pointer"

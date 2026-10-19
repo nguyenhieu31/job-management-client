@@ -76,12 +76,14 @@ interface VideoTableProps {
   videos: VideoResponse[];
   userRole: UserRole;
   employees?: EmployeeResponse[];
+  qaList?: EmployeeResponse[];
+  actionPending?: boolean;
   customers?: CustomerInfo[];
   onVideoAction: (
     videoId: number,
     action: VideoAction,
     payload?: { reason?: string; linkDone?: string },
-  ) => void;
+  ) => Promise<boolean>;
   onEdit?: (video: VideoResponse) => void;
 }
 
@@ -91,6 +93,8 @@ const videoStatusColors: Record<string, string> = {
   IN_PROGRESS:
     "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20",
   DONE: "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20",
+  IN_REVIEW: "bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/20",
+  REVIEWED: "bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-500/20",
   COMPLETED:
     "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20",
 };
@@ -99,6 +103,8 @@ const videoStatusLabels: Record<string, string> = {
   PENDING: "Chưa làm",
   IN_PROGRESS: "Đang làm",
   DONE: "Đang đợi xét duyệt",
+  IN_REVIEW: "Đang xem xét",
+  REVIEWED: "Đã xem xét",
   COMPLETED: "Đã hoàn thành",
 };
 
@@ -210,6 +216,8 @@ export function VideoTable({
   videos,
   userRole,
   employees,
+  qaList = [],
+  actionPending = false,
   customers = [],
   onVideoAction,
   onEdit,
@@ -220,7 +228,7 @@ export function VideoTable({
   const [bulkMarkAsPaidDialogOpen, setBulkMarkAsPaidDialogOpen] =
     useState(false);
   const [jobToDelete, setJobToDelete] = useState<number | null>(null);
-  const [rejectDialog, setRejectDialog] = useState<{ open: boolean; videoId: number | null }>({
+  const [rejectDialog, setRejectDialog] = useState<{ open: boolean; videoId: number | null; action?: "reject-video" | "reject-review" }>({
     open: false,
     videoId: null,
   });
@@ -237,7 +245,10 @@ export function VideoTable({
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
   const [previewJob, setPreviewJob] = useState<VideoResponse | null>(null);
   const [relatedWorkVideo, setRelatedWorkVideo] = useState<VideoResponse | null>(null);
-  const { roleName, email } = useAppSelector((state) => state.authenticate);
+  const { roleName, email, id: userId } = useAppSelector((state) => state.authenticate);
+  const isCurrentUser = (assignee: VideoResponse["qualifiedAssignee"]) => Boolean(
+    assignee && (userId != null ? assignee.id === Number(userId) : email && assignee.email === email)
+  );
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [updateTrigger, setUpdateTrigger] = useState(0);
 
@@ -357,6 +368,7 @@ console.log("editValue: ", editValue)
       if (changes || uploadedFiles || removedFiles) {
         const job = videos.find((j) => j.id === videoId);
         const assigneeId = changes?.assignee?.id;
+        const qualifiedAssigneeId = changes?.qualifiedAssignee?.id;
 
         // Check if user cleared assignee or QA fields
         const isDeleteAssignee = !!(
@@ -390,6 +402,8 @@ console.log("editValue: ", editValue)
         const payload = {
           data: {
             jobId: videoId,
+            qualifiedAssigneeId: qualifiedAssigneeId ?? null,
+            isDeleteQualifiedAssignee: Boolean(job?.qualifiedAssignee && changes && "qualifiedAssignee" in changes && !qualifiedAssigneeId),
             assigneeId: assigneeId
               ? Number.parseInt(assigneeId.toString())
               : null,
@@ -406,7 +420,7 @@ console.log("editValue: ", editValue)
               changes?.outputNumber !== undefined ? changes.outputNumber : null,
             paymentStatus: changes?.paymentStatus || null,
             paymentEmployee: changes?.paymentEmployee || null,
-            doneLink: changes?.doneLink || "",
+            doneLink: changes?.doneLink ?? null,
             inputLink: changes?.inputLink || null,
             payPerFile: changes?.payPerFile || null,
             totalPayPerFile:
@@ -731,9 +745,8 @@ console.log("editValue: ", editValue)
 
   const handlePreviewClick = (video: VideoResponse) => {
     if (
-      ((userRole === "employee" || userRole === "special") &&
-        video.jobStatus === "PENDING") ||
-      (userRole === "qa" && video.jobStatus === "DONE")
+      (userRole === "employee" || userRole === "special") &&
+        video.jobStatus === "PENDING"
     ) {
       toast.info("Nhận video này để xem chi tiết");
       return;
@@ -1008,6 +1021,7 @@ console.log("editValue: ", editValue)
         );
 
       case "inputCount":
+        if (userRole === "qa") return <span>{video.inputNumber}</span>;
         return (
           <EditableInput
             value={getCurrentValue(video, "inputNumber") as number}
@@ -1345,6 +1359,24 @@ console.log("editValue: ", editValue)
           </span>
         );
 
+      case "qaNote":
+        return <span className="block max-w-[320px] whitespace-pre-wrap break-words">{video.qaNote || ""}</span>;
+
+      case "qa": {
+        const reviewer = getCurrentValue(video, "qualifiedAssignee") as VideoResponse["qualifiedAssignee"];
+        if (userRole !== "manager") return <span>{reviewer?.fullName || "Chưa giao QA"}</span>;
+        return (
+          <SearchableDropdown
+            options={qaList.map((qa) => ({ id: qa.id, name: qa.fullName }))}
+            defaultValue={reviewer ? { id: reviewer.id, name: reviewer.fullName } : null}
+            placeholder="Chọn QA..."
+            onChange={(option) => handleFieldChange(video.id, "qualifiedAssignee", option ? qaList.find((qa) => qa.id === option.id) : null)}
+            className="w-[150px]"
+            type="text"
+          />
+        );
+      }
+
       case "assignedEmployee":
         if (employees && employees.length > 0 && userRole === "manager") {
           const currentAssignee = getCurrentValue(video, "assignee") as any;
@@ -1441,7 +1473,7 @@ console.log("editValue: ", editValue)
 
       case "actions":
         return (
-          <div className="flex items-center justify-end gap-2">
+          <fieldset disabled={actionPending} className="flex items-center justify-end gap-2 disabled:opacity-60">
             {/* Edit button for manager */}
             {userRole === "manager" && onEdit && !pendingChangesRef.current[video.id] && (
               <Button
@@ -1486,6 +1518,7 @@ console.log("editValue: ", editValue)
             {/* Action buttons based on status and role */}
             {(userRole === "employee" || userRole === "special") &&
               video.jobStatus === "PENDING" &&
+              (!video.assignee || isCurrentUser(video.assignee)) &&
               !pendingChangesRef.current[video.id] && (
                 <Button
                   variant="outline"
@@ -1500,6 +1533,7 @@ console.log("editValue: ", editValue)
 
             {(userRole === "employee" || userRole === "special") &&
               video.jobStatus === "IN_PROGRESS" &&
+              isCurrentUser(video.assignee) &&
               !pendingChangesRef.current[video.id] && (
                 <Button
                   variant="outline"
@@ -1512,8 +1546,29 @@ console.log("editValue: ", editValue)
                 </Button>
               )}
 
+            {(userRole === "manager" || (userRole === "qa" && (!video.qualifiedAssignee || isCurrentUser(video.qualifiedAssignee)))) &&
+              video.jobStatus === "DONE" && !pendingChangesRef.current[video.id] && (
+                <Button variant="outline" size="sm" className="h-8 gap-1" onClick={() => onVideoAction(video.id, "start-review")}>
+                  <PlayCircle className="h-3 w-3" />
+                  {userRole === "qa" && !video.qualifiedAssignee ? "Nhận kiểm duyệt" : "Bắt đầu duyệt"}
+                </Button>
+              )}
+
+            {(userRole === "manager" || (userRole === "qa" && isCurrentUser(video.qualifiedAssignee))) &&
+              video.jobStatus === "IN_REVIEW" && !pendingChangesRef.current[video.id] && (
+                <>
+                  <Button variant="outline" size="sm" className="h-8 gap-1 border-green-500 text-green-600" onClick={() => onVideoAction(video.id, "approve-review")}>
+                    <CheckCircle className="h-3 w-3" />Đạt QA
+                  </Button>
+                  <Button variant="outline" size="sm" className="h-8 gap-1 border-red-500 text-red-600" onClick={() => {
+                    setRejectDialog({ open: true, videoId: video.id, action: "reject-review" });
+                    setRejectNote("");
+                  }}>Yêu cầu làm lại</Button>
+                </>
+              )}
+
             {userRole === "manager" &&
-              video.jobStatus === "DONE" &&
+              video.jobStatus === "REVIEWED" &&
               !pendingChangesRef.current[video.id] && (
                 <>
                   <Button
@@ -1525,6 +1580,11 @@ console.log("editValue: ", editValue)
                     <CheckCircle className="h-3 w-3" />
                     Duyệt
                   </Button>
+                </>
+              )}
+
+            {userRole === "manager" && ["DONE", "IN_REVIEW", "REVIEWED"].includes(video.jobStatus) &&
+              !pendingChangesRef.current[video.id] && (
                   <Button
                     variant="outline"
                     size="sm"
@@ -1537,7 +1597,6 @@ console.log("editValue: ", editValue)
                     <XCircle className="h-3 w-3" />
                     Từ chối
                   </Button>
-                </>
               )}
 
             {/* Temporary: hide delivery + revision actions on UI only */}
@@ -1644,7 +1703,7 @@ console.log("editValue: ", editValue)
                 <Trash2 className="h-3 w-3" />
               </Button>
             )}
-          </div>
+          </fieldset>
         );
 
       default:
@@ -1658,9 +1717,11 @@ console.log("editValue: ", editValue)
         <p className="text-muted-foreground text-lg">
           Không tìm thấy công việc
         </p>
-        <p className="text-muted-foreground text-sm mt-1">
-          Nhấn &quot;Thêm Công Việc&quot; để tạo công việc đầu tiên
-        </p>
+        {(userRole === "manager" || userRole === "saler") && (
+          <p className="text-muted-foreground text-sm mt-1">
+            Nhấn &quot;Thêm Công Việc&quot; để tạo công việc đầu tiên
+          </p>
+        )}
       </div>
     );
   }
@@ -1709,7 +1770,7 @@ console.log("editValue: ", editValue)
         <Table>
           <TableHeader>
             <TableRow>
-              {userRole !== "saler" && (
+              {userRole !== "saler" && userRole !== "qa" && (
                 <TableHead className="w-12 text-center border-r">
                   <input
                     type="checkbox"
@@ -1755,7 +1816,7 @@ console.log("editValue: ", editValue)
                     : ""
                 }
               >
-                {userRole !== "saler" && (
+                {userRole !== "saler" && userRole !== "qa" && (
                   <TableCell className="w-12 text-center border-r">
                     <input
                       type="checkbox"
@@ -1857,7 +1918,7 @@ console.log("editValue: ", editValue)
       <VideoDetailDialog
         open={previewDialogOpen}
         onOpenChange={setPreviewDialogOpen}
-        video={previewJob}
+        video={videos.find((video) => video.id === previewJob?.id) || previewJob}
       />
 
       {/* Edit Dialog for CaseName and Note */}
@@ -2001,24 +2062,29 @@ console.log("editValue: ", editValue)
       {/* Reject Reason Dialog */}
       <Dialog
         open={rejectDialog.open}
-        onOpenChange={(open) => setRejectDialog({ ...rejectDialog, open })}
+        onOpenChange={(open) => !actionPending && setRejectDialog({ ...rejectDialog, open })}
       >
         <DialogContent className="sm:max-w-xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Từ Chối Duyệt Video (Ghi chú QA)</DialogTitle>
           </DialogHeader>
           <div className="space-y-2 py-2">
-            <RichTextEditor
-              value={rejectNote}
-              onChange={setRejectNote}
-              onMediaUpload={uploadMediaApi}
-              placeholder="Nhập lý do từ chối (có thể chèn ảnh/video minh họa)..."
-              minHeight="180px"
-            />
+            {rejectDialog.action === "reject-review" ? (
+              <Textarea aria-label="Ghi chú QA" value={rejectNote} onChange={(e) => setRejectNote(e.target.value)} placeholder="Nhập lý do yêu cầu làm lại (tối thiểu 5 ký tự)..." className="min-h-[180px]" disabled={actionPending} />
+            ) : (
+              <RichTextEditor
+                value={rejectNote}
+                onChange={setRejectNote}
+                onMediaUpload={uploadMediaApi}
+                placeholder="Nhập lý do từ chối (có thể chèn ảnh/video minh họa)..."
+                minHeight="180px"
+              />
+            )}
           </div>
           <DialogFooter>
             <Button
               variant="outline"
+              disabled={actionPending}
               onClick={() => {
                 setRejectDialog({ open: false, videoId: null });
                 setRejectNote("");
@@ -2028,15 +2094,17 @@ console.log("editValue: ", editValue)
             </Button>
             <Button
               variant="destructive"
-              onClick={() => {
-                if (!rejectNote || !rejectNote.replace(/<[^>]*>/g, '').trim()) {
-                  toast.warning("Vui lòng nhập lý do từ chối");
+              disabled={actionPending}
+              onClick={async () => {
+                if (rejectNote.replace(/<[^>]*>/g, '').trim().length < 5) {
+                  toast.warning("Lý do từ chối tối thiểu 5 ký tự");
                   return;
                 }
                 if (rejectDialog.videoId != null) {
-                  onVideoAction(rejectDialog.videoId, "reject-video", {
+                  const success = await onVideoAction(rejectDialog.videoId, rejectDialog.action || "reject-video", {
                     reason: rejectNote.trim(),
                   });
+                  if (!success) return;
                 }
                 setRejectDialog({ open: false, videoId: null });
                 setRejectNote("");

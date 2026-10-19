@@ -146,7 +146,7 @@ export function VideoFilterBar({
     onFiltersChange?.(payload);
     
     onPageChange(1);
-    dispatch(SearchVideoByConditionsAction(payload));
+    if (!onFiltersChange) dispatch(SearchVideoByConditionsAction(payload));
   };
 
   const handleResetFilters = () => {
@@ -221,6 +221,8 @@ export function VideoFilterBar({
                 <SelectItem value="PENDING">Chưa làm</SelectItem>
                 <SelectItem value="IN_PROGRESS">Đang làm</SelectItem>
                 <SelectItem value="DONE">Đang đợi xét duyệt</SelectItem>
+                <SelectItem value="IN_REVIEW">Đang xem xét</SelectItem>
+                <SelectItem value="REVIEWED">Đã xem xét</SelectItem>
                 <SelectItem value="COMPLETED">Đã hoàn thành</SelectItem>
               </SelectContent>
             </Select>

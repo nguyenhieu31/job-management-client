@@ -51,6 +51,8 @@ export interface VideoResponse {
   note: string;
   employeeNote?: string | null;
   assignee: AssigneeInfo;
+  qualifiedAssignee: AssigneeInfo | null;
+  qaNote: string | null;
   customer: CustomerInfo;
   assignedSale?: SaleInfo | null;
   workRequest: WorkRequestResponse;
@@ -80,6 +82,8 @@ export interface VideoRequest {
   note: string | null;
   employeeNote?: string | null;
   assigneeId: number | null;
+  qualifiedAssigneeId?: number | null;
+  isDeleteQualifiedAssignee?: boolean;
   customerId: number | null;
   workRequestId: number | null;
   assignedSaleId?: number | null;
@@ -88,7 +92,7 @@ export interface VideoRequest {
   fileStoragesNeedRemove?: FileStorage[];
 }
 
-export type VideoStatus = "PENDING" | "IN_PROGRESS" | "DONE" | "COMPLETED";
+export type VideoStatus = "PENDING" | "IN_PROGRESS" | "DONE" | "IN_REVIEW" | "REVIEWED" | "COMPLETED";
 
 export type VideoDeliveryStatus = "NONE" | "NOT_DELIVERED" | "DELIVERED";
 export type VideoRevisionStatus =
@@ -100,6 +104,9 @@ export type VideoRevisionStatus =
 export type VideoTransitionEvent =
   | "TAKE"
   | "DONE"
+  | "START_REVIEW"
+  | "APPROVE_REVIEW"
+  | "REJECT_REVIEW"
   | "APPROVE"
   | "REJECT"
   | "MARK_DELIVERED"
@@ -122,6 +129,9 @@ export type EmployeePaymentStatus = "UNPAID" | "PAID";
 export type VideoAction =
   | "take-video"
   | "done-video"
+  | "start-review"
+  | "approve-review"
+  | "reject-review"
   | "complete-video"
   | "reject-video"
   | "mark-delivered"
@@ -140,7 +150,13 @@ export interface VideoActionPayload {
   qaNote?: string;
   reason?: string;
   linkDone?: string;
-  qaOutputNumber?: number | null;
+}
+
+export interface VideoTransitionRequest {
+  id: number;
+  event: VideoTransitionEvent;
+  reason?: string;
+  linkDone?: string;
 }
 
 export type UserRole = "manager" | "qa" | "employee" | "special" | "saler";
@@ -180,6 +196,8 @@ export const ROLE_COLUMNS = {
     "totalPayPerFile",
     // "assignedSale",
     "assignedEmployee",
+    "qa",
+    "qaNote",
     "note",
     // "relatedWork",
     // "paymentStatus",
@@ -196,6 +214,7 @@ export const ROLE_COLUMNS = {
     "jobStatus",
     "note",
     "rejectReason",
+    "qaNote",
     // "relatedWork",
     "actions",
   ],
@@ -210,10 +229,15 @@ export const ROLE_COLUMNS = {
     "jobStatus",
     "note",
     "rejectReason",
+    "qaNote",
     "employeeNote",
     "paymentEmployee",
     // "relatedWork",
     "actions",
+  ],
+  qa: [
+    "code", "date", "caseName", "linkInput", "linkDone", "inputCount",
+    "assignedEmployee", "qa", "jobStatus", "note", "qaNote", "actions",
   ],
   saler: [
     "code",

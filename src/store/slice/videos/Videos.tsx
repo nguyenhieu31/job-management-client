@@ -1,6 +1,6 @@
 import { PageResponse } from "@/components/types/Page";
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { VideoRequest, VideoResponse, VideoViewResponse } from "@/types/videos";
+import { VideoRequest, VideoResponse, VideoViewResponse, VideoTransitionRequest } from "@/types/videos";
 import * as VideoApi from "@/services/VideoApi";
 import { getVideoFromDropbox } from "@/services/DropboxApi";
 import { toast } from "react-toastify";
@@ -13,6 +13,7 @@ interface VideoState {
   videoView: VideoViewResponse[];
   loading: boolean;
   loadingSearching: boolean;
+  transitioning: boolean;
   error: string | null;
 }
 
@@ -22,6 +23,7 @@ const initialState: VideoState = {
   videoView: [],
   loading: false,
   loadingSearching: false,
+  transitioning: false,
   error: null,
 };
 
@@ -37,6 +39,14 @@ export const GetAllVideosByAssigneeAction = createAsyncThunk(
   "video/getAllVideosByAssignee",
   async (data: { pageNumber: number; pageSize: number; email: string } & { fromDate?: string | null }) => {
     const res = await VideoApi.getAllVideosByAssignee(data);
+    return res.data;
+  }
+);
+
+export const GetAllVideosByQualifiedAssigneeAction = createAsyncThunk(
+  "video/getAllVideosByQualifiedAssignee",
+  async (data: { pageNumber: number; pageSize: number; email: string; fromDate?: string | null }) => {
+    const res = await VideoApi.getAllVideosByQualifiedAssignee(data);
     return res.data;
   }
 );
@@ -64,12 +74,7 @@ export const UpdateVideoStatusAction = createAsyncThunk(
 
 export const TransitionVideoAction = createAsyncThunk(
   "video/transitionVideo",
-  async (data: {
-    id: number;
-    event: string;
-    reason?: string;
-    linkDone?: string;
-  }) => {
+  async (data: VideoTransitionRequest) => {
     const res = await VideoApi.transitionVideo(data);
     return res.data;
   }
@@ -138,6 +143,7 @@ export const UpdateGridViewVideoAction = createAsyncThunk(
       editedNumber?: number | null;
       qaOutputNumber?: number | null;
       qualifiedAssigneeId?: number | null;
+      isDeleteQualifiedAssignee?: boolean;
       paymentStatus?: string | null;
       paymentEmployee?: string | null;
       inputLink?: string | null;
@@ -312,6 +318,29 @@ const videoSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
+    builder.addCase(GetAllVideosByQualifiedAssigneeAction.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(GetAllVideosByQualifiedAssigneeAction.fulfilled, (state, action) => {
+      state.loading = false;
+      state.videos = action.payload;
+    });
+    builder.addCase(GetAllVideosByQualifiedAssigneeAction.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.error.message || "Không thể tải danh sách duyệt video";
+    });
+    builder.addCase(TransitionVideoAction.pending, (state) => {
+      state.transitioning = true;
+      state.error = null;
+    });
+    builder.addCase(TransitionVideoAction.fulfilled, (state) => {
+      state.transitioning = false;
+    });
+    builder.addCase(TransitionVideoAction.rejected, (state, action) => {
+      state.transitioning = false;
+      state.error = action.error.message || "Không thể cập nhật trạng thái";
+    });
     // Get All Videos
     builder.addCase(GetAllVideosAction.pending, (state) => {
       state.loading = true;
