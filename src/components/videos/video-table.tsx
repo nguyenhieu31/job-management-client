@@ -1558,7 +1558,7 @@ console.log("editValue: ", editValue)
               video.jobStatus === "IN_REVIEW" && !pendingChangesRef.current[video.id] && (
                 <>
                   <Button variant="outline" size="sm" className="h-8 gap-1 border-green-500 text-green-600" onClick={() => onVideoAction(video.id, "approve-review")}>
-                    <CheckCircle className="h-3 w-3" />Đạt QA
+                    <CheckCircle className="h-3 w-3" />Duyệt QA
                   </Button>
                   <Button variant="outline" size="sm" className="h-8 gap-1 border-red-500 text-red-600" onClick={() => {
                     setRejectDialog({ open: true, videoId: video.id, action: "reject-review" });

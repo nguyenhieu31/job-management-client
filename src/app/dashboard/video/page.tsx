@@ -250,7 +250,9 @@ export default function VideosPage() {
 
   const qaList = useMemo(
     () =>
-      employees?.data.filter((e) => e.role.name.toLowerCase() === "qa") || [],
+      employees?.data.filter(
+        (e) => e.role.name.toLowerCase() === "qa" && e.isVideoAccount === true,
+      ) || [],
     [employees],
   );
 

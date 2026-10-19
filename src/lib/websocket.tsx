@@ -46,86 +46,86 @@ export const WebsocketConnection: React.FC = () => {
 
         stompClient.onConnect = () => {
             console.log('WebSocket Connected!');
-            stompClient?.subscribe(`/user/${email}/queue/notifications`, (message) => {
+            stompClient?.subscribe('/user/queue/notifications', (message) => {
                 const data = JSON.parse(message.body);
                 console.log('Received notification:', data);
                 dispatch(addNotificationLocal(data));
             });
 
-            stompClient?.subscribe(`/user/${email}/queue/update-job`, (message) => {
+            stompClient?.subscribe('/user/queue/update-job', (message) => {
                 const data = JSON.parse(message.body);
                 console.log('Received job response update:', data);
                 dispatch(updateJob(data));
             });
 
-            stompClient?.subscribe(`/user/${email}/queue/create-job`, (message) => {
+            stompClient?.subscribe('/user/queue/create-job', (message) => {
                 const data = JSON.parse(message.body);
                 console.log('Received job response create:', data);
                 dispatch(createJobRealTime(data));
             });
 
-            stompClient?.subscribe(`/user/${email}/queue/delete-job`, (message) => {
+            stompClient?.subscribe('/user/queue/delete-job', (message) => {
                 const data = JSON.parse(message.body);
                 console.log('Received job response delete:', data);
                 dispatch(deleteJobByIdRealTime(data));
             });
 
-            stompClient?.subscribe(`/user/${email}/queue/delete-job-user-specific`, (message) => {
+            stompClient?.subscribe('/user/queue/delete-job-user-specific', (message) => {
                 const data = JSON.parse(message.body);
                 console.log('Received job response delete:', data);
                 dispatch(deleteJobByIdRealTime(data));
             });
 
-            stompClient?.subscribe(`/user/${email}/queue/delete-multiple-job`, (message) => {
+            stompClient?.subscribe('/user/queue/delete-multiple-job', (message) => {
                 const data = JSON.parse(message.body);
                 console.log('Received job response delete multiple:', data);
                 dispatch(deleteMultipleJobsRealTime(data));
             });
 
-            stompClient?.subscribe(`/user/${email}/queue/update-payment-employee-status-job`, (message) => {
+            stompClient?.subscribe('/user/queue/update-payment-employee-status-job', (message) => {
                 const data = JSON.parse(message.body);
                 console.log('Received job response update payment employee status:', data);
                 dispatch(updatePaymentEmployeeMultipleJobsRealTime(data));
             });
 
 
-            stompClient?.subscribe(`/user/${email}/queue/update-video`, (message) => {
+            stompClient?.subscribe('/user/queue/update-video', (message) => {
                 const data = JSON.parse(message.body);
                 console.log('Received video response update:', data);
                 dispatch(updateVideo(data));
             });
 
-            stompClient?.subscribe(`/user/${email}/queue/create-video`, (message) => {
+            stompClient?.subscribe('/user/queue/create-video', (message) => {
                 const data = JSON.parse(message.body);
                 console.log('Received video response create:', data);
                 dispatch(createVideoRealTime(data));
             });
 
-            stompClient?.subscribe(`/user/${email}/queue/delete-video`, (message) => {
+            stompClient?.subscribe('/user/queue/delete-video', (message) => {
                 const data = JSON.parse(message.body);
                 console.log('Received video response delete:', data);
                 dispatch(deleteVideoByIdRealTime(data));
             });
 
-            stompClient?.subscribe(`/user/${email}/queue/delete-video-user-specific`, (message) => {
+            stompClient?.subscribe('/user/queue/delete-video-user-specific', (message) => {
                 const data = JSON.parse(message.body);
                 console.log('Received video response delete by user specific:', data);
                 dispatch(deleteVideoByIdRealTime(data));
             });
 
-            stompClient?.subscribe(`/user/${email}/queue/delete-multiple-video`, (message) => {
+            stompClient?.subscribe('/user/queue/delete-multiple-video', (message) => {
                 const data = JSON.parse(message.body);
                 console.log('Received video response delete multiple:', data);
                 dispatch(deleteMultipleVideosRealTime(data));
             });
 
-            stompClient?.subscribe(`/user/${email}/queue/update-payment-employee-status-video`, (message) => {
+            stompClient?.subscribe('/user/queue/update-payment-employee-status-video', (message) => {
                 const data = JSON.parse(message.body);
                 console.log('Received video response update payment employee status:', data);
                 dispatch(updatePaymentEmployeeMultipleVideosRealTime(data));
             });
 
-            stompClient?.subscribe(`/user/${email}/queue/update-status-bank-transfer-sepay`, (message) => {
+            stompClient?.subscribe('/user/queue/update-status-bank-transfer-sepay', (message) => {
                 const data = JSON.parse(message.body);
                 console.log('Received update status bank transfer sepay:', data);
                 Promise.all([
