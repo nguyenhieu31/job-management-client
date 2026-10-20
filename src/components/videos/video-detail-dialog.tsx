@@ -17,6 +17,7 @@ import type { FileStorage } from "@/types/jobs";
 import { formatCurrency, formatCurrencyVND, formatDate } from "@/lib/utils";
 import { useAppSelector } from "@/store/store";
 import { RelatedWorkSection } from "@/components/shared/related-work-section";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import {
   ExternalLink,
   User,
@@ -111,7 +112,7 @@ const videoStatusLabels: Record<string, string> = {
   IN_PROGRESS: "Đang tiến hành",
   DONE: "Đang đợi xét duyệt",
   IN_REVIEW: "Đang xem xét",
-  REVIEWED: "Đã được xem xét",
+  REVIEWED: "Chờ hoàn tất (luồng cũ)",
   COMPLETED: "Đã hoàn tất",
 };
 
@@ -232,12 +233,6 @@ export function VideoDetailDialog({
             <p className="text-sm text-muted-foreground">QA được giao</p>
             <p className="font-medium">{video.qualifiedAssignee?.fullName || "Chưa giao QA"}</p>
           </div>
-          {video.qaNote && (
-            <div className="rounded-lg border p-4 space-y-2">
-              <h3 className="text-sm font-medium">Ghi Chú QA</h3>
-              <p className="whitespace-pre-wrap break-words text-sm">{video.qaNote}</p>
-            </div>
-          )}
 
           {/* Reject Reason */}
           {video.rejectReason && (
@@ -395,6 +390,20 @@ export function VideoDetailDialog({
                     onClick={handleRichContentClick}
                     dangerouslySetInnerHTML={{ __html: renderHtmlWithLinks(video.rejectReason) }}
                   />
+                </div>
+              )}
+
+              {video.qaNote && (video.qaNote.replace(/<[^>]*>/g, " ").replace(/&nbsp;/gi, " ").trim()
+                || /<(img|video|iframe)\b/i.test(video.qaNote)) && (
+                <div className="space-y-2 min-w-0">
+                  <h3 className="font-semibold text-lg">Ghi Chú QA</h3>
+                  {/<[^>]+>/.test(video.qaNote) ? (
+                    <RichTextEditor value={video.qaNote} editable={false} minHeight="0px" />
+                  ) : (
+                    <div className="text-sm bg-muted/50 p-4 rounded-lg whitespace-pre-wrap break-words max-w-full">
+                      {renderTextWithLinks(video.qaNote)}
+                    </div>
+                  )}
                 </div>
               )}
 

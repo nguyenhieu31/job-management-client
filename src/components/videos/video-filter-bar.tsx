@@ -222,7 +222,7 @@ export function VideoFilterBar({
                 <SelectItem value="IN_PROGRESS">Đang làm</SelectItem>
                 <SelectItem value="DONE">Đang đợi xét duyệt</SelectItem>
                 <SelectItem value="IN_REVIEW">Đang xem xét</SelectItem>
-                <SelectItem value="REVIEWED">Đã xem xét</SelectItem>
+                <SelectItem value="REVIEWED">Chờ hoàn tất (luồng cũ)</SelectItem>
                 <SelectItem value="COMPLETED">Đã hoàn thành</SelectItem>
               </SelectContent>
             </Select>

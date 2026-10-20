@@ -104,7 +104,7 @@ const videoStatusLabels: Record<string, string> = {
   IN_PROGRESS: "Đang làm",
   DONE: "Đang đợi xét duyệt",
   IN_REVIEW: "Đang xem xét",
-  REVIEWED: "Đã xem xét",
+  REVIEWED: "Chờ hoàn tất (luồng cũ)",
   COMPLETED: "Đã hoàn thành",
 };
 
@@ -228,7 +228,7 @@ export function VideoTable({
   const [bulkMarkAsPaidDialogOpen, setBulkMarkAsPaidDialogOpen] =
     useState(false);
   const [jobToDelete, setJobToDelete] = useState<number | null>(null);
-  const [rejectDialog, setRejectDialog] = useState<{ open: boolean; videoId: number | null; action?: "reject-video" | "reject-review" }>({
+  const [rejectDialog, setRejectDialog] = useState<{ open: boolean; videoId: number | null }>({
     open: false,
     videoId: null,
   });
@@ -1359,8 +1359,27 @@ console.log("editValue: ", editValue)
           </span>
         );
 
-      case "qaNote":
-        return <span className="block max-w-[320px] whitespace-pre-wrap break-words">{video.qaNote || ""}</span>;
+      case "qaNote": {
+        const qaPreview = video.qaNote?.replace(/<[^>]*>/g, " ").replace(/&nbsp;/gi, " ").trim();
+        const hasQaMedia = /<(img|video|iframe)\b/i.test(video.qaNote || "");
+        return qaPreview || hasQaMedia ? (
+          <button
+            type="button"
+            className="block w-[220px] max-w-[220px] rounded px-2 py-1 text-left hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label={`Xem ghi chú QA của ${video.caseName || video.code}`}
+            title="Xem ghi chú QA và chi tiết công việc"
+            onClick={(event) => {
+              event.stopPropagation();
+              setPreviewJob(video);
+              setPreviewDialogOpen(true);
+            }}
+          >
+            <span className="line-clamp-2 whitespace-normal break-words">
+              {qaPreview || "Ghi chú có ảnh/video"}
+            </span>
+          </button>
+        ) : null;
+      }
 
       case "qa": {
         const reviewer = getCurrentValue(video, "qualifiedAssignee") as VideoResponse["qualifiedAssignee"];
@@ -1471,7 +1490,11 @@ console.log("editValue: ", editValue)
           <span className="text-xs text-muted-foreground">—</span>
         );
 
-      case "actions":
+      case "actions": {
+        const hasAssignedQa = video.qualifiedAssignee?.role === "QA";
+        const canReview = hasAssignedQa
+          ? roleName === "QA" && isCurrentUser(video.qualifiedAssignee)
+          : roleName === "MANAGER";
         return (
           <fieldset disabled={actionPending} className="flex items-center justify-end gap-2 disabled:opacity-60">
             {/* Edit button for manager */}
@@ -1527,13 +1550,12 @@ console.log("editValue: ", editValue)
                   className="h-8 gap-1 border-blue-500 text-blue-600 hover:bg-blue-50"
                 >
                   <PlayCircle className="h-3 w-3" />
-                  Nhận
+                  Nhận Việc
                 </Button>
               )}
 
             {(userRole === "employee" || userRole === "special") &&
-              video.jobStatus === "IN_PROGRESS" &&
-              isCurrentUser(video.assignee) &&
+              video.jobStatus === "IN_PROGRESS" && isCurrentUser(video.assignee) &&
               !pendingChangesRef.current[video.id] && (
                 <Button
                   variant="outline"
@@ -1542,32 +1564,28 @@ console.log("editValue: ", editValue)
                   className="h-8 gap-1 border-green-500 text-green-600 hover:bg-green-50"
                 >
                   <CheckCircle className="h-3 w-3" />
-                  Hoàn Thành
+                  Hoàn Tất
                 </Button>
               )}
 
-            {(userRole === "manager" || (userRole === "qa" && (!video.qualifiedAssignee || isCurrentUser(video.qualifiedAssignee)))) &&
+            {canReview &&
               video.jobStatus === "DONE" && !pendingChangesRef.current[video.id] && (
                 <Button variant="outline" size="sm" className="h-8 gap-1" onClick={() => onVideoAction(video.id, "start-review")}>
                   <PlayCircle className="h-3 w-3" />
-                  {userRole === "qa" && !video.qualifiedAssignee ? "Nhận kiểm duyệt" : "Bắt đầu duyệt"}
+                  Nhận Review
                 </Button>
               )}
 
-            {(userRole === "manager" || (userRole === "qa" && isCurrentUser(video.qualifiedAssignee))) &&
+            {canReview &&
               video.jobStatus === "IN_REVIEW" && !pendingChangesRef.current[video.id] && (
                 <>
                   <Button variant="outline" size="sm" className="h-8 gap-1 border-green-500 text-green-600" onClick={() => onVideoAction(video.id, "approve-review")}>
-                    <CheckCircle className="h-3 w-3" />Duyệt QA
+                    <CheckCircle className="h-3 w-3" />Hoàn Thành
                   </Button>
-                  <Button variant="outline" size="sm" className="h-8 gap-1 border-red-500 text-red-600" onClick={() => {
-                    setRejectDialog({ open: true, videoId: video.id, action: "reject-review" });
-                    setRejectNote("");
-                  }}>Yêu cầu làm lại</Button>
                 </>
               )}
 
-            {userRole === "manager" &&
+            {canReview &&
               video.jobStatus === "REVIEWED" &&
               !pendingChangesRef.current[video.id] && (
                 <>
@@ -1578,12 +1596,13 @@ console.log("editValue: ", editValue)
                     className="h-8 gap-1 border-emerald-500 text-emerald-600 hover:bg-emerald-50"
                   >
                     <CheckCircle className="h-3 w-3" />
-                    Duyệt
+                    Hoàn Thành
                   </Button>
                 </>
               )}
 
-            {userRole === "manager" && ["DONE", "IN_REVIEW", "REVIEWED"].includes(video.jobStatus) &&
+            {canReview &&
+              video.jobStatus === "IN_REVIEW" &&
               !pendingChangesRef.current[video.id] && (
                   <Button
                     variant="outline"
@@ -1595,7 +1614,7 @@ console.log("editValue: ", editValue)
                     className="h-8 gap-1 border-red-500 text-red-600 hover:bg-red-50"
                   >
                     <XCircle className="h-3 w-3" />
-                    Từ chối
+                    Từ Chối
                   </Button>
               )}
 
@@ -1705,6 +1724,7 @@ console.log("editValue: ", editValue)
             )}
           </fieldset>
         );
+      }
 
       default:
         return null;
@@ -2066,20 +2086,16 @@ console.log("editValue: ", editValue)
       >
         <DialogContent className="sm:max-w-xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Từ Chối Duyệt Video (Ghi chú QA)</DialogTitle>
+            <DialogTitle>Từ Chối Công Việc (Ghi chú QA)</DialogTitle>
           </DialogHeader>
           <div className="space-y-2 py-2">
-            {rejectDialog.action === "reject-review" ? (
-              <Textarea aria-label="Ghi chú QA" value={rejectNote} onChange={(e) => setRejectNote(e.target.value)} placeholder="Nhập lý do yêu cầu làm lại (tối thiểu 5 ký tự)..." className="min-h-[180px]" disabled={actionPending} />
-            ) : (
-              <RichTextEditor
+            <RichTextEditor
                 value={rejectNote}
                 onChange={setRejectNote}
                 onMediaUpload={uploadMediaApi}
                 placeholder="Nhập lý do từ chối (có thể chèn ảnh/video minh họa)..."
                 minHeight="180px"
-              />
-            )}
+            />
           </div>
           <DialogFooter>
             <Button
@@ -2101,7 +2117,7 @@ console.log("editValue: ", editValue)
                   return;
                 }
                 if (rejectDialog.videoId != null) {
-                  const success = await onVideoAction(rejectDialog.videoId, rejectDialog.action || "reject-video", {
+                  const success = await onVideoAction(rejectDialog.videoId, "reject-video", {
                     reason: rejectNote.trim(),
                   });
                   if (!success) return;

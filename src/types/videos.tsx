@@ -131,7 +131,6 @@ export type VideoAction =
   | "done-video"
   | "start-review"
   | "approve-review"
-  | "reject-review"
   | "complete-video"
   | "reject-video"
   | "mark-delivered"

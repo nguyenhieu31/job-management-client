@@ -25,7 +25,6 @@ import {
   SearchVideoByConditionsAction,
   UpdateVideoFullAction,
   GetVideoFromDropboxAction,
-  GetRandomVideoAction,
   TransitionVideoAction,
 } from "@/store/slice/videos/Videos";
 import { PageResponse } from "@/components/types/Page";
@@ -168,9 +167,8 @@ export default function VideosPage() {
       "done-video": "DONE",
       "start-review": "START_REVIEW",
       "approve-review": "APPROVE_REVIEW",
-      "reject-review": "REJECT_REVIEW",
       "complete-video": "APPROVE",
-      "reject-video": "REJECT",
+      "reject-video": "REJECT_REVIEW",
       "mark-delivered": "MARK_DELIVERED",
       "request-revision": "REQUEST_REVISION",
       "start-revision": "START_REVISION",
@@ -182,7 +180,7 @@ export default function VideosPage() {
     const event = eventMap[action];
     if (!event) return false;
 
-    if (action === "reject-video" || action === "reject-review") {
+    if (action === "reject-video") {
       const reason = payload?.reason?.replace(/<[^>]*>/g, "").trim() || "";
       if (reason.length < 5) {
         toast.error("Lý do từ chối tối thiểu 5 ký tự");
@@ -220,13 +218,7 @@ export default function VideosPage() {
 
   const handleClickGetVideo = async () => {
     if (loading || transitioning) return;
-    if (userRole === "qa") {
-      try {
-        await dispatch(GetRandomVideoAction()).unwrap();
-      } catch (err: any) {
-        toast.error(err?.message || "Không thể tìm việc kiểm duyệt");
-      }
-    } else if (userRole === "manager") {
+    if (userRole === "manager") {
       await dispatch(GetVideoFromDropboxAction());
     }
   };
@@ -361,14 +353,14 @@ export default function VideosPage() {
               Thêm Công Việc
             </Button>
           )}
-          {(userRole === "manager" || userRole === "qa") && (
+          {userRole === "manager" && (
             <Button
               onClick={handleClickGetVideo}
               disabled={loading || transitioning}
               className="sm:w-auto bg-green-600 hover:bg-green-700 cursor-pointer"
             >
               <ArrowDown className="mr-2 h-4 w-4" />
-              {userRole === "qa" ? "Tìm việc kiểm duyệt" : "Lấy Video Ngẫu Nhiên"}
+              Lấy Video Ngẫu Nhiên
             </Button>
           )}
         </div>
