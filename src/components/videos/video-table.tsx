@@ -1495,9 +1495,7 @@ console.log("editValue: ", editValue)
 
       case "actions": {
         const hasAssignedQa = video.qualifiedAssignee?.role === "QA";
-        const canReview = hasAssignedQa
-          ? roleName === "QA" && isCurrentUser(video.qualifiedAssignee)
-          : roleName === "MANAGER";
+        const canReview = roleName === "MANAGER" || (roleName === "QA" && (!hasAssignedQa || isCurrentUser(video.qualifiedAssignee)));
         return (
           <fieldset disabled={actionPending} className="flex items-center justify-end gap-2 disabled:opacity-60">
             {/* Edit button for manager */}
@@ -1572,41 +1570,18 @@ console.log("editValue: ", editValue)
               )}
 
             {canReview &&
-              video.jobStatus === "DONE" && !pendingChangesRef.current[video.id] && (
-                <Button variant="outline" size="sm" className="h-8 gap-1" onClick={() => onVideoAction(video.id, "start-review")}>
-                  <PlayCircle className="h-3 w-3" />
-                  Nhận Review
-                </Button>
-              )}
-
-            {canReview &&
-              video.jobStatus === "IN_REVIEW" && !pendingChangesRef.current[video.id] && (
-                <>
-                  <Button variant="outline" size="sm" className="h-8 gap-1 border-green-500 text-green-600" onClick={() => onVideoAction(video.id, "approve-review")}>
-                    <CheckCircle className="h-3 w-3" />Hoàn Thành
-                  </Button>
-                </>
-              )}
-
-            {canReview &&
-              video.jobStatus === "REVIEWED" &&
+              (video.jobStatus === "DONE" || video.jobStatus === "IN_REVIEW" || video.jobStatus === "REVIEWED") &&
               !pendingChangesRef.current[video.id] && (
                 <>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => onVideoAction(video.id, "complete-video")}
-                    className="h-8 gap-1 border-emerald-500 text-emerald-600 hover:bg-emerald-50"
+                    onClick={() => onVideoAction(video.id, "approve-review")}
+                    className="h-8 gap-1 border-green-500 text-green-600 hover:bg-green-50"
                   >
                     <CheckCircle className="h-3 w-3" />
                     Hoàn Thành
                   </Button>
-                </>
-              )}
-
-            {canReview &&
-              video.jobStatus === "IN_REVIEW" &&
-              !pendingChangesRef.current[video.id] && (
                   <Button
                     variant="outline"
                     size="sm"
@@ -1619,6 +1594,7 @@ console.log("editValue: ", editValue)
                     <XCircle className="h-3 w-3" />
                     Từ Chối
                   </Button>
+                </>
               )}
 
             {/* Temporary: hide delivery + revision actions on UI only */}
