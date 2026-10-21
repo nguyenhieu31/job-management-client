@@ -705,8 +705,6 @@ export function VideoForm({
                         Đang tiến hành
                       </SelectItem>
                       <SelectItem value="DONE">Đợi xét duyệt</SelectItem>
-                      <SelectItem value="IN_REVIEW">Đang xem xét</SelectItem>
-                      <SelectItem value="REVIEWED">Chờ hoàn tất (luồng cũ)</SelectItem>
                       <SelectItem value="COMPLETED">Đã hoàn thành</SelectItem>
                     </SelectContent>
                   </Select>

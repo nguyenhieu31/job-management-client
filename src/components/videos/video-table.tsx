@@ -1372,15 +1372,17 @@ console.log("editValue: ", editValue)
 
       case "qaNote": {
         const currentQaNote = (getCurrentValue(video, "qaNote") as string) || video.qaNote || "";
-        if (!currentQaNote) return null;
+        if (!currentQaNote) {
+          return <span className="text-muted-foreground text-xs">-</span>;
+        }
         return (
           <div
-            className="max-w-[250px] overflow-hidden cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1 rounded group relative h-[max-content] min-h-[40px]"
+            className="max-w-[250px] overflow-hidden cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1 rounded group relative min-h-[40px] flex items-center"
             onClick={() => handlePreviewClick(video)}
             title="Click để xem chi tiết"
           >
             <div
-              className="break-words line-clamp-3 prose prose-sm h-[20px]"
+              className="break-words line-clamp-3 prose prose-sm max-h-[60px] [&>p]:my-0 [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 text-xs dark:prose-invert"
               dangerouslySetInnerHTML={{ __html: currentQaNote }}
             />
           </div>
