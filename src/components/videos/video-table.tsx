@@ -247,7 +247,10 @@ export function VideoTable({
   const [relatedWorkVideo, setRelatedWorkVideo] = useState<VideoResponse | null>(null);
   const { roleName, email, id: userId } = useAppSelector((state) => state.authenticate);
   const isCurrentUser = (assignee: VideoResponse["qualifiedAssignee"]) => Boolean(
-    assignee && (userId != null ? assignee.id === Number(userId) : email && assignee.email === email)
+    assignee && (
+      (userId != null && assignee.id != null && Number(assignee.id) === Number(userId)) ||
+      (email && assignee.email && assignee.email.toLowerCase() === email.toLowerCase())
+    )
   );
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [updateTrigger, setUpdateTrigger] = useState(0);
@@ -1494,8 +1497,12 @@ console.log("editValue: ", editValue)
         );
 
       case "actions": {
-        const hasAssignedQa = video.qualifiedAssignee?.role === "QA";
-        const canReview = roleName === "MANAGER" || (roleName === "QA" && (!hasAssignedQa || isCurrentUser(video.qualifiedAssignee)));
+        const isManager = userRole === "manager" || roleName === "MANAGER";
+        const isQa = userRole === "qa" || roleName === "QA";
+        const hasAssignedQa = Boolean(video.qualifiedAssignee && video.qualifiedAssignee.id);
+        const canReview = hasAssignedQa
+          ? (isQa && isCurrentUser(video.qualifiedAssignee))
+          : isManager;
         return (
           <fieldset disabled={actionPending} className="flex items-center justify-end gap-2 disabled:opacity-60">
             {/* Edit button for manager */}
