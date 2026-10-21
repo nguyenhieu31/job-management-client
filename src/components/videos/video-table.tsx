@@ -1282,15 +1282,23 @@ console.log("editValue: ", editValue)
           />
         );
 
-      case "rejectReason":
-        const currentRejectReason = getCurrentValue(video, "rejectReason") as string;
+      case "rejectReason": {
+        const currentRejectReason =
+          (getCurrentValue(video, "rejectReason") as string) || video.rejectReason || "";
+        if (!currentRejectReason) return null;
         return (
           <div
-            className="max-w-[250px] overflow-hidden break-words line-clamp-3 prose prose-sm h-[40px] text-red-600 cursor-pointer"
+            className="max-w-[250px] overflow-hidden cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1 rounded group relative h-[max-content] min-h-[40px]"
             onClick={() => handlePreviewClick(video)}
-            dangerouslySetInnerHTML={{ __html: currentRejectReason || "" }}
-          />
+            title="Click để xem chi tiết"
+          >
+            <div
+              className="break-words line-clamp-3 prose prose-sm h-[20px] text-red-600 dark:text-red-400"
+              dangerouslySetInnerHTML={{ __html: currentRejectReason }}
+            />
+          </div>
         );
+      }
 
       case "paymentEmployee":
         if (canEditSpecialFields(video)) {
@@ -1360,25 +1368,20 @@ console.log("editValue: ", editValue)
         );
 
       case "qaNote": {
-        const qaPreview = video.qaNote?.replace(/<[^>]*>/g, " ").replace(/&nbsp;/gi, " ").trim();
-        const hasQaMedia = /<(img|video|iframe)\b/i.test(video.qaNote || "");
-        return qaPreview || hasQaMedia ? (
-          <button
-            type="button"
-            className="block w-[220px] max-w-[220px] rounded px-2 py-1 text-left hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            aria-label={`Xem ghi chú QA của ${video.caseName || video.code}`}
-            title="Xem ghi chú QA và chi tiết công việc"
-            onClick={(event) => {
-              event.stopPropagation();
-              setPreviewJob(video);
-              setPreviewDialogOpen(true);
-            }}
+        const currentQaNote = (getCurrentValue(video, "qaNote") as string) || video.qaNote || "";
+        if (!currentQaNote) return null;
+        return (
+          <div
+            className="max-w-[250px] overflow-hidden cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1 rounded group relative h-[max-content] min-h-[40px]"
+            onClick={() => handlePreviewClick(video)}
+            title="Click để xem chi tiết"
           >
-            <span className="line-clamp-2 whitespace-normal break-words">
-              {qaPreview || "Ghi chú có ảnh/video"}
-            </span>
-          </button>
-        ) : null;
+            <div
+              className="break-words line-clamp-3 prose prose-sm h-[20px]"
+              dangerouslySetInnerHTML={{ __html: currentQaNote }}
+            />
+          </div>
+        );
       }
 
       case "qa": {
